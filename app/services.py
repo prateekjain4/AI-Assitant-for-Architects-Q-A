@@ -242,6 +242,64 @@ NEW VERSION:
 
     return response.choices[0].message.content.strip()
 
+def answer_question_from_bylaws(question):
+
+    if not os.path.exists(JSON_FILE):
+        return {"error": "No structured sections found. Run /check-updates first."}
+
+    with open(JSON_FILE, "r", encoding="utf-8") as f:
+        sections = json.load(f)
+
+    # Simple keyword search
+    relevant_sections = []
+
+    for sec in sections:
+        if question.lower() in sec["content"].lower():
+            relevant_sections.append(sec)
+
+    # If no direct match, fallback to first 5 sections
+    if not relevant_sections:
+        relevant_sections = sections[:5]
+
+    # Limit context size
+    relevant_sections = relevant_sections[:5]
+
+    context_text = "\n\n".join([
+        f"{sec['chapter']} - Section {sec['section_number']}:\n{sec['content']}"
+        for sec in relevant_sections
+    ])
+
+    client = get_openai_client()
+
+    prompt = f"""
+You are a regulatory assistant for architects.
+
+Answer the question strictly based on the provided bylaw sections.
+If answer not found, say: "Not specified in provided sections."
+
+Question:
+{question}
+
+Relevant Bylaw Sections:
+{context_text}
+
+Answer clearly and professionally. Mention section numbers in your response.
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a precise regulatory assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.2
+    )
+
+    return {
+        "question": question,
+        "answer": response.choices[0].message.content.strip()
+    }
+
 def run_full_pipeline():
 
     # 1️⃣ Download PDF if needed

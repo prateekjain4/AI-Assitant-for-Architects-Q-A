@@ -2,10 +2,22 @@ from fastapi import FastAPI
 import json
 import os
 from app.services import run_full_pipeline, JSON_FILE, SECTION_HASH_FILE
+from pydantic import BaseModel
+from app.services import answer_question_from_bylaws
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="AI Bylaw Monitor API")
 
-
+class QuestionRequest(BaseModel):
+    question: str
+    
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:4200"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.get("/")
 def home():
     return {"message": "AI Bylaw Monitor Running"}
@@ -37,3 +49,7 @@ def get_changes():
         data = json.load(f)
 
     return data
+
+@app.post("/ask")
+def ask_question(request: QuestionRequest):
+    return answer_question_from_bylaws(request.question)
