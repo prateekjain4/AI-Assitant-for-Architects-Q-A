@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import json
 import os
-from app.services import run_full_pipeline, JSON_FILE, SECTION_HASH_FILE
+from app.services import run_full_pipeline, JSON_FILE, change_report
 from pydantic import BaseModel
 from app.services import answer_question_from_bylaws
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,7 +10,7 @@ app = FastAPI(title="AI Bylaw Monitor API")
 
 class QuestionRequest(BaseModel):
     question: str
-    
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:4200"],
@@ -42,13 +42,7 @@ def get_sections():
 
 @app.get("/changes")
 def get_changes():
-    if not os.path.exists(SECTION_HASH_FILE):
-        return {"error": "No change data available."}
-
-    with open(SECTION_HASH_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    return data
+    return change_report
 
 @app.post("/ask")
 def ask_question(request: QuestionRequest):

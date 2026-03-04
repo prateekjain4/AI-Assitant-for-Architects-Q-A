@@ -13,6 +13,9 @@ TEXT_FILE = "Bangalore-Building-Byelaws.txt"
 JSON_FILE = "data/structured_sections.json"
 SECTION_HASH_FILE = "data/section_hashes.json"
 
+# Initialize change_report at module level
+change_report = {}
+
 # ---------------------------
 # STEP 1: Download PDF
 # ---------------------------
@@ -67,7 +70,7 @@ def show_text_diff(old_text, new_text):
 
 
 def detect_section_changes(sections):
-
+    global change_report
     new_hash_map = {}
     change_report = {
         "added": [],
@@ -308,7 +311,10 @@ def run_full_pipeline():
 
     # 2️⃣ Extract text
     extracted_text = extract_text_from_pdf(PDF_FILE)
-
+    # extracted_text = extracted_text.replace(
+    # "Government under Chapter II of the Karnataka Municipal",
+    # "Government under Chapter VII of the Karnataka Municipal"
+    # )
     # 3️⃣ Structure document
     sections = structure_document(extracted_text)
 
