@@ -7,12 +7,38 @@ import json
 import datetime
 import difflib
 from openai import OpenAI
-PDF_URL = "https://www.naredco.in/notification/pdfs/Bangalore-Building-Byelaws.pdf"
-PDF_FILE = "Bangalore-Building-Byelaws.pdf"
+import numpy as np
+import faiss
+from sentence_transformers import SentenceTransformer
+
+VECTOR_INDEX_FILE = "data/bylaw_index.faiss"
+METADATA_FILE = "data/section_metadata.json"
 TEXT_FILE = "Bangalore-Building-Byelaws.txt"
 JSON_FILE = "data/structured_sections.json"
 SECTION_HASH_FILE = "data/section_hashes.json"
 
+PDF_SOURCES = [
+    {
+        "name": "bbmp_bylaws",
+        "category": "bylaws",
+        "url": "https://www.naredco.in/notification/pdfs/Bangalore-Building-Byelaws.pdf",
+        "file": "Bangalore-Building-Byelaws.pdf"
+    },
+    {
+        "name": "zoning_regulations",
+        "category": "zoning",
+        "url": "https://data-opencity.sgp1.cdn.digitaloceanspaces.com/Documents/Recent/Bengaluru-BDA-RMP-2031-Volume_6_Zoning_Regulations.pdf",
+        "file": "BDA_Zoning_Regulations.pdf"
+    },
+    {
+        "name": "fire_safety",
+        "category": "fire",
+        "url": "https://fireandsafetyequipments.com/wp-content/uploads/2018/09/NBC2016-Part-IV.pdf",
+        "file": "NBC2016_Fire_Safety.pdf"
+    }
+]
+
+model = SentenceTransformer("all-MiniLM-L6-v2")
 # Initialize change_report at module level
 change_report = {}
 
@@ -143,7 +169,7 @@ def detect_section_changes(sections):
 # ---------------------------
 # STEP 3: Structure Text
 # ---------------------------
-def structure_document(text):
+def structure_document(text, source, category):
 
     text = re.sub(r'\r', '', text)
 
@@ -198,13 +224,72 @@ def structure_document(text):
         title = re.sub(r'^(\d+(\.\d+)*\.?)\s*', '', first_line)
 
         structured_sections.append({
+            "source": source,
+            "category": category,
             "chapter": current_part,
             "section_number": section_number,
             "title": title.strip(),
             "content": section_text.strip()
         })
-
     return structured_sections
+
+def build_vector_index(sections):
+
+    print("Building vector index...")
+
+    embeddings = []
+    metadata = []
+
+    for sec in sections:
+        text = sec["content"]
+
+        embedding = model.encode(text)
+
+        embeddings.append(embedding)
+
+        metadata.append({
+            "source": sec["source"],
+            "category": sec["category"],
+            "chapter": sec["chapter"],
+            "section_number": sec["section_number"],
+            "title": sec["title"],
+            "content": sec["content"]
+        })
+
+    embeddings = np.array(embeddings).astype("float32")
+
+    dimension = embeddings.shape[1]
+
+    index = faiss.IndexFlatL2(dimension)
+
+    index.add(embeddings)
+
+    os.makedirs("data", exist_ok=True)
+
+    faiss.write_index(index, VECTOR_INDEX_FILE)
+
+    with open(METADATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(metadata, f)
+
+    print("Vector index saved.")
+
+def classify_question(question):
+
+    q = question.lower()
+
+    if any(word in q for word in [
+        "fire", "exit", "sprinkler", "evacuation",
+        "fire lift", "fire safety", "smoke detector"
+    ]):
+        return "fire"
+
+    if any(word in q for word in [
+        "zone", "zoning", "far", "fsi", "floor area ratio",
+        "land use", "residential zone", "commercial zone"
+    ]):
+        return "zoning"
+
+    return "bylaws"
 
 def get_openai_client():
     api_key = os.getenv("OPENAI_API_KEY")
@@ -245,48 +330,126 @@ NEW VERSION:
 
     return response.choices[0].message.content.strip()
 
+def extract_plot_info(question):
+
+    zone = None
+    road_width = None
+
+    zone_match = re.search(r'\bR\d\b', question.upper())
+    if zone_match:
+        zone = zone_match.group(0)
+
+    road_match = re.search(r'(\d+)\s*m', question.lower())
+    if road_match:
+        road_width = int(road_match.group(1))
+
+    return zone, road_width
+
+def get_far_from_rules(zone, road_width):
+
+    if not os.path.exists("data/zoning_rules.json"):
+        return None
+
+    with open("data/zoning_rules.json") as f:
+        rules = json.load(f)
+
+    for rule in rules:
+
+        if rule["zone"] == zone:
+
+            if rule["road_min"] <= road_width < rule["road_max"]:
+                return rule["far"]
+
+    return None
+
+
 def answer_question_from_bylaws(question):
 
-    if not os.path.exists(JSON_FILE):
-        return {"error": "No structured sections found. Run /check-updates first."}
+    if not os.path.exists(METADATA_FILE):
+        return {"error": "Metadata not found. Run /check-updates first."}
 
-    with open(JSON_FILE, "r", encoding="utf-8") as f:
+    # Load sections first
+    with open(METADATA_FILE, "r", encoding="utf-8") as f:
         sections = json.load(f)
 
-    # Simple keyword search
+    # Classify question
+    category = classify_question(question)
+
+    # Filter sections by category
+    candidate_sections = [
+        sec for sec in sections
+        if sec.get("category") == category
+    ]
+
+    if not candidate_sections:
+        return {"error": f"No sections found for category {category}"}
+
+    # Prepare texts
+    candidate_texts = [sec["content"] for sec in candidate_sections]
+
+    # Encode embeddings
+    candidate_embeddings = model.encode(candidate_texts)
+
+    candidate_embeddings = np.array(candidate_embeddings).astype("float32")
+
+    dimension = candidate_embeddings.shape[1]
+
+    temp_index = faiss.IndexFlatL2(dimension)
+
+    temp_index.add(candidate_embeddings)
+
+    # Query embedding
+    query_embedding = model.encode(question)
+
+    query_embedding = np.array([query_embedding]).astype("float32")
+
+    zone, road_width = extract_plot_info(question)
+
+    if zone and road_width:
+
+        far = get_far_from_rules(zone, road_width)
+
+        if far:
+            return {
+                "question": question,
+                "answer": f"For zone {zone} with road width {road_width}m, the permissible FAR is {far} according to BDA RMP 2031 zoning regulations.",
+                "sources": ["BDA RMP 2031 Zoning Regulations"]
+            }
+    
+
+    # Search
+    k = 10
+    distances, indices = temp_index.search(query_embedding, k)
+
     relevant_sections = []
 
-    for sec in sections:
-        if question.lower() in sec["content"].lower():
-            relevant_sections.append(sec)
-
-    # If no direct match, fallback to first 5 sections
-    if not relevant_sections:
-        relevant_sections = sections[:5]
-
-    # Limit context size
-    relevant_sections = relevant_sections[:5]
+    for idx in indices[0]:
+        relevant_sections.append(candidate_sections[idx])
 
     context_text = "\n\n".join([
-        f"{sec['chapter']} - Section {sec['section_number']}:\n{sec['content']}"
+        f"Source: {sec.get('source','unknown')} | {sec['chapter']} - Section {sec['section_number']}:\n{sec['content']}"
         for sec in relevant_sections
     ])
 
     client = get_openai_client()
 
     prompt = f"""
-You are a regulatory assistant for architects.
+You are a regulatory assistant helping architects understand building bylaws.
 
-Answer the question strictly based on the provided bylaw sections.
-If answer not found, say: "Not specified in provided sections."
+The question belongs to category: {category}
+
+Answer ONLY using the provided sections.
+
+If relevant information exists, explain it clearly.
+Only say "Not specified" if no relevant rule exists.
+
+Relevant Sections:
+{context_text}
 
 Question:
 {question}
 
-Relevant Bylaw Sections:
-{context_text}
-
-Answer clearly and professionally. Mention section numbers in your response.
+Provide the answer clearly and cite the section number.
 """
 
     response = client.chat.completions.create(
@@ -300,33 +463,36 @@ Answer clearly and professionally. Mention section numbers in your response.
 
     return {
         "question": question,
-        "answer": response.choices[0].message.content.strip()
+        "answer": response.choices[0].message.content.strip(),
+        "sources": relevant_sections
     }
 
 def run_full_pipeline():
 
-    # 1️⃣ Download PDF if needed
-    if not os.path.exists(PDF_FILE):
-        download_pdf(PDF_URL, PDF_FILE)
+    all_sections = []
 
-    # 2️⃣ Extract text
-    extracted_text = extract_text_from_pdf(PDF_FILE)
-    # extracted_text = extracted_text.replace(
-    # "Government under Chapter II of the Karnataka Municipal",
-    # "Government under Chapter VII of the Karnataka Municipal"
-    # )
-    # 3️⃣ Structure document
-    sections = structure_document(extracted_text)
+    for pdf in PDF_SOURCES:
 
-    # 4️⃣ Detect changes (includes AI summary)
-    changes = detect_section_changes(sections)
+        if not os.path.exists(pdf["file"]):
+            download_pdf(pdf["url"], pdf["file"])
 
-    # 5️⃣ Save structured sections
+        extracted_text = extract_text_from_pdf(pdf["file"])
+
+        sections = structure_document(extracted_text, pdf["name"], pdf["category"])
+
+        all_sections.extend(sections)
+
+    changes = detect_section_changes(all_sections)
+
+    os.makedirs("data", exist_ok=True)
+
     with open(JSON_FILE, "w", encoding="utf-8") as f:
-        json.dump(sections, f, indent=4, ensure_ascii=False)
+        json.dump(all_sections, f, indent=4, ensure_ascii=False)
+
+    build_vector_index(all_sections)
 
     return {
-    "status": "completed",
-    "total_sections": len(sections),
-    "changes": changes
+        "status": "completed",
+        "total_sections": len(all_sections),
+        "changes": changes
     }
