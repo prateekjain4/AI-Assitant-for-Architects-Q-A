@@ -1,0 +1,20 @@
+[
+  {
+    "zone": "R2",
+    "road_min": 9,
+    "road_max": 12,
+    "far": 1.75
+  },
+  {
+    "zone": "R2",
+    "road_min": 12,
+    "road_max": 18,
+    "far": 2.25
+  },
+  {
+    "zone": "R2",
+    "road_min": 18,
+    "road_max": 24,
+    "far": 3.25
+  }
+]
