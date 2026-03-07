@@ -5,6 +5,8 @@ from app.services import run_full_pipeline, JSON_FILE, change_report
 from pydantic import BaseModel
 from app.services import answer_question_from_bylaws
 from fastapi.middleware.cors import CORSMiddleware
+from app.model.planning_request import PlanningRequest
+from app.planning_request_service import calculate_plot_planning
 
 app = FastAPI(title="AI Bylaw Monitor API")
 
@@ -47,3 +49,7 @@ def get_changes():
 @app.post("/ask")
 def ask_question(request: QuestionRequest):
     return answer_question_from_bylaws(request.question)
+
+@app.post("/planning")
+def planning_tool(request: PlanningRequest):
+    return calculate_plot_planning(request)

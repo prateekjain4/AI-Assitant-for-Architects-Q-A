@@ -9,6 +9,7 @@ import difflib
 from openai import OpenAI
 import numpy as np
 import faiss
+import pandas as pd
 from sentence_transformers import SentenceTransformer
 
 VECTOR_INDEX_FILE = "data/bylaw_index.faiss"
@@ -104,7 +105,7 @@ def detect_section_changes(sections):
         "removed": []
     }
     for sec in sections:
-        section_id = f"{sec['chapter']}|{sec['section_number']}"
+        section_id = f"{sec['source']}|{sec['chapter']}|{sec['section_number']}"
         content_hash = generate_section_hash(sec["content"])
         new_hash_map[section_id] = {
             "chapter": sec["chapter"],
@@ -233,6 +234,17 @@ def structure_document(text, source, category):
         })
     return structured_sections
 
+def chunk_text(text, chunk_size=400):
+
+    words = text.split()
+    chunks = []
+
+    for i in range(0, len(words), chunk_size):
+        chunk = " ".join(words[i:i+chunk_size])
+        chunks.append(chunk)
+
+    return chunks
+
 def build_vector_index(sections):
 
     print("Building vector index...")
@@ -241,20 +253,23 @@ def build_vector_index(sections):
     metadata = []
 
     for sec in sections:
-        text = sec["content"]
 
-        embedding = model.encode(text)
+        chunks = chunk_text(sec["content"])
 
-        embeddings.append(embedding)
+        for chunk in chunks:
 
-        metadata.append({
-            "source": sec["source"],
-            "category": sec["category"],
-            "chapter": sec["chapter"],
-            "section_number": sec["section_number"],
-            "title": sec["title"],
-            "content": sec["content"]
-        })
+            embedding = model.encode(chunk)
+
+            embeddings.append(embedding)
+
+            metadata.append({
+                "source": sec["source"],
+                "category": sec["category"],
+                "chapter": sec["chapter"],
+                "section_number": sec["section_number"],
+                "title": sec["title"],
+                "content": chunk
+            })
 
     embeddings = np.array(embeddings).astype("float32")
 
@@ -272,6 +287,19 @@ def build_vector_index(sections):
         json.dump(metadata, f)
 
     print("Vector index saved.")
+
+def keyword_score(text, question):
+
+    text = text.lower()
+    question_words = re.findall(r'\w+', question.lower())
+
+    score = 0
+
+    for word in question_words:
+        if word in text:
+            score += 1
+
+    return score
 
 def classify_question(question):
 
@@ -365,66 +393,64 @@ def get_far_from_rules(zone, road_width):
 
 def answer_question_from_bylaws(question):
 
-    if not os.path.exists(METADATA_FILE):
-        return {"error": "Metadata not found. Run /check-updates first."}
+    if not os.path.exists(VECTOR_INDEX_FILE):
+        return {
+            "question": question,
+            "answer": "Vector index not found. Please run the update pipeline first.",
+            "sources": []
+        }
 
-    # Load sections first
+    category = classify_question(question)
+
+    # Rule engine only for zoning
+    if category == "zoning":
+        far_rule = find_far_rule(question)
+
+        if far_rule:
+            return {
+                "question": question,
+                "answer": f"The permissible FAR according to BDA zoning regulations is approximately {far_rule}.",
+                "sources": ["BDA RMP 2031 Zoning Regulations"]
+            }
+
+    index = faiss.read_index(VECTOR_INDEX_FILE)
+
     with open(METADATA_FILE, "r", encoding="utf-8") as f:
         sections = json.load(f)
 
-    # Classify question
-    category = classify_question(question)
-
-    # Filter sections by category
-    candidate_sections = [
-        sec for sec in sections
-        if sec.get("category") == category
-    ]
-
-    if not candidate_sections:
-        return {"error": f"No sections found for category {category}"}
-
-    # Prepare texts
-    candidate_texts = [sec["content"] for sec in candidate_sections]
-
-    # Encode embeddings
-    candidate_embeddings = model.encode(candidate_texts)
-
-    candidate_embeddings = np.array(candidate_embeddings).astype("float32")
-
-    dimension = candidate_embeddings.shape[1]
-
-    temp_index = faiss.IndexFlatL2(dimension)
-
-    temp_index.add(candidate_embeddings)
-
-    # Query embedding
     query_embedding = model.encode(question)
-
     query_embedding = np.array([query_embedding]).astype("float32")
 
-    zone, road_width = extract_plot_info(question)
+    k = 20
+    distances, indices = index.search(query_embedding, k)
 
-    if zone and road_width:
+    results = []
 
-        far = get_far_from_rules(zone, road_width)
+    for rank, idx in enumerate(indices[0]):
 
-        if far:
-            return {
-                "question": question,
-                "answer": f"For zone {zone} with road width {road_width}m, the permissible FAR is {far} according to BDA RMP 2031 zoning regulations.",
-                "sources": ["BDA RMP 2031 Zoning Regulations"]
-            }
-    
+        sec = sections[idx]
 
-    # Search
-    k = 10
-    distances, indices = temp_index.search(query_embedding, k)
+        if sec["category"] != category:
+            continue
 
-    relevant_sections = []
+        keyword_match = keyword_score(sec["content"], question)
 
-    for idx in indices[0]:
-        relevant_sections.append(candidate_sections[idx])
+        vector_score = 1 / (1 + distances[0][rank])
+
+        final_score = vector_score + (0.3 * keyword_match)
+
+        results.append((final_score, sec))
+
+    results.sort(reverse=True, key=lambda x: x[0])
+
+    if not results:
+        return {
+            "question": question,
+            "answer": "No relevant regulation section found.",
+            "sources": []
+        }
+
+    relevant_sections = [r[1] for r in results[:5]]
 
     context_text = "\n\n".join([
         f"Source: {sec.get('source','unknown')} | {sec['chapter']} - Section {sec['section_number']}:\n{sec['content']}"
@@ -434,14 +460,11 @@ def answer_question_from_bylaws(question):
     client = get_openai_client()
 
     prompt = f"""
-You are a regulatory assistant helping architects understand building bylaws.
+You are a regulatory assistant helping architects understand Bangalore building regulations.
 
-The question belongs to category: {category}
-
-Answer ONLY using the provided sections.
-
-If relevant information exists, explain it clearly.
-Only say "Not specified" if no relevant rule exists.
+Use ONLY the provided sections.
+If information is partially present, infer carefully from the sections.
+Do not add information not present in the sections.
 
 Relevant Sections:
 {context_text}
@@ -449,7 +472,7 @@ Relevant Sections:
 Question:
 {question}
 
-Provide the answer clearly and cite the section number.
+Explain clearly and cite the section numbers.
 """
 
     response = client.chat.completions.create(
@@ -466,6 +489,87 @@ Provide the answer clearly and cite the section number.
         "answer": response.choices[0].message.content.strip(),
         "sources": relevant_sections
     }
+
+def extract_zoning_tables(pdf_file):
+
+    rules = []
+
+    with pdfplumber.open(pdf_file) as pdf:
+
+        for page in pdf.pages:
+
+            tables = page.extract_tables()
+
+            for table in tables:
+
+                df = pd.DataFrame(table)
+
+                if df.empty:
+                    continue
+
+                text = " ".join(str(x) for x in df.values.flatten() if x is not None).lower()
+
+                if "far" in text or "floor area ratio" in text:
+
+                    for row in df.values:
+
+                        try:
+                            road = str(row[0]).lower().strip()
+                            far = str(row[1]).strip()
+
+                            # Skip headers
+                            if "road" in road or "width" in road:
+                                continue
+
+                            # Only keep numeric FAR values
+                            if not re.match(r'^\d+(\.\d+)?$', far):
+                                continue
+
+                            rules.append({
+                                "road_width": road,
+                                "far": far
+                            })
+
+                            if "road" in road or "width" in road:
+                                continue
+
+                            rules.append({
+                                "road_width": road.lower(),
+                                "far": far
+                            })
+
+                        except:
+                            pass
+
+    return rules
+
+def find_far_rule(question):
+
+    if not os.path.exists("data/zoning_rules.json"):
+        return None
+
+    question_clean = question.lower().replace(" ", "")
+
+    with open("data/zoning_rules.json") as f:
+        rules = json.load(f)
+
+    for rule in rules:
+
+        road = rule["road_width"].replace(" ", "")
+
+        if road in question_clean:
+            return rule["far"]
+
+    return None
+
+def build_zoning_rules():
+
+    rules = extract_zoning_tables("BDA_Zoning_Regulations.pdf")
+
+    with open("data/zoning_rules.json", "w") as f:
+        json.dump(rules, f, indent=4)
+
+    print("Zoning rules extracted:", len(rules))
 
 def run_full_pipeline():
 
@@ -490,6 +594,8 @@ def run_full_pipeline():
         json.dump(all_sections, f, indent=4, ensure_ascii=False)
 
     build_vector_index(all_sections)
+
+    build_zoning_rules()
 
     return {
         "status": "completed",
