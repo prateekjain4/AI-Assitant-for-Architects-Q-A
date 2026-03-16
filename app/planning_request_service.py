@@ -1,10 +1,7 @@
 from app.services import find_far_rule, get_openai_client
-
+from shapely.geometry import Polygon
 def calculate_plot_planning(request):
-
     zone = request.zone
-    plot_length = request.plot_length
-    plot_width = request.plot_width
     road_width = request.road_width
     building_height = request.building_height
     usage = request.usage
@@ -13,7 +10,22 @@ def calculate_plot_planning(request):
     # Plot Area
     # ---------------------------
 
-    plot_area = plot_length * plot_width
+    if request.coordinates:
+
+        coords = [(p.lng, p.lat) for p in request.coordinates]
+
+        polygon = Polygon(coords)
+
+        area_m2 = polygon.area
+
+        plot_area = area_m2 * 10.7639   # convert to sq ft
+
+    else:
+
+        plot_length = request.plot_length
+        plot_width = request.plot_width
+
+        plot_area = plot_length * plot_width
 
     # ---------------------------
     # FAR Lookup
