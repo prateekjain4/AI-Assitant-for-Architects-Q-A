@@ -7,7 +7,7 @@ from app.services import answer_question_from_bylaws
 from fastapi.middleware.cors import CORSMiddleware
 from app.model.planning_request import PlanningRequest
 from app.planning_request_service import calculate_plot_planning
-
+from app.chat_service import chat_with_context
 app = FastAPI(title="AI Bylaw Monitor API")
 
 class QuestionRequest(BaseModel):
@@ -53,3 +53,13 @@ def ask_question(request: QuestionRequest):
 @app.post("/planning")
 def planning_tool(request: PlanningRequest):
     return calculate_plot_planning(request)
+
+@app.post("/chat")
+def chat_endpoint(data: dict):
+
+    question = data.get("question")
+    planning_data = data.get("planning_data", None)
+
+    answer = chat_with_context(question, planning_data)
+
+    return {"answer": answer}
