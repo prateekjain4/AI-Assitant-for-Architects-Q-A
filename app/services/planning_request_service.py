@@ -1,4 +1,4 @@
-from app.services import find_far_rule, get_openai_client
+from app.services.services import find_far_rule, get_openai_client
 from shapely.geometry import Polygon
 def calculate_plot_planning(request):
     zone = request.zone

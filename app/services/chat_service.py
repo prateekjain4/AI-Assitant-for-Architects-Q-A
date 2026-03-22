@@ -1,4 +1,4 @@
-from app.services import get_openai_client, answer_question_from_bylaws
+from app.services.services import get_openai_client, answer_question_from_bylaws
 
 def chat_with_context(question, planning_data=None):
 

@@ -1,0 +1,272 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "source": "BDA Revised Master Plan 2031 (Pilot Dataset)",
+    "areas_covered": ["Koramangala", "Indiranagar", "HSR Layout", "BTM Layout", "Jayanagar", "Whitefield"],
+    "crs": "EPSG:4326",
+    "disclaimer": "Pilot dataset for development. Verify against official BDA maps before production use."
+  },
+  "features": [
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.6219, 12.9352], [77.6280, 12.9352],
+          [77.6280, 12.9410], [77.6219, 12.9410],
+          [77.6219, 12.9352]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-R-KOR-001",
+        "zone_code": "R",
+        "zone_name": "Residential Zone",
+        "locality": "Koramangala 1st & 2nd Block",
+        "ward": "Koramangala",
+        "planning_district": "PD-12"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.6280, 12.9352], [77.6350, 12.9352],
+          [77.6350, 12.9420], [77.6280, 12.9420],
+          [77.6280, 12.9352]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-RM-KOR-002",
+        "zone_code": "RM",
+        "zone_name": "Residential Mixed Zone",
+        "locality": "Koramangala 5th & 6th Block",
+        "ward": "Koramangala",
+        "planning_district": "PD-12"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.6219, 12.9280], [77.6350, 12.9280],
+          [77.6350, 12.9352], [77.6219, 12.9352],
+          [77.6219, 12.9280]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-C2-KOR-003",
+        "zone_code": "C2",
+        "zone_name": "Commercial Zone - C2",
+        "locality": "Koramangala 7th & 8th Block",
+        "ward": "Koramangala",
+        "planning_district": "PD-12"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.6380, 12.9780], [77.6480, 12.9780],
+          [77.6480, 12.9870], [77.6380, 12.9870],
+          [77.6380, 12.9780]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-R-IND-004",
+        "zone_code": "R",
+        "zone_name": "Residential Zone",
+        "locality": "Indiranagar 1st Stage",
+        "ward": "Indiranagar",
+        "planning_district": "PD-08"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.6480, 12.9780], [77.6580, 12.9780],
+          [77.6580, 12.9870], [77.6480, 12.9870],
+          [77.6480, 12.9780]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-C3-IND-005",
+        "zone_code": "C3",
+        "zone_name": "Commercial Zone - C3",
+        "locality": "Indiranagar 100 Feet Road & CMH Road",
+        "ward": "Indiranagar",
+        "planning_district": "PD-08"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.6380, 12.9150], [77.6500, 12.9150],
+          [77.6500, 12.9260], [77.6380, 12.9260],
+          [77.6380, 12.9150]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-R-HSR-006",
+        "zone_code": "R",
+        "zone_name": "Residential Zone",
+        "locality": "HSR Layout Sectors 1-4",
+        "ward": "HSR Layout",
+        "planning_district": "PD-15"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.6500, 12.9150], [77.6580, 12.9150],
+          [77.6580, 12.9260], [77.6500, 12.9260],
+          [77.6500, 12.9150]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-PSP-HSR-007",
+        "zone_code": "PSP",
+        "zone_name": "Public / Semi-Public Zone",
+        "locality": "HSR Layout BDA Complex",
+        "ward": "HSR Layout",
+        "planning_district": "PD-15"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.6150, 12.9150], [77.6280, 12.9150],
+          [77.6280, 12.9250], [77.6150, 12.9250],
+          [77.6150, 12.9150]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-R-BTM-008",
+        "zone_code": "R",
+        "zone_name": "Residential Zone",
+        "locality": "BTM Layout 1st Stage",
+        "ward": "BTM Layout",
+        "planning_district": "PD-14"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.6280, 12.9150], [77.6380, 12.9150],
+          [77.6380, 12.9250], [77.6280, 12.9250],
+          [77.6280, 12.9150]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-RM-BTM-009",
+        "zone_code": "RM",
+        "zone_name": "Residential Mixed Zone",
+        "locality": "BTM Layout 2nd Stage",
+        "ward": "BTM Layout",
+        "planning_district": "PD-14"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.5800, 12.9250], [77.5950, 12.9250],
+          [77.5950, 12.9380], [77.5800, 12.9380],
+          [77.5800, 12.9250]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-R-JAY-010",
+        "zone_code": "R",
+        "zone_name": "Residential Zone",
+        "locality": "Jayanagar 4th Block",
+        "ward": "Jayanagar",
+        "planning_district": "PD-11"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.5950, 12.9250], [77.6080, 12.9250],
+          [77.6080, 12.9380], [77.5950, 12.9380],
+          [77.5950, 12.9250]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-C1-JAY-011",
+        "zone_code": "C1",
+        "zone_name": "Commercial Zone - C1",
+        "locality": "Jayanagar Shopping Complex & 11th Main",
+        "ward": "Jayanagar",
+        "planning_district": "PD-11"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.7480, 12.9698], [77.7620, 12.9698],
+          [77.7620, 12.9810], [77.7480, 12.9810],
+          [77.7480, 12.9698]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-IT-WHF-012",
+        "zone_code": "IT",
+        "zone_name": "IT / ITES Zone",
+        "locality": "Whitefield ITPL Area",
+        "ward": "Whitefield",
+        "planning_district": "PD-03"
+      }
+    },
+
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [77.7620, 12.9698], [77.7750, 12.9698],
+          [77.7750, 12.9810], [77.7620, 12.9810],
+          [77.7620, 12.9698]
+        ]]
+      },
+      "properties": {
+        "zone_id": "BLR-RM-WHF-013",
+        "zone_code": "RM",
+        "zone_name": "Residential Mixed Zone",
+        "locality": "Whitefield Residential Area",
+        "ward": "Whitefield",
+        "planning_district": "PD-03"
+      }
+    }
+
+  ]
+}

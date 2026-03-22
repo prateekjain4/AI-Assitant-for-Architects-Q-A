@@ -1,13 +1,15 @@
 from fastapi import FastAPI
 import json
 import os
-from app.services import run_full_pipeline, JSON_FILE, change_report
+from app.services.services import run_full_pipeline, JSON_FILE, change_report
 from pydantic import BaseModel
-from app.services import answer_question_from_bylaws
+from app.services.services import answer_question_from_bylaws
 from fastapi.middleware.cors import CORSMiddleware
-from app.model.planning_request import PlanningRequest
-from app.planning_request_service import calculate_plot_planning
-from app.chat_service import chat_with_context
+from app.model.planning_request import Coordinate, PlanningRequest
+from app.services.planning_request_service import calculate_plot_planning
+from app.services.chat_service import chat_with_context
+from app.services.zone_service import detect_zone_from_coordinate
+
 app = FastAPI(title="AI Bylaw Monitor API")
 
 class QuestionRequest(BaseModel):
@@ -63,3 +65,10 @@ def chat_endpoint(data: dict):
     answer = chat_with_context(question, planning_data)
 
     return {"answer": answer}
+
+@app.post("/detect-zone")
+def detect_zone(request: Coordinate):
+    result = detect_zone_from_coordinate(request.lat, request.lng)
+    if not result["found"]:
+        return {"found": False, "message": "Coordinate is outside mapped zone boundaries."}
+    return result
