@@ -5,7 +5,9 @@ def calculate_plot_planning(request):
     road_width = request.road_width
     building_height = request.building_height
     usage = request.usage
-
+    locality = getattr(request, 'locality', 'Bangalore')
+    corner_plot = getattr(request, 'corner_plot', False)
+    basement = getattr(request, 'basement', False)
     # ---------------------------
     # Plot Area
     # ---------------------------
@@ -98,23 +100,72 @@ def calculate_plot_planning(request):
     client = get_openai_client()
 
     prompt = f"""
-Explain the building planning regulations for the following plot:
+EYou are an expert Bangalore building regulations assistant helping a licensed architect.
 
-Zone: {zone}
-Plot Area: {plot_area} sq ft
-Road Width: {road_width} m
-FAR: {far}
-Maximum Built Area: {max_built_area} sq ft
-Building Height: {building_height} m
+You have access to:
+- BBMP Building Bylaws
+- BDA RMP 2031 Zoning Regulations  
+- NBC 2016 Fire Safety (Part IV)
 
-Setbacks:
-Front: {front_setback} m
-Side: {side_setback} m
-Rear: {rear_setback} m
+A client has a plot with these details:
+- Zone: {zone}
+- Locality: {locality}
+- Plot Area: {plot_area} sq ft ({round(plot_area / 10.764, 1)} sq m)
+- Road Width: {road_width} m
+- Building Height proposed: {building_height} m
+- Usage: {usage}
+- Corner Plot: {corner_plot}
+- Basement proposed: {basement}
 
-Fire Rules: {fire_rules}
+Computed values (use these, do not recalculate):
+- FAR: {far}
+- Maximum Built-up Area: {max_built_area} sq ft
+- Front Setback: {front_setback} m
+- Side Setback: {side_setback} m  
+- Rear Setback: {rear_setback} m
 
-Explain clearly what the architect can build and what regulations apply.
+Note: Floor-wise areas are estimates assuming uniform floor plates. 
+Actual areas reduce above 11.5m due to increased setback requirements.
+
+Your task — answer each section below using ONLY the bylaw documents:
+
+1. SETBACK ANALYSIS
+   - Confirm setbacks from bylaws for this plot size and height
+   - If corner plot, state the relaxation available under BBMP Bylaws
+   - Cite the specific bylaw section or table number
+
+2. WHAT CAN BE BUILT
+   - How many floors are feasible given {building_height}m height and FAR {far}?
+   - Estimated floor-wise built-up area breakdown
+   - Ground coverage percentage allowed for this zone
+
+3. PARKING REQUIREMENTS
+   - How many car and two-wheeler parking spaces are mandatory?
+   - Based on usage: {usage} and built-up area: {max_built_area} sq ft
+   - Cite bylaw table
+
+4. FIRE SAFETY
+   - Is fire NOC mandatory for {building_height}m height? State the threshold
+   - List specific requirements: sprinklers, fire lift, refuge area, escape staircase
+   - Cite NBC 2016 Part IV section
+
+5. MANDATORY COMPLIANCES
+   - Rainwater harvesting — required for this plot size?
+   - Solar panels — required?
+   - STP (Sewage Treatment Plant) — required?
+   - State the threshold for each
+
+6. APPROVAL PROCESS
+   - Which authority approves this — BBMP or BDA?
+   - Key documents the architect needs to submit
+   - Any special NOCs required before plan sanction
+
+7. WATCH OUT
+   - Any restrictions or common mistakes for {zone} zone in {locality}
+   - Any recent bylaw amendments that apply
+
+Be specific, cite section numbers, and do not repeat the input data back.
+Keep each section concise — 2 to 4 bullet points maximum.
 """
 
     response = client.chat.completions.create(

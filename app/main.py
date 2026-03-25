@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 import json
 import os
 from app.services.services import run_full_pipeline, JSON_FILE, change_report
@@ -9,6 +9,7 @@ from app.model.planning_request import Coordinate, PlanningRequest
 from app.services.planning_request_service import calculate_plot_planning
 from app.services.chat_service import chat_with_context
 from app.services.zone_service import detect_zone_from_coordinate
+from app.services.report_service import generate_planning_report
 
 app = FastAPI(title="AI Bylaw Monitor API")
 
@@ -72,3 +73,14 @@ def detect_zone(request: Coordinate):
     if not result["found"]:
         return {"found": False, "message": "Coordinate is outside mapped zone boundaries."}
     return result
+
+@app.post("/generate-report")
+def generate_report(data: dict):
+    pdf_bytes = generate_planning_report(data)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": 'attachment; filename="planning-report.pdf"'
+        }
+    )
