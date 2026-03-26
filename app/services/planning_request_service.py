@@ -1,5 +1,31 @@
 from app.services.services import find_far_rule, get_openai_client
 from shapely.geometry import Polygon
+from pyproj import Transformer
+from shapely.ops import transform
+
+def calculate_area_sqft(coords_lng_lat: list) -> float:
+    """
+    Convert lat/lng polygon to accurate area in sq ft.
+    Uses UTM zone 43N — correct projection for Bangalore.
+    """
+    # Create WGS84 polygon (degrees)
+    polygon_wgs84 = Polygon(coords_lng_lat)
+
+    # Project to UTM Zone 43N (EPSG:32643) — Bangalore falls in this zone
+    # This gives coordinates in metres
+    transformer = Transformer.from_crs(
+        "EPSG:4326",   # WGS84 lat/lng
+        "EPSG:32643",  # UTM Zone 43N — metres
+        always_xy=True
+    )
+
+    polygon_utm = transform(transformer.transform, polygon_wgs84)
+
+    area_m2    = polygon_utm.area          # now correctly in sq metres
+    area_sqft  = area_m2 * 10.7639        # convert to sq ft
+
+    return round(area_sqft, 2)
+    
 def calculate_plot_planning(request):
     zone = request.zone
     road_width = request.road_width
@@ -13,14 +39,8 @@ def calculate_plot_planning(request):
     # ---------------------------
 
     if request.coordinates:
-
         coords = [(p.lng, p.lat) for p in request.coordinates]
-
-        polygon = Polygon(coords)
-
-        area_m2 = polygon.area
-
-        plot_area = area_m2 * 10.7639   # convert to sq ft
+        plot_area = calculate_area_sqft(coords)
 
     else:
 
