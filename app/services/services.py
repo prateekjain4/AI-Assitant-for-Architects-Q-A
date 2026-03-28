@@ -8,6 +8,10 @@ import datetime
 import difflib
 from openai import OpenAI
 import numpy as np
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 import faiss
 import pandas as pd
 from sentence_transformers import SentenceTransformer
