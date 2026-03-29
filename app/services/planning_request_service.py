@@ -2,196 +2,405 @@ from app.services.services import find_far_rule, get_openai_client
 from shapely.geometry import Polygon
 from pyproj import Transformer
 from shapely.ops import transform
+import math
 
+# ─────────────────────────────────────────────────────────────────
+# Area calculation
+# ─────────────────────────────────────────────────────────────────
 def calculate_area_sqft(coords_lng_lat: list) -> float:
-    """
-    Convert lat/lng polygon to accurate area in sq ft.
-    Uses UTM zone 43N — correct projection for Bangalore.
-    """
-    # Create WGS84 polygon (degrees)
     polygon_wgs84 = Polygon(coords_lng_lat)
-
-    # Project to UTM Zone 43N (EPSG:32643) — Bangalore falls in this zone
-    # This gives coordinates in metres
     transformer = Transformer.from_crs(
-        "EPSG:4326",   # WGS84 lat/lng
-        "EPSG:32643",  # UTM Zone 43N — metres
+        "EPSG:4326",
+        "EPSG:32643",
         always_xy=True
     )
-
     polygon_utm = transform(transformer.transform, polygon_wgs84)
+    return round(polygon_utm.area * 10.7639, 2)
 
-    area_m2    = polygon_utm.area          # now correctly in sq metres
-    area_sqft  = area_m2 * 10.7639        # convert to sq ft
 
-    return round(area_sqft, 2)
-    
+# ─────────────────────────────────────────────────────────────────
+# Bylaw context from FAISS — called INSIDE the function, not outside
+# ─────────────────────────────────────────────────────────────────
+def get_bylaw_context(question: str) -> str:
+    """Pull relevant bylaw sections from FAISS for a specific question."""
+    from app.services.services import answer_question_from_bylaws
+    result = answer_question_from_bylaws(question)
+    return result.get("answer", "")
+
+
+# ─────────────────────────────────────────────────────────────────
+# Ground coverage by zone + road width (BDA RMP 2031)
+# ─────────────────────────────────────────────────────────────────
+GROUND_COVERAGE = {
+    "R":   {12: 70, 18: 65, 24: 60, 9999: 55},
+    "RM":  {12: 70, 18: 65, 24: 60, 9999: 55},
+    "C1":  {12: 65, 18: 60, 24: 55, 9999: 50},
+    "C2":  {12: 60, 18: 55, 24: 55, 9999: 50},
+    "C3":  {12: 60, 18: 55, 24: 55, 9999: 50},
+    "IT":  {12: 50, 18: 50, 24: 45, 9999: 40},
+    "PSP": {12: 40, 18: 40, 24: 40, 9999: 40},
+}
+
+def get_ground_coverage(zone: str, road_width: float) -> int:
+    zone_map = GROUND_COVERAGE.get(zone.upper(), GROUND_COVERAGE["R"])
+    for threshold in sorted(zone_map.keys()):
+        if road_width <= threshold:
+            return zone_map[threshold]
+    return 55
+
+
+# ─────────────────────────────────────────────────────────────────
+# Fire requirements
+# ─────────────────────────────────────────────────────────────────
+def get_fire_requirements(building_height: float, max_built_area: float, usage: str) -> dict:
+    fire = {
+        "noc_required": False,
+        "requirements": [],
+        "tender_access": {},
+        "refuge_area": {},
+        "thresholds_note": ""
+    }
+
+    if building_height > 15:
+        fire["noc_required"] = True
+        fire["thresholds_note"] = "Fire NOC from KSFES mandatory above 15m"
+    elif max_built_area > 500 and usage.lower() in ["commercial", "mixed"]:
+        fire["noc_required"] = True
+        fire["thresholds_note"] = "Fire NOC mandatory for commercial buildings above 500 sqm BUA"
+
+    if building_height > 9:
+        fire["requirements"] += [
+            "Fire escape staircase — minimum 1.2m clear width",
+            "Fire-rated doors on staircase landings",
+            "Emergency lighting in corridors and staircases",
+        ]
+        fire["tender_access"] = {
+            "required": True,
+            "min_road_width_m": 4.5,
+            "min_height_clearance_m": 4.5,
+            "turning_radius_m": 9.0,
+            "dead_end_max_m": 45,
+            "note": "Fire tender access road required on at least 3 sides above 15m (NBC 2016 Part IV Cl. 4.1)"
+        }
+
+    if building_height > 15:
+        fire["requirements"] += [
+            "Automatic sprinkler system throughout",
+            "Fire lift — minimum 1.1m × 2.1m car, 630kg capacity",
+            "Wet riser system",
+            "Public address system",
+            "Fire detection and alarm system",
+            "Hose reel and extinguishers on every floor",
+            "Terrace tank — minimum 25,000 litres",
+        ]
+
+    if building_height > 24:
+        fire["requirements"] += [
+            "Fire command centre at ground level",
+            "Pressurisation of staircases",
+            "Two separate fire escape staircases mandatory",
+        ]
+        fire["refuge_area"] = {
+            "required": True,
+            "frequency": "Every 7 floors",
+            "min_area_sqm": 15,
+            "note": "Refuge area NOT counted in FAR (NBC 2016 Part IV Section 4.11)"
+        }
+
+    return fire
+
+
+# ─────────────────────────────────────────────────────────────────
+# Staircase & lift requirements
+# ─────────────────────────────────────────────────────────────────
+def get_staircase_requirements(building_height: float, max_built_area: float) -> dict:
+    num_floors = math.ceil(building_height / 3.2)
+
+    if building_height <= 11.5:
+        min_width = 1.0
+        width_note = "Minimum 1.0m clear width (BBMP Bylaws)"
+    else:
+        min_width = 1.2
+        width_note = "Minimum 1.2m clear width for buildings above 11.5m"
+
+    if max_built_area > 2000:
+        num_staircases = 2
+        staircase_note = "2 staircases mandatory above 2000 sqm BUA"
+    else:
+        num_staircases = 1
+        staircase_note = "1 staircase sufficient for this BUA"
+
+    lift_mandatory = num_floors > 4
+    lift_note = (
+        f"Lift mandatory — {num_floors} floors (above G+4 threshold)"
+        if lift_mandatory
+        else f"Lift not mandatory — {num_floors} floors (G+{num_floors - 1})"
+    )
+
+    return {
+        "min_staircase_width_m": min_width,
+        "staircase_note":        width_note,
+        "num_staircases":        num_staircases,
+        "staircase_extra":       staircase_note,
+        "lift_mandatory":        lift_mandatory,
+        "lift_note":             lift_note,
+        "num_floors":            num_floors,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────
+# Basement regulations
+# ─────────────────────────────────────────────────────────────────
+def get_basement_regulations(plot_area: float, basement_requested: bool) -> dict:
+    if not basement_requested:
+        return {"requested": False}
+
+    plot_area_sqm = plot_area / 10.7639
+    return {
+        "requested": True,
+        "max_basements": 2,
+        "permitted_uses": [
+            "Car parking (primary use)",
+            "Two-wheeler parking",
+            "Electrical room, pump room, generator",
+            "AC plant room",
+            "Storage (ancillary only)",
+        ],
+        "not_permitted": [
+            "Habitable rooms or residential use",
+            "Retail or commercial use",
+            "Kitchens or restaurants",
+        ],
+        "setback_in_basement": "May extend up to plot boundary if used for parking/services only — subject to structural stability certificate",
+        "ventilation": "Mechanical ventilation mandatory — minimum 6 air changes per hour (NBC 2016)",
+        "max_depth_m": 3.6,
+        "far_counted": False,
+        "far_note": "Basement NOT counted in FAR if used for parking/services only",
+        "fire_requirements": [
+            "Sprinklers mandatory in basement regardless of height",
+            "Minimum 2 means of escape from basement",
+            "Smoke extraction system required",
+            "Emergency lighting mandatory",
+        ] if plot_area_sqm > 200 else [
+            "Fire extinguishers mandatory",
+            "Adequate ventilation required",
+        ]
+    }
+
+
+# ─────────────────────────────────────────────────────────────────
+# Balcony & projection rules
+# ─────────────────────────────────────────────────────────────────
+def get_projection_rules(road_width: float) -> dict:
+    return {
+        "balcony_max_projection_m": 1.5,
+        "balcony_far_note": "Balconies up to 1.5m excluded from FAR if total ≤ 20% of floor area (BBMP Bylaws Section 15)",
+        "chajja_max_projection_m": 0.75,
+        "chajja_note": "Chajja/sun shade up to 0.75m — not counted in FAR",
+        "projection_into_setback": "Projections may extend up to 50% into required setback but not beyond plot boundary",
+        "road_overhang_note": f"No projection over road boundary — {road_width}m road setback must be maintained",
+    }
+
+
+# ─────────────────────────────────────────────────────────────────
+# FAR exclusions list
+# ─────────────────────────────────────────────────────────────────
+FAR_EXCLUSIONS = [
+    "Staircase and lift shafts (full height)",
+    "Lift machine room (up to 16 sqm)",
+    "Staircase headroom / mumty (up to 2.4m height)",
+    "Basement parking floors — not counted in FAR",
+    "Balconies up to 1.5m projection (within 20% of floor area)",
+    "Utility ducts and service shafts",
+    "Watchman cabin up to 9 sqm at entrance",
+    "Refuge area (not counted in FAR per NBC 2016 Part IV Section 4.11)",
+    "Ramps for disabled access",
+]
+
+
+# ─────────────────────────────────────────────────────────────────
+# Main planning function
+# ─────────────────────────────────────────────────────────────────
 def calculate_plot_planning(request):
-    zone = request.zone
-    road_width = request.road_width
+    zone            = request.zone
+    road_width      = request.road_width
     building_height = request.building_height
-    usage = request.usage
-    locality = getattr(request, 'locality', 'Bangalore')
-    corner_plot = getattr(request, 'corner_plot', False)
-    basement = getattr(request, 'basement', False)
-    # ---------------------------
-    # Plot Area
-    # ---------------------------
+    usage           = request.usage
+    locality        = getattr(request, 'locality', 'Bangalore')
+    corner_plot     = getattr(request, 'corner_plot', False)
+    basement        = getattr(request, 'basement', False)
 
+    # ── Plot Area ─────────────────────────────────────────────────
     if request.coordinates:
-        coords = [(p.lng, p.lat) for p in request.coordinates]
+        coords    = [(p.lng, p.lat) for p in request.coordinates]
         plot_area = calculate_area_sqft(coords)
-
     else:
+        plot_length = request.plot_length or 0
+        plot_width  = request.plot_width  or 0
+        plot_area   = round((plot_length * plot_width) * 10.7639, 2)
 
-        plot_length = request.plot_length
-        plot_width = request.plot_width
+    plot_area_sqm = round(plot_area / 10.7639, 2)
 
-        plot_area = plot_length * plot_width
+    # ── FAR ───────────────────────────────────────────────────────
+    far = find_far_rule(f"{road_width}m") or 1.75
 
-    # ---------------------------
-    # FAR Lookup
-    # ---------------------------
+    # ── Ground Coverage ───────────────────────────────────────────
+    ground_coverage_pct = get_ground_coverage(zone, road_width)
 
-    road_query = f"{int(road_width)}m"
+    # ── Max Built Area ────────────────────────────────────────────
+    max_built_area = round(plot_area * far, 2)
 
-    far = find_far_rule(road_query)
-
-    if not far:
-        far = 1.75   # fallback default
-
-    try:
-        far = float(far)
-    except:
-        far = 1.75   # fallback FAR
-
-    # ---------------------------
-    # Max Built Area
-    # ---------------------------
-
-    max_built_area = plot_area * far
-
-    # ---------------------------
-    # Setback Estimation (simplified)
-    # ---------------------------
-
+    # ── Setbacks ──────────────────────────────────────────────────
     if plot_area < 1500:
-        front_setback = 3
-        side_setback = 1
-        rear_setback = 1
+        front_setback = 3.0
+        side_setback  = 1.0
+        rear_setback  = 1.0
     else:
-        front_setback = 4
-        side_setback = 1.5
-        rear_setback = 2
+        front_setback = 4.0
+        side_setback  = 1.5
+        rear_setback  = 2.0
+
+    if corner_plot:
+        side_setback = max(1.0, side_setback - 1.0)
 
     setbacks = {
         "front": front_setback,
-        "side": side_setback,
-        "rear": rear_setback
+        "side":  side_setback,
+        "rear":  rear_setback,
+        "corner_relaxation": "Side setback reduced by 1m on secondary road side" if corner_plot else None
     }
 
-    # ---------------------------
-    # Fire Safety Rules
-    # ---------------------------
+    # ── Computed sections ─────────────────────────────────────────
+    fire_data        = get_fire_requirements(building_height, max_built_area, usage)
+    staircase_data   = get_staircase_requirements(building_height, max_built_area)
+    basement_data    = get_basement_regulations(plot_area, basement)
+    projection_rules = get_projection_rules(road_width)
 
-    fire_rules = []
+    fire_rules = fire_data["requirements"]
 
-    if building_height > 15:
-        fire_rules.append("Fire lift required")
-        fire_rules.append("Automatic sprinkler system required")
-        fire_rules.append("Fire escape staircase required")
-
-    if building_height > 24:
-        fire_rules.append("Fire command center required")
-
-    # ---------------------------
-    # Parking Rules (simplified)
-    # ---------------------------
-
+    # ── Parking ───────────────────────────────────────────────────
     if usage.lower() == "residential":
-        parking = "1 car parking space per dwelling unit"
+        parking = "1 car + 2 two-wheeler spaces per dwelling unit (BBMP Table 23)"
+    elif usage.lower() == "commercial":
+        parking = "1 car space per 50 sqm of BUA (BBMP Table 23)"
     else:
-        parking = "Parking requirement depends on building usage and floor area"
+        parking = "As per BBMP Table 23 based on usage and built-up area"
 
-    # ---------------------------
-    # AI Explanation
-    # ---------------------------
+    # ── Bylaw context from FAISS — called HERE inside function ────
+    setback_context   = get_bylaw_context(
+        f"setback requirements plot area {plot_area_sqm} sqm height {building_height}m"
+    )
+    staircase_context = get_bylaw_context(
+        f"staircase width lift requirements building height {building_height}m floors"
+    )
+    balcony_context   = get_bylaw_context(
+        "balcony projection FAR exclusion cantilever chajja rules"
+    )
+    fire_context      = get_bylaw_context(
+        f"fire safety NOC requirements building height {building_height}m sprinkler"
+    )
+    basement_context  = get_bylaw_context(
+        "basement regulations permitted uses ventilation parking"
+    ) if basement else ""
 
+    # ── Prompt ────────────────────────────────────────────────────
     client = get_openai_client()
 
     prompt = f"""
-EYou are an expert Bangalore building regulations assistant helping a licensed architect.
+You are an expert Bangalore building regulations assistant helping a licensed architect.
 
-You have access to:
-- BBMP Building Bylaws
-- BDA RMP 2031 Zoning Regulations  
-- NBC 2016 Fire Safety (Part IV)
+VERIFIED BYLAW CONTEXT (retrieved directly from official PDFs — use ONLY this):
+─────────────────────────────────────────────────────────────────────────────
+SETBACKS (BBMP Bylaws):
+{setback_context}
 
-A client has a plot with these details:
-- Zone: {zone}
-- Locality: {locality}
-- Plot Area: {plot_area} sq ft ({round(plot_area / 10.764, 1)} sq m)
-- Road Width: {road_width} m
-- Building Height proposed: {building_height} m
-- Usage: {usage}
-- Corner Plot: {corner_plot}
-- Basement proposed: {basement}
+STAIRCASE & LIFT (BBMP Bylaws):
+{staircase_context}
 
-Computed values (use these, do not recalculate):
-- FAR: {far}
-- Maximum Built-up Area: {max_built_area} sq ft
-- Front Setback: {front_setback} m
-- Side Setback: {side_setback} m  
-- Rear Setback: {rear_setback} m
+BALCONY & PROJECTIONS (BBMP Bylaws):
+{balcony_context}
 
-Note: Floor-wise areas are estimates assuming uniform floor plates. 
-Actual areas reduce above 11.5m due to increased setback requirements.
+FIRE SAFETY (NBC 2016 Part IV):
+{fire_context}
 
-Your task — answer each section below using ONLY the bylaw documents:
+{f"BASEMENT (BBMP Bylaws):{chr(10)}{basement_context}" if basement else ""}
+─────────────────────────────────────────────────────────────────────────────
+
+Plot inputs:
+- Zone: {zone} | Locality: {locality}
+- Plot Area: {plot_area:,.0f} sq ft ({plot_area_sqm} sq m)
+- Road Width: {road_width}m | Height: {building_height}m
+- Usage: {usage} | Corner Plot: {corner_plot} | Basement: {basement}
+
+Pre-computed facts — treat as EXACT, do NOT recalculate:
+- FAR: {far} | Ground Coverage: {ground_coverage_pct}%
+- Max Built-up Area: {max_built_area:,.0f} sq ft
+- Setbacks: Front {front_setback}m | Side {side_setback}m | Rear {rear_setback}m
+- Fire NOC required: {fire_data['noc_required']}
+- Lift mandatory: {staircase_data['lift_mandatory']} ({staircase_data['lift_note']})
+- Staircases required: {staircase_data['num_staircases']}
+
+Using ONLY the bylaw context above, answer each section below.
+Cite the exact section number. If context doesn't cover a point, write "verify with BBMP".
+Keep each section to 3–5 bullet points. Do NOT repeat input data.
 
 1. SETBACK ANALYSIS
-   - Confirm setbacks from bylaws for this plot size and height
-   - If corner plot, state the relaxation available under BBMP Bylaws
-   - Cite the specific bylaw section or table number
+   - Confirm setbacks for this plot size and height from bylaws
+   - State the 11.5m threshold rule where setbacks increase to 5m all sides
+   - Corner plot relaxation if applicable
 
-2. WHAT CAN BE BUILT
-   - How many floors are feasible given {building_height}m height and FAR {far}?
-   - Estimated floor-wise built-up area breakdown
-   - Ground coverage percentage allowed for this zone
+2. FAR & WHAT COUNTS
+   - What is included vs excluded from FAR (staircase, basement, balcony, refuge)
+   - How many floors feasible at {building_height}m with FAR {far}
+   - Ground coverage: {ground_coverage_pct}% for {zone} zone on {road_width}m road
 
-3. PARKING REQUIREMENTS
-   - How many car and two-wheeler parking spaces are mandatory?
-   - Based on usage: {usage} and built-up area: {max_built_area} sq ft
-   - Cite bylaw table
+3. STAIRCASE & LIFT
+   - Min width: {staircase_data['min_staircase_width_m']}m | Staircases: {staircase_data['num_staircases']}
+   - Lift mandatory: {staircase_data['lift_mandatory']}
+   - Cite BBMP section
 
-4. FIRE SAFETY
-   - Is fire NOC mandatory for {building_height}m height? State the threshold
-   - List specific requirements: sprinklers, fire lift, refuge area, escape staircase
-   - Cite NBC 2016 Part IV section
+4. BALCONY, PROJECTIONS & CANTILEVERS
+   - Max balcony projection: 1.5m | Chajja: 0.75m
+   - FAR counting rule for balconies (20% rule)
+   - Projection into setback allowance
 
-5. MANDATORY COMPLIANCES
-   - Rainwater harvesting — required for this plot size?
+5. {"BASEMENT REGULATIONS" if basement else "BASEMENT (not requested — skip this section)"}
+   {"- Permitted uses, FAR counting, ventilation, fire requirements" if basement else ""}
+
+6. PARKING
+   - Car and two-wheeler spaces for {usage}, {max_built_area:,.0f} sq ft
+   - Cite BBMP Table 23
+
+7. FIRE SAFETY
+   - NOC required: {fire_data['noc_required']} | Threshold: 15m height
+   - Key requirements for {building_height}m building
+   - Fire tender access: 4.5m wide road, 9m turning radius
+   - Refuge area required: {bool(fire_data.get('refuge_area', {}).get('required', False))}
+   - Cite NBC 2016 Part IV sections
+
+8. MANDATORY COMPLIANCES
+   - Rainwater harvesting threshold for this plot size
    - Solar panels — required?
-   - STP (Sewage Treatment Plant) — required?
-   - State the threshold for each
+   - STP — required for this height/usage?
+   - Accessibility ramp — required?
 
-6. APPROVAL PROCESS
-   - Which authority approves this — BBMP or BDA?
-   - Key documents the architect needs to submit
-   - Any special NOCs required before plan sanction
+9. APPROVAL PROCESS
+   - BBMP or BDA jurisdiction for {locality}?
+   - Key documents to submit
+   - Special NOCs needed before plan sanction
 
-7. WATCH OUT
-   - Any restrictions or common mistakes for {zone} zone in {locality}
-   - Any recent bylaw amendments that apply
-
-Be specific, cite section numbers, and do not repeat the input data back.
-Keep each section concise — 2 to 4 bullet points maximum.
+10. WATCH OUT
+    - Restrictions specific to {zone} zone in {locality}
+    - Common mistakes for this height and usage combination
 """
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are an urban planning regulatory assistant."},
+            {
+                "role": "system",
+                "content": "You are a precise Bangalore urban planning regulatory assistant. Always cite bylaw section numbers. Never guess numbers — if unsure, say 'verify with BBMP'."
+            },
             {"role": "user", "content": prompt}
         ],
         temperature=0.2
@@ -199,17 +408,21 @@ Keep each section concise — 2 to 4 bullet points maximum.
 
     explanation = response.choices[0].message.content.strip()
 
-    # ---------------------------
-    # Final Result
-    # ---------------------------
-
+    # ── Return ────────────────────────────────────────────────────
     return {
-        "zone": zone,
-        "plot_area": plot_area,
-        "far": far,
-        "max_built_area": max_built_area,
-        "setbacks": setbacks,
-        "fire_rules": fire_rules,
-        "parking": parking,
-        "ai_explanation": explanation
+        "zone":               zone,
+        "plot_area":          plot_area,
+        "plot_area_sqm":      plot_area_sqm,
+        "far":                far,
+        "max_built_area":     max_built_area,
+        "ground_coverage_pct": ground_coverage_pct,
+        "setbacks":           setbacks,
+        "fire_rules":         fire_rules,
+        "fire_data":          fire_data,
+        "staircase":          staircase_data,
+        "basement":           basement_data,
+        "projections":        projection_rules,
+        "far_exclusions":     FAR_EXCLUSIONS,
+        "parking":            parking,
+        "ai_explanation":     explanation
     }

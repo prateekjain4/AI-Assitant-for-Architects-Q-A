@@ -547,33 +547,69 @@ def extract_zoning_tables(pdf_file):
 
     return rules
 
-def find_far_rule(question):
+FAR_BY_ROAD_WIDTH = {
+    9:    1.75,   # up to 9m road
+    12:   1.75,   # up to 12m road
+    18:   2.25,   # up to 18m road
+    24:   2.50,   # up to 24m road
+    30:   3.00,   # up to 30m road
+    9999: 3.25,   # above 30m road
+}
 
-    if not os.path.exists("data/zoning_rules.json"):
+def find_far_rule(question: str) -> float | None:
+    """
+    Extract road width from the question string and return FAR.
+    Accepts strings like '12m', '18m', '9m', or plain numbers.
+    Falls back to None if no road width found.
+    """
+    # Extract numeric road width from string like "12m" or "18m road"
+    match = re.search(r'(\d+\.?\d*)\s*m', question.lower())
+    if not match:
+        # Try plain number
+        match = re.search(r'(\d+\.?\d*)', question)
+
+    if not match:
         return None
 
-    question_clean = question.lower().replace(" ", "")
+    road_width = float(match.group(1))
 
-    with open("data/zoning_rules.json") as f:
-        rules = json.load(f)
+    for threshold in sorted(FAR_BY_ROAD_WIDTH.keys()):
+        if road_width <= threshold:
+            return FAR_BY_ROAD_WIDTH[threshold]
 
-    for rule in rules:
-
-        road = rule["road_width"].replace(" ", "")
-
-        if road in question_clean:
-            return rule["far"]
-
-    return None
+    return 1.75  # fallback
 
 def build_zoning_rules():
+    """
+    Populate zoning_rules.json from hardcoded BDA RMP 2031 FAR table.
+    The PDF FAR tables are image-based and cannot be extracted by pdfplumber.
+    """
+    rules = []
 
-    rules = extract_zoning_tables("BDA_Zoning_Regulations.pdf")
+    road_labels = {
+        9:    "up to 9m",
+        12:   "up to 12m",
+        18:   "12m to 18m",
+        24:   "18m to 24m",
+        30:   "24m to 30m",
+        9999: "above 30m",
+    }
 
+    for width, far in FAR_BY_ROAD_WIDTH.items():
+        label = road_labels.get(width, f"{width}m")
+        rules.append({
+            "road_width": label,
+            "road_width_max_m": width,
+            "far": str(far),
+            "source": "BDA RMP 2031 — hardcoded (PDF tables are image-based)"
+        })
+
+    os.makedirs("data", exist_ok=True)
     with open("data/zoning_rules.json", "w") as f:
         json.dump(rules, f, indent=4)
 
-    print("Zoning rules extracted:", len(rules))
+    print(f"Zoning rules written: {len(rules)} entries")
+    return rules
 
 def run_full_pipeline():
 

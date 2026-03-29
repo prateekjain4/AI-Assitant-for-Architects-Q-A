@@ -150,6 +150,61 @@ def generate_planning_report(data: dict) -> bytes:
         ('LEFTPADDING',   (0,0), (-1,-1), 8),
     ]))
     story.append(setback_table)
+    # ── Staircase & Lift ──────────────────────────────────────────────
+    section_heading('Staircase & Lift Requirements')
+    staircase = data.get('staircase', {})
+    if staircase:
+        staircase_data_table = [
+            ['Requirement', 'Value', 'Notes'],
+            ['Min staircase width',  f"{staircase.get('min_staircase_width_m', '-')} m",  staircase.get('staircase_note', '')],
+            ['Number of staircases', str(staircase.get('num_staircases', '-')),           staircase.get('staircase_extra', '')],
+            ['Lift mandatory',       'Yes' if staircase.get('lift_mandatory') else 'No',  staircase.get('lift_note', '')],
+        ]
+        st_table = Table(staircase_data_table, colWidths=[50*mm, 30*mm, 90*mm])
+        st_table.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0), (-1,0),  PRIMARY),
+            ('TEXTCOLOR',     (0,0), (-1,0),  colors.white),
+            ('FONTSIZE',      (0,0), (-1,-1), 9),
+            ('FONTNAME',      (0,0), (-1,0),  'Helvetica-Bold'),
+            ('ROWBACKGROUNDS',(0,1), (-1,-1), [colors.white, SECONDARY]),
+            ('BOX',           (0,0), (-1,-1), 0.5, BORDER),
+            ('INNERGRID',     (0,0), (-1,-1), 0.3, BORDER),
+            ('TOPPADDING',    (0,0), (-1,-1), 5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+            ('LEFTPADDING',   (0,0), (-1,-1), 8),
+        ]))
+        story.append(st_table)
+
+    # ── Fire Tender Access ────────────────────────────────────────────
+    fire_data = data.get('fire_data', {})
+    tender    = fire_data.get('tender_access', {})
+    if tender.get('required'):
+        section_heading('Fire Tender Access Requirements')
+        tender_table_data = [
+            ['Parameter', 'Requirement'],
+            ['Min road width',       f"{tender.get('min_road_width_m')} m"],
+            ['Height clearance',     f"{tender.get('min_height_clearance_m')} m"],
+            ['Turning radius',       f"{tender.get('turning_radius_m')} m"],
+            ['Max dead-end length',  f"{tender.get('dead_end_max_m')} m"],
+        ]
+        tender_table = Table(tender_table_data, colWidths=[80*mm, 90*mm])
+        tender_table.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0), (-1,0),  PRIMARY),
+            ('TEXTCOLOR',     (0,0), (-1,0),  colors.white),
+            ('FONTSIZE',      (0,0), (-1,-1), 9),
+            ('FONTNAME',      (0,0), (-1,0),  'Helvetica-Bold'),
+            ('ROWBACKGROUNDS',(0,1), (-1,-1), [colors.white, SECONDARY]),
+            ('BOX',           (0,0), (-1,-1), 0.5, BORDER),
+            ('INNERGRID',     (0,0), (-1,-1), 0.3, BORDER),
+            ('TOPPADDING',    (0,0), (-1,-1), 5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+            ('LEFTPADDING',   (0,0), (-1,-1), 8),
+        ]))
+        story.append(tender_table)
+        story.append(Paragraph(
+            f'<font size="8" color="#64748b">{tender.get("note", "")}</font>',
+            styles['Normal']
+        ))
 
     # ── Fire rules ────────────────────────────────────────────────
     section_heading('Fire Safety Requirements')
