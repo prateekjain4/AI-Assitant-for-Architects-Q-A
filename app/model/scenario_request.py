@@ -1,0 +1,11 @@
+from pydantic import BaseModel
+class ScenarioRequest(BaseModel):
+    zone:          str
+    road_width:    float
+    plot_area_sqft: float
+    plot_length_m:  float
+    plot_width_m:   float
+    usage:          str = "residential"
+    corner_plot:    bool = False
+    basement:       bool = False
+    scenarios:      list = [2, 3, 4, 5]

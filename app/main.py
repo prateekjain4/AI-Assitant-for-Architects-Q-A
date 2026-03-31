@@ -10,6 +10,8 @@ from app.services.planning_request_service import calculate_plot_planning
 from app.services.chat_service import chat_with_context
 from app.services.zone_service import detect_zone_from_coordinate
 from app.services.report_service import generate_planning_report
+from app.model.scenario_request import ScenarioRequest
+from app.services.scenario_service import calculate_scenarios
 
 app = FastAPI(title="AI Bylaw Monitor API")
 
@@ -83,4 +85,19 @@ def generate_report(data: dict):
         headers={
             "Content-Disposition": 'attachment; filename="planning-report.pdf"'
         }
+    )
+
+
+@app.post("/scenarios")
+def get_scenarios(request: ScenarioRequest):
+    return calculate_scenarios(
+        zone           = request.zone,
+        road_width     = request.road_width,
+        plot_area_sqft = request.plot_area_sqft,
+        plot_length_m  = request.plot_length_m,
+        plot_width_m   = request.plot_width_m,
+        usage          = request.usage,
+        corner_plot    = request.corner_plot,
+        basement       = request.basement,
+        scenarios      = request.scenarios,
     )
