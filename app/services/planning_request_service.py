@@ -3,6 +3,7 @@ from shapely.geometry import Polygon
 from pyproj import Transformer
 from shapely.ops import transform
 import math
+from app.services.parking_service import calculate_parking
 
 # ─────────────────────────────────────────────────────────────────
 # Area calculation
@@ -78,7 +79,7 @@ def get_fire_requirements(building_height: float, max_built_area: float, usage: 
             "required": True,
             "min_road_width_m": 4.5,
             "min_height_clearance_m": 4.5,
-            "turning_radius_m": 9.0,
+            "turning_radius_m": 9.0, 
             "dead_end_max_m": 45,
             "note": "Fire tender access road required on at least 3 sides above 15m (NBC 2016 Part IV Cl. 4.1)"
         }
@@ -108,13 +109,87 @@ def get_fire_requirements(building_height: float, max_built_area: float, usage: 
         }
 
     return fire
+# ─────────────────────────────────────────────────────────────────
+# Feasibility & Compliance requirements
+# ─────────────────────────────────────────────────────────────────
+def generate_feasibility_summary(plot_area, max_built_area, far_floors):
+    avg_unit_size = 900  # sqft assumption
+    total_units = int(max_built_area / avg_unit_size)
 
+    typology = "Apartment" if far_floors >= 4 else "Independent Floors"
+
+    risk = "High" if far_floors >= 5 else "Medium" if far_floors >= 3 else "Low"
+
+    return {
+        "typology": typology,
+        "floors": f"G+{far_floors-1}",
+        "units": total_units,
+        "risk": risk,
+        "approval": f"{80 - (far_floors * 5)}%"
+    }
+
+
+def generate_design_options(far_floors, max_built_area):
+    return [
+        {
+            "title": "Max FAR Apartment",
+            "floors": f"G+{far_floors-1}",
+            "units": int(max_built_area / 900),
+            "parking": "Basement required",
+            "risk": "High"
+        },
+        {
+            "title": "Balanced Development",
+            "floors": f"G+{max(2, far_floors-2)}",
+            "units": int(max_built_area / 1200),
+            "parking": "Stilt + surface",
+            "risk": "Medium"
+        },
+        {
+            "title": "Low Density",
+            "floors": "G+1",
+            "units": 1,
+            "parking": "Surface",
+            "risk": "Low"
+        }
+    ]
+
+
+def generate_compliance_score(fire_data, parking, far_floors):
+    score = 100
+    issues = []
+
+    if fire_data.get("noc_required"):
+        score -= 15
+        issues.append("Fire NOC required")
+
+    cars_required = parking.get("required", {}).get("cars", 0)
+    if cars_required > 50:
+        score -= 10
+        issues.append("High parking demand")
+
+    if far_floors >= 5:
+        score -= 10
+        issues.append("High-rise complexity")
+
+    if score >= 80:
+        status = "Low Risk"
+    elif score >= 60:
+        status = "Moderate Risk"
+    else:
+        status = "High Risk"
+
+    return {
+        "score": score,
+        "status": status,
+        "issues": issues
+    }
 
 # ─────────────────────────────────────────────────────────────────
 # Staircase & lift requirements
 # ─────────────────────────────────────────────────────────────────
-def get_staircase_requirements(building_height: float, max_built_area: float) -> dict:
-    num_floors = math.ceil(building_height / 3.2)
+def get_staircase_requirements(building_height: float, max_built_area: float, far_floors: float) -> dict:
+    num_floors = far_floors if far_floors > 0 else math.ceil(building_height / 3.2)
 
     if building_height <= 11.5:
         min_width = 1.0
@@ -246,11 +321,16 @@ def calculate_plot_planning(request):
 
     # ── Ground Coverage ───────────────────────────────────────────
     ground_coverage_pct = get_ground_coverage(zone, road_width)
-
+    footprint_sqm       = plot_area_sqm * (ground_coverage_pct / 100)
     # ── Max Built Area ────────────────────────────────────────────
-    max_built_area = round(plot_area * far, 2)
+    max_built_sqm  = round(plot_area_sqm * far, 2)
+    max_built_area = round(max_built_sqm * 10.7639, 2)   # sqft for display/return
+    # How many floors does FAR actually allow?
+    far_floors = math.ceil(max_built_sqm / max(footprint_sqm, 1))
+    far_floors = max(1, min(far_floors, 15))
 
     # ── Setbacks ──────────────────────────────────────────────────
+
     if plot_area < 1500:
         front_setback = 3.0
         side_setback  = 1.0
@@ -271,20 +351,26 @@ def calculate_plot_planning(request):
     }
 
     # ── Computed sections ─────────────────────────────────────────
-    fire_data        = get_fire_requirements(building_height, max_built_area, usage)
-    staircase_data   = get_staircase_requirements(building_height, max_built_area)
+    far_building_height = far_floors * 3.2  # actual buildable height from FAR
+    fire_data      = get_fire_requirements(far_building_height, max_built_area, usage)
+    staircase_data = get_staircase_requirements(far_building_height, max_built_area, far_floors)
     basement_data    = get_basement_regulations(plot_area, basement)
     projection_rules = get_projection_rules(road_width)
 
     fire_rules = fire_data["requirements"]
 
     # ── Parking ───────────────────────────────────────────────────
-    if usage.lower() == "residential":
-        parking = "1 car + 2 two-wheeler spaces per dwelling unit (BBMP Table 23)"
-    elif usage.lower() == "commercial":
-        parking = "1 car space per 50 sqm of BUA (BBMP Table 23)"
-    else:
-        parking = "As per BBMP Table 23 based on usage and built-up area"
+    parking_data = calculate_parking(
+        usage=usage,
+        built_up_sqft=max_built_area,
+        num_units=getattr(request, "number_of_units", 1),
+        plot_length_m=request.plot_length or 0,
+        plot_width_m=request.plot_width or 0,
+        basement=basement,
+        stilt=False
+    )
+
+    parking = parking_data  # return full structured data
 
     # ── Bylaw context from FAISS — called HERE inside function ────
     setback_context   = get_bylaw_context(
@@ -302,6 +388,10 @@ def calculate_plot_planning(request):
     basement_context  = get_bylaw_context(
         "basement regulations permitted uses ventilation parking"
     ) if basement else ""
+
+    summary = generate_feasibility_summary(plot_area, max_built_area, far_floors)
+    design_options = generate_design_options(far_floors, max_built_area)
+    compliance = generate_compliance_score(fire_data, parking, far_floors)
 
     # ── Prompt ────────────────────────────────────────────────────
     client = get_openai_client()
@@ -329,7 +419,7 @@ FIRE SAFETY (NBC 2016 Part IV):
 Plot inputs:
 - Zone: {zone} | Locality: {locality}
 - Plot Area: {plot_area:,.0f} sq ft ({plot_area_sqm} sq m)
-- Road Width: {road_width}m | Height: {building_height}m
+- Road Width: {road_width}m | Effective Height (based on FAR): {far_building_height:.1f}m
 - Usage: {usage} | Corner Plot: {corner_plot} | Basement: {basement}
 
 Pre-computed facts — treat as EXACT, do NOT recalculate:
@@ -351,7 +441,7 @@ Keep each section to 3–5 bullet points. Do NOT repeat input data.
 
 2. FAR & WHAT COUNTS
    - What is included vs excluded from FAR (staircase, basement, balcony, refuge)
-   - How many floors feasible at {building_height}m with FAR {far}
+   - How many floors feasible at {far_building_height:.1f}m with FAR {far}
    - Ground coverage: {ground_coverage_pct}% for {zone} zone on {road_width}m road
 
 3. STAIRCASE & LIFT
@@ -368,8 +458,8 @@ Keep each section to 3–5 bullet points. Do NOT repeat input data.
    {"- Permitted uses, FAR counting, ventilation, fire requirements" if basement else ""}
 
 6. PARKING
-   - Car and two-wheeler spaces for {usage}, {max_built_area:,.0f} sq ft
-   - Cite BBMP Table 23
+   - Parking already computed separately — DO NOT calculate again
+   - Explain only general BBMP Table 23 rule
 
 7. FIRE SAFETY
    - NOC required: {fire_data['noc_required']} | Threshold: 15m height
@@ -399,14 +489,17 @@ Keep each section to 3–5 bullet points. Do NOT repeat input data.
         messages=[
             {
                 "role": "system",
-                "content": "You are a precise Bangalore urban planning regulatory assistant. Always cite bylaw section numbers. Never guess numbers — if unsure, say 'verify with BBMP'."
+                "content": "You are a precise Bangalore urban planning assistant. Provide confident answers using given context. Use 'subject to local authority approval' only if absolutely necessary."
             },
             {"role": "user", "content": prompt}
         ],
         temperature=0.2
     )
 
-    explanation = response.choices[0].message.content.strip()
+    try:
+        explanation = response.choices[0].message.content.strip()
+    except:
+        explanation = "Regulatory analysis could not be generated at this time."
 
     # ── Return ────────────────────────────────────────────────────
     return {
@@ -414,7 +507,13 @@ Keep each section to 3–5 bullet points. Do NOT repeat input data.
         "plot_area":          plot_area,
         "plot_area_sqm":      plot_area_sqm,
         "far":                far,
+        "locality":           locality,
+        "ward":            getattr(request, 'ward', ''),
         "max_built_area":     max_built_area,
+        "feasibility":        summary,
+        "design_options":     design_options,
+        "compliance":         compliance,
+        "road_width":         road_width,
         "ground_coverage_pct": ground_coverage_pct,
         "setbacks":           setbacks,
         "fire_rules":         fire_rules,

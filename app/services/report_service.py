@@ -1,3 +1,4 @@
+from reportlab.lib import styles
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -98,12 +99,13 @@ def generate_planning_report(data: dict) -> bytes:
     far          = data.get('far', 0)
     max_built    = data.get('max_built_area', 0)
     road_width   = data.get('road_width', 0)
-
+    floors = data.get("staircase", {}).get("num_floors", "-")
     metrics_data = [[
         metric_cell('Plot Area',         f'{plot_area:,.0f}', 'sq ft'),
         metric_cell('FAR',               f'{far}',            ''),
         metric_cell('Max Built-up Area', f'{max_built:,.0f}', 'sq ft'),
         metric_cell('Road Width',        f'{road_width}',     'm'),
+        metric_cell('Floors',            f'{floors}',        ''),
     ]]
     metrics_table = Table(metrics_data, colWidths=[42*mm]*4)
     metrics_table.setStyle(TableStyle([
@@ -126,6 +128,35 @@ def generate_planning_report(data: dict) -> bytes:
             styles['Normal']
         ))
         story.append(HRFlowable(width='100%', thickness=0.5, color=BORDER, spaceAfter=3*mm))
+
+    section_heading('Feasibility Summary')
+
+    summary = data.get("feasibility", {})
+
+    story.append(Paragraph(
+        f"""
+        <b>Recommended Typology:</b> {summary.get('typology', '-')}<br/>
+        <b>Floors:</b> {summary.get('floors', '-')}<br/>
+        <b>Estimated Units:</b> {summary.get('units', '-')}<br/>
+        <b>Risk Level:</b> {summary.get('risk', '-')}<br/>
+        <b>Approval Probability:</b> {summary.get('approval', '-')}
+        """,
+        styles['Normal']
+    ))
+    section_heading('Design Options')
+
+    options = data.get("design_options", [])
+    for opt in options:
+        story.append(Paragraph(
+            f"""
+            <b>{opt['title']}</b><br/>
+            Floors: {opt['floors']}<br/>
+            Units: {opt['units']}<br/>
+            Parking: {opt['parking']}<br/>
+            Risk: {opt['risk']}<br/><br/>
+            """,
+            styles['Normal']
+        ))
 
     # ── Setbacks table ────────────────────────────────────────────
     section_heading('Setback Requirements')
@@ -224,7 +255,39 @@ def generate_planning_report(data: dict) -> bytes:
         ))
 
     story.append(Spacer(1, 3*mm))
+    # ── Parking Requirements ──────────────────────────────────────
+    section_heading('Parking Requirements')
 
+    parking = data.get("parking", {})
+
+    if isinstance(parking, dict):
+        required = parking.get("required") or {}
+        area = parking.get("area") or {}
+        location = parking.get("location", "-")
+
+        story.append(Paragraph(
+            f"""
+                <b>Cars Required:</b> {required.get('cars', '-')}<br/>
+                <b>Bikes Required:</b> {required.get('bikes', '-')}<br/>
+                <b>Parking Location:</b> {location}<br/>
+                <b>Total Parking Area:</b> {area.get('total_sqm', '-')} sqm
+            """,
+            styles['Normal']
+        ))
+    section_heading('Compliance Score')
+
+    comp = data.get("compliance", {})
+
+    story.append(Paragraph(
+        f"""
+        <b>Score:</b> {comp.get('score', '-')}/100<br/>
+        <b>Status:</b> {comp.get('status', '-')}<br/><br/>
+
+        <b>Key Issues:</b><br/>
+        {"<br/>".join(comp.get('issues', []))}
+        """,
+        styles['Normal']
+    ))
     # ── AI Explanation ────────────────────────────────────────────
     section_heading('Regulatory Analysis')
     ai_text = data.get('ai_explanation', '')

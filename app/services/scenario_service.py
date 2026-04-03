@@ -108,8 +108,17 @@ def _compute_scenario(
     lift_mandatory    = floors > 4
     num_staircases    = 2 if total_built > 2000 else 1
 
-    parking_car = math.ceil(total_built / (400 if usage.lower() == "residential" else 500))
-    parking_2w  = parking_car * 2
+    if usage.lower() == "residential":
+        # BBMP Table 23: 1 car per dwelling unit
+        # Estimate units: avg Bangalore apartment = 120-150 sqm
+        avg_unit_sqm = 130
+        estimated_units = max(1, math.ceil((total_built / 10.7639) / avg_unit_sqm))
+        parking_car = estimated_units + max(1, math.ceil(estimated_units * 0.10))  # +10% visitor
+        parking_2w = estimated_units
+    else:
+        # Commercial: 3 cars per 100 sqm
+        parking_car = math.ceil((total_built / 10.7639) / 100 * 3)
+        parking_2w = parking_car * 2
 
     return {
         "label":              label,
@@ -151,6 +160,8 @@ def _get_warnings(height, built, fire_noc, lift, plot_area):
         w.append("Small plot with high building — verify structural feasibility with engineer")
     return w
 
+# REPLACE the entire calculate_scenarios() function
+
 def calculate_scenarios(
     zone: str,
     road_width: float,
@@ -160,7 +171,7 @@ def calculate_scenarios(
     usage:          str,
     corner_plot:    bool = False,
     basement:       bool = False,
-    scenarios:      list = None,   # e.g. [2, 3, 4, 5]  floors count
+    scenarios:      list = None,
 ) -> dict:
 
     far = find_far_rule(f"{road_width}m") or 1.75
@@ -171,36 +182,47 @@ def calculate_scenarios(
 
     plot_area_sqm = round(plot_area_sqft / 10.7639, 2)
 
-    # Default: G+1 through G+4 = 2, 3, 4, 5 floors total
+    # ── How many floors does FAR actually allow? ──────────────────
+    ground_cov_pct = _get_ground_coverage(zone, road_width)
+    footprint_sqm  = plot_area_sqm * (ground_cov_pct / 100)
+    max_built_sqm  = plot_area_sqm * far
+    far_max_floors = math.ceil(max_built_sqm / max(footprint_sqm, 1))
+    far_max_floors = max(1, min(far_max_floors, 15))
+
     if not scenarios:
         scenarios = [2, 3, 4, 5]
 
     results = []
     for floors in scenarios:
         label = f"G+{floors - 1}"
-        results.append(_compute_scenario(
-            label          = label,
-            floors         = floors,
-            plot_area_sqft = plot_area_sqft,
-            plot_area_sqm  = plot_area_sqm,
-            plot_length_m  = plot_length_m,
-            plot_width_m   = plot_width_m,
-            far            = far,
-            road_width     = road_width,
-            zone           = zone,
-            usage          = usage,
-            corner_plot    = corner_plot,
-            basement       = basement,
-        ))
+        s = _compute_scenario(
+            label=label, floors=floors,
+            plot_area_sqft=plot_area_sqft, plot_area_sqm=plot_area_sqm,
+            plot_length_m=plot_length_m, plot_width_m=plot_width_m,
+            far=far, road_width=road_width, zone=zone,
+            usage=usage, corner_plot=corner_plot, basement=basement,
+        )
+        # ── Mark FAR-exceeded scenarios ───────────────────────────
+        s["exceeds_far"]    = floors > far_max_floors
+        s["far_max_floors"] = far_max_floors
+        if s["exceeds_far"]:
+            s["warnings"].insert(0,
+                f"Exceeds FAR {far} — only {far_max_floors} floors "
+                f"(G+{far_max_floors-1}) are viable on this {plot_area_sqm:.0f} sqm plot"
+            )
+        results.append(s)
 
-    # Best scenario = highest FAR efficiency without fire NOC if possible
-    no_noc = [s for s in results if not s["fire_noc_required"]]
-    best   = max(no_noc or results, key=lambda s: s["total_built_sqft"])
+    # ── Recommended: highest built-up among FAR-viable, prefer no NOC ──
+    viable    = [s for s in results if not s["exceeds_far"]]
+    no_noc    = [s for s in viable  if not s["fire_noc_required"]]
+    best_pool = no_noc if no_noc else (viable if viable else results)
+    best      = max(best_pool, key=lambda s: s["total_built_sqft"])
 
     return {
         "plot_area_sqft": plot_area_sqft,
         "plot_area_sqm":  plot_area_sqm,
         "far":            far,
+        "far_max_floors": far_max_floors,          # ← new field
         "zone":           zone,
         "road_width":     road_width,
         "recommended":    best["label"],

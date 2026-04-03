@@ -12,12 +12,14 @@ from app.services.zone_service import detect_zone_from_coordinate
 from app.services.report_service import generate_planning_report
 from app.model.scenario_request import ScenarioRequest
 from app.services.scenario_service import calculate_scenarios
+from app.model.parking_request import ParkingRequest
+from app.services.parking_service import calculate_parking
 
 app = FastAPI(title="AI Bylaw Monitor API")
 
 class QuestionRequest(BaseModel):
-    question: str
-
+    question: str   
+  
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:4200"],
@@ -91,7 +93,7 @@ def generate_report(data: dict):
 @app.post("/scenarios")
 def get_scenarios(request: ScenarioRequest):
     return calculate_scenarios(
-        zone           = request.zone,
+        zone           = request.zone,     
         road_width     = request.road_width,
         plot_area_sqft = request.plot_area_sqft,
         plot_length_m  = request.plot_length_m,
@@ -100,4 +102,17 @@ def get_scenarios(request: ScenarioRequest):
         corner_plot    = request.corner_plot,
         basement       = request.basement,
         scenarios      = request.scenarios,
+    )
+
+
+@app.post("/parking")
+def parking_calculator(request: ParkingRequest):
+    return calculate_parking(
+        usage          = request.usage,
+        built_up_sqft  = request.built_up_sqft,
+        num_units      = request.num_units,
+        plot_length_m  = request.plot_length_m,
+        plot_width_m   = request.plot_width_m,
+        basement       = request.basement,
+        stilt          = request.stilt,
     )
