@@ -14,6 +14,8 @@ from app.model.scenario_request import ScenarioRequest
 from app.services.scenario_service import calculate_scenarios
 from app.model.parking_request import ParkingRequest
 from app.services.parking_service import calculate_parking
+from app.services.floor_plan_service import generate_floor_plan
+from app.services.cost_estimator_service import estimate_cost
 
 app = FastAPI(title="AI Bylaw Monitor API")
 
@@ -102,6 +104,46 @@ def get_scenarios(request: ScenarioRequest):
         corner_plot    = request.corner_plot,
         basement       = request.basement,
         scenarios      = request.scenarios,
+    )
+
+
+@app.post("/estimate-cost")
+def cost_estimate_endpoint(data: dict):
+    return estimate_cost(
+        plot_length_m     = float(data.get("plot_length_m",      20)),
+        plot_width_m      = float(data.get("plot_width_m",       15)),
+        built_up_sqm      = float(data.get("built_up_sqm",      500)),
+        num_floors        = int(data.get("num_floors",             3)),
+        floor_height_m    = float(data.get("floor_height_m",     3.2)),
+        setback_front     = float(data.get("setback_front",        3)),
+        setback_side      = float(data.get("setback_side",       1.5)),
+        setback_rear      = float(data.get("setback_rear",       1.5)),
+        usage             = str(data.get("usage",      "residential")),
+        zone              = str(data.get("zone",                 "RM")),
+        fire_noc_required = bool(data.get("fire_noc_required",  False)),
+        basement          = bool(data.get("basement",           False)),
+        car_spaces        = int(data.get("car_spaces",              0)),
+        tier              = str(data.get("tier",                "mid")),
+    )
+
+
+@app.post("/generate-floor-plan")
+def floor_plan_endpoint(data: dict):
+    return generate_floor_plan(
+        plot_length_m       = float(data.get("plot_length_m",       20)),
+        plot_width_m        = float(data.get("plot_width_m",        15)),
+        setback_front       = float(data.get("setback_front",        3)),
+        setback_side        = float(data.get("setback_side",       1.5)),
+        setback_rear        = float(data.get("setback_rear",       1.5)),
+        building_height_m   = float(data.get("building_height_m",   10)),
+        num_floors          = int(data.get("num_floors",              3)),
+        floor_height_m      = float(data.get("floor_height_m",      3.2)),
+        usage               = str(data.get("usage",       "residential")),
+        zone                = str(data.get("zone",                  "RM")),
+        ground_coverage_pct = float(data.get("ground_coverage_pct",  60)),
+        road_width_m        = float(data.get("road_width_m",          6)),
+        corner_plot         = bool(data.get("corner_plot",        False)),
+        basement            = bool(data.get("basement",           False)),
     )
 
 
