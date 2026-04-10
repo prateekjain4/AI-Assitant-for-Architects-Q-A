@@ -325,8 +325,16 @@ def calculate_plot_planning(request):
     # ── Max Built Area ────────────────────────────────────────────
     max_built_sqm  = round(plot_area_sqm * far, 2)
     max_built_area = round(max_built_sqm * 10.7639, 2)   # sqft for display/return
-    # How many floors does FAR actually allow?
-    far_floors = math.ceil(max_built_sqm / max(footprint_sqm, 1))
+
+    # How many floors are feasible?
+    # Two independent constraints — take the more restrictive:
+    # 1. FAR constraint: total built-up ÷ ground footprint
+    floor_height_m = getattr(request, 'floor_height', 3.2) or 3.2
+    far_floors_by_far    = math.ceil(max_built_sqm / max(footprint_sqm, 1))
+    # 2. Height constraint: building_height ÷ floor_height (each floor including slab ~floor_height_m)
+    far_floors_by_height = max(1, math.floor(building_height / floor_height_m))
+    # Use whichever is fewer — you cannot exceed either limit
+    far_floors = min(far_floors_by_far, far_floors_by_height)
     far_floors = max(1, min(far_floors, 15))
 
     # ── Setbacks ──────────────────────────────────────────────────
@@ -401,87 +409,33 @@ You are an expert Bangalore building regulations assistant helping a licensed ar
 
 VERIFIED BYLAW CONTEXT (retrieved directly from official PDFs — use ONLY this):
 ─────────────────────────────────────────────────────────────────────────────
-SETBACKS (BBMP Bylaws):
-{setback_context}
-
-STAIRCASE & LIFT (BBMP Bylaws):
-{staircase_context}
-
-BALCONY & PROJECTIONS (BBMP Bylaws):
-{balcony_context}
-
-FIRE SAFETY (NBC 2016 Part IV):
-{fire_context}
-
-{f"BASEMENT (BBMP Bylaws):{chr(10)}{basement_context}" if basement else ""}
+SETBACKS: {setback_context}
+STAIRCASE & LIFT: {staircase_context}
+BALCONY & PROJECTIONS: {balcony_context}
+FIRE SAFETY: {fire_context}
+{f"BASEMENT: {basement_context}" if basement else ""}
 ─────────────────────────────────────────────────────────────────────────────
 
-Plot inputs:
-- Zone: {zone} | Locality: {locality}
-- Plot Area: {plot_area:,.0f} sq ft ({plot_area_sqm} sq m)
-- Road Width: {road_width}m | Effective Height (based on FAR): {far_building_height:.1f}m
-- Usage: {usage} | Corner Plot: {corner_plot} | Basement: {basement}
+Plot facts (pre-computed — do NOT recalculate):
+Zone: {zone} | Locality: {locality} | Road: {road_width}m | Usage: {usage}
+FAR: {far} | Ground coverage: {ground_coverage_pct}% | Max built-up: {max_built_area:,.0f} sqft
+Setbacks: Front {front_setback}m | Side {side_setback}m | Rear {rear_setback}m
+Lift mandatory: {staircase_data['lift_mandatory']} | Staircases: {staircase_data['num_staircases']}
+Fire NOC required: {fire_data['noc_required']} | Building height: {building_height}m
+Basement requested: {basement} | Corner plot: {corner_plot}
 
-Pre-computed facts — treat as EXACT, do NOT recalculate:
-- FAR: {far} | Ground Coverage: {ground_coverage_pct}%
-- Max Built-up Area: {max_built_area:,.0f} sq ft
-- Setbacks: Front {front_setback}m | Side {side_setback}m | Rear {rear_setback}m
-- Fire NOC required: {fire_data['noc_required']}
-- Lift mandatory: {staircase_data['lift_mandatory']} ({staircase_data['lift_note']})
-- Staircases required: {staircase_data['num_staircases']}
+Return ONLY a JSON object with these keys. Each value must be ONE concise sentence (max 25 words) citing the relevant bylaw section. No bullet points, no markdown.
 
-Using ONLY the bylaw context above, answer each section below.
-Cite the exact section number. If context doesn't cover a point, write "verify with BBMP".
-Keep each section to 3–5 bullet points. Do NOT repeat input data.
-
-1. SETBACK ANALYSIS
-   - Confirm setbacks for this plot size and height from bylaws
-   - State the 11.5m threshold rule where setbacks increase to 5m all sides
-   - Corner plot relaxation if applicable
-
-2. FAR & WHAT COUNTS
-   - What is included vs excluded from FAR (staircase, basement, balcony, refuge)
-   - How many floors feasible at {far_building_height:.1f}m with FAR {far}
-   - Ground coverage: {ground_coverage_pct}% for {zone} zone on {road_width}m road
-
-3. STAIRCASE & LIFT
-   - Min width: {staircase_data['min_staircase_width_m']}m | Staircases: {staircase_data['num_staircases']}
-   - Lift mandatory: {staircase_data['lift_mandatory']}
-   - Cite BBMP section
-
-4. BALCONY, PROJECTIONS & CANTILEVERS
-   - Max balcony projection: 1.5m | Chajja: 0.75m
-   - FAR counting rule for balconies (20% rule)
-   - Projection into setback allowance
-
-5. {"BASEMENT REGULATIONS" if basement else "BASEMENT (not requested — skip this section)"}
-   {"- Permitted uses, FAR counting, ventilation, fire requirements" if basement else ""}
-
-6. PARKING
-   - Parking already computed separately — DO NOT calculate again
-   - Explain only general BBMP Table 23 rule
-
-7. FIRE SAFETY
-   - NOC required: {fire_data['noc_required']} | Threshold: 15m height
-   - Key requirements for {building_height}m building
-   - Fire tender access: 4.5m wide road, 9m turning radius
-   - Refuge area required: {bool(fire_data.get('refuge_area', {}).get('required', False))}
-   - Cite NBC 2016 Part IV sections
-
-8. MANDATORY COMPLIANCES
-   - Rainwater harvesting threshold for this plot size
-   - Solar panels — required?
-   - STP — required for this height/usage?
-   - Accessibility ramp — required?
-
-9. APPROVAL PROCESS
-   - BBMP or BDA jurisdiction for {locality}?
-   - Key documents to submit
-   - Special NOCs needed before plan sanction
-
-10. WATCH OUT
-    - Restrictions specific to {zone} zone in {locality}
-    - Common mistakes for this height and usage combination
+{{
+  "setbacks": "One sentence about these specific setbacks and the 11.5m rule, citing bylaw section.",
+  "far": "One sentence about FAR {far} for {zone} zone and what is excluded, citing bylaw section.",
+  "staircase": "One sentence about staircase width and lift requirement for this building, citing BBMP section.",
+  "projections": "One sentence about max balcony and chajja projection and FAR 20% rule, citing bylaw section.",
+  "basement": {"One sentence about permitted uses and FAR exclusion for basement" if basement else "null"},
+  "fire": "One sentence about NOC requirement and key fire safety rule for {building_height}m building, citing NBC 2016.",
+  "compliance": "One sentence about the most critical mandatory compliance for this plot size and usage.",
+  "parking": "One sentence about parking requirement under BBMP Table 23 for this usage.",
+}}
 """
 
     response = client.chat.completions.create(
@@ -489,17 +443,33 @@ Keep each section to 3–5 bullet points. Do NOT repeat input data.
         messages=[
             {
                 "role": "system",
-                "content": "You are a precise Bangalore urban planning assistant. Provide confident answers using given context. Use 'subject to local authority approval' only if absolutely necessary."
+                "content": "You are a precise Bangalore urban planning assistant. Return only valid JSON, no markdown fences, no extra text."
             },
             {"role": "user", "content": prompt}
         ],
-        temperature=0.2
+        temperature=0.1
     )
 
     try:
-        explanation = response.choices[0].message.content.strip()
-    except:
-        explanation = "Regulatory analysis could not be generated at this time."
+        import json as _json
+        raw = response.choices[0].message.content.strip()
+        # Strip markdown fences if model adds them
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        section_summaries = _json.loads(raw.strip())
+    except Exception:
+        section_summaries = {
+            "setbacks":    f"Front {front_setback}m, Side {side_setback}m, Rear {rear_setback}m per BBMP bylaws for {zone} zone.",
+            "far":         f"FAR {far} allows max {max_built_area:,.0f} sqft built-up; basement and staircase excluded from FAR count.",
+            "staircase":   f"Min {staircase_data['min_staircase_width_m']}m staircase width required; {'lift mandatory' if staircase_data['lift_mandatory'] else 'lift not mandatory'} per BBMP Sec 20.7.",
+            "projections":  "Max 1.5m balcony and 0.75m chajja projection permitted; balconies within 20% of floor area excluded from FAR.",
+            "basement":    "Basement permitted for parking and utilities only; excluded from FAR calculation per BBMP Sec 18.2." if basement else None,
+            "fire":        f"{'Fire NOC required' if fire_data['noc_required'] else 'Fire NOC not required'} for {building_height}m building under NBC 2016 Part IV.",
+            "compliance":  "Rainwater harvesting mandatory for plots above 2,400 sqft; solar panels required above 20m height.",
+            "parking":     "Parking calculated per BBMP Table 23 based on built-up area and usage type.",
+        }
 
     # ── Return ────────────────────────────────────────────────────
     return {
@@ -523,5 +493,5 @@ Keep each section to 3–5 bullet points. Do NOT repeat input data.
         "projections":        projection_rules,
         "far_exclusions":     FAR_EXCLUSIONS,
         "parking":            parking,
-        "ai_explanation":     explanation
+        "section_summaries":  section_summaries,
     }

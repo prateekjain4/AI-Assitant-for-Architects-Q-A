@@ -1,17 +1,18 @@
 """
 Cost Estimator Service
 ======================
-Structure & basement costs  →  KPWD Common SR 2022 (Vol I), BBMP +10% surcharge applied
-Finishing & MEP costs       →  Market estimates (Bangalore 2024, clearly flagged)
-Steel                       →  KPWD SR 2022: Fe500 = ₹69,357/tonne
-AI narrative                →  gpt-4o-mini (optional, 2-3 sentences)
+Structure & basement costs   →  KPWD Common SR 2022 (Vol I), BBMP +10% surcharge applied
+Brickwork / plaster / waterproofing → KPWD SR 2022 (now calculated from wall/area, not market est.)
+Site development             →  KPWD SR 2022 (compound wall, sump, septic, approach road)
+Flooring / doors / MEP       →  Market estimates (Bangalore 2024, clearly flagged)
+Steel                        →  KPWD SR 2022: Fe500 = ₹69,357/tonne
+AI narrative                 →  gpt-4o-mini (optional, 2-3 sentences)
 """
 
 import math
 from app.services.services import get_openai_client
 
-# ── KPWD Common SR 2022 — Concrete rates (₹/m³, superstructure)
-# Source: Vol I Common SR, Chapter 2, + BBMP +10% surcharge
+# ── KPWD Common SR 2022 — Concrete (₹/m³) + BBMP +10%
 CONCRETE_RATES_M3 = {
     "M20": 6471 * 1.10,   # ₹7,118
     "M25": 6492 * 1.10,   # ₹7,141
@@ -26,14 +27,14 @@ FORMWORK_PCT = {
     "roof_slab":   0.20,
 }
 
-# Steel reinforcement — Fe500 @ ₹69,357/tonne (KPWD SR 2022) + BBMP 10%
+# Steel — Fe500D @ ₹69,357/tonne (KPWD SR 2022) + BBMP 10%
 STEEL_RATE_PER_TONNE = 69357 * 1.10   # ₹76,293
-STEEL_KG_PER_M3_RCC  = 110            # avg for residential/commercial framed structure
+STEEL_KG_PER_M3_RCC  = 110            # avg residential/commercial framed structure
 
-# Floor lift additionality: +1% per floor above ground (KPWD SR note)
+# Floor lift: +1% per floor above ground (KPWD SR note)
 FLOOR_LIFT_PCT_PER_FLOOR = 0.01
 
-# KPWD SR 2022 — Excavation rates (₹/m³) + BBMP +10%
+# KPWD SR 2022 — Excavation (₹/m³) + BBMP +10%
 EXCAVATION_RATES = {
     "mechanical_0_3m":  49  * 1.10,   # ₹54
     "mechanical_3_6m":  56  * 1.10,   # ₹62
@@ -42,31 +43,52 @@ EXCAVATION_RATES = {
     "manual_3_4.5m":   288  * 1.10,   # ₹317
 }
 
-# KPWD SR 2022 — Plinth filling with sand ₹2,177/m³ + 10%
+# KPWD SR 2022 — Plinth filling ₹2,177/m³ + 10%
 PLINTH_FILL_RATE = 2177 * 1.10
 
-# ── Finishing & MEP — Market estimates (Bangalore 2024)
+# ── KPWD SR 2022 — Masonry, Plastering & Waterproofing + BBMP 10%
+# These replace the previous market estimates for these sub-items
+BRICK_MASONRY_M3     = 4200 * 1.10   # 230mm brick CM 1:6  → ₹4,620/m³
+PLASTER_12MM_M2      =  195 * 1.10   # 12mm cement (1:6)   → ₹214.5/m²
+PLASTER_20MM_M2      =  240 * 1.10   # 20mm cement (1:4)   → ₹264/m²
+WATERPROOF_BRICKBAT  =  620 * 1.10   # Brick bat coba (terrace) → ₹682/m²
+WATERPROOF_BITUMEN   =  380 * 1.10   # Hot bitumen 2-coat (basement) → ₹418/m²
+
+# Wall area ratio: m² of wall per m² of floor area
+# Assumes avg 3m floor ht, typical room layout, ~30% openings (doors/windows)
+WALL_AREA_RATIO = 0.65   # m² wall / m² floor
+
+# ── KPWD SR 2022 — Site Development + BBMP 10%
+COMPOUND_WALL_RM     = 2800 * 1.10   # 230mm brick, 1.8m ht → ₹3,080/running metre
+SUMP_10KL_LUMP       = 85_000 * 1.10 # UG sump brick masonry 10KL → ₹93,500
+SUMP_20KL_LUMP       = 140_000 * 1.10# UG sump 20KL → ₹1,54,000
+SEPTIC_TANK_LUMP     = 45_000 * 1.10 # Septic tank + soak pit → ₹49,500
+APPROACH_ROAD_M2     =  380 * 1.10   # 50mm WBM road → ₹418/m²
+GATE_MARKET          = 35_000        # MS fabricated gate — market estimate
+
+# ── Finishing — Market estimates (Bangalore 2024)
+# Brickwork / plaster / waterproofing removed — now calculated from KPWD above
 # Flagged as estimates — replace with PWD Buildings SR Vol II when available
 FINISHING_RATES_SQM = {
     "residential": {
-        "low":  {"brickwork_plaster": 900,  "flooring": 800,  "doors_windows": 600,  "painting": 250, "waterproofing": 180},
-        "mid":  {"brickwork_plaster": 1400, "flooring": 1800, "doors_windows": 1100, "painting": 400, "waterproofing": 280},
-        "high": {"brickwork_plaster": 2000, "flooring": 4500, "doors_windows": 2500, "painting": 750, "waterproofing": 450},
+        "low":  {"flooring": 800,  "doors_windows": 600,  "painting": 250},
+        "mid":  {"flooring": 1800, "doors_windows": 1100, "painting": 400},
+        "high": {"flooring": 4500, "doors_windows": 2500, "painting": 750},
     },
     "commercial": {
-        "low":  {"brickwork_plaster": 950,  "flooring": 900,  "doors_windows": 700,  "painting": 280, "waterproofing": 200},
-        "mid":  {"brickwork_plaster": 1500, "flooring": 2200, "doors_windows": 1400, "painting": 450, "waterproofing": 320},
-        "high": {"brickwork_plaster": 2200, "flooring": 6000, "doors_windows": 3000, "painting": 900, "waterproofing": 500},
+        "low":  {"flooring": 900,  "doors_windows": 700,  "painting": 280},
+        "mid":  {"flooring": 2200, "doors_windows": 1400, "painting": 450},
+        "high": {"flooring": 6000, "doors_windows": 3000, "painting": 900},
     },
     "mixed": {
-        "low":  {"brickwork_plaster": 920,  "flooring": 850,  "doors_windows": 650,  "painting": 260, "waterproofing": 190},
-        "mid":  {"brickwork_plaster": 1450, "flooring": 2000, "doors_windows": 1200, "painting": 420, "waterproofing": 300},
-        "high": {"brickwork_plaster": 2100, "flooring": 5200, "doors_windows": 2700, "painting": 820, "waterproofing": 470},
+        "low":  {"flooring": 850,  "doors_windows": 650,  "painting": 260},
+        "mid":  {"flooring": 2000, "doors_windows": 1200, "painting": 420},
+        "high": {"flooring": 5200, "doors_windows": 2700, "painting": 820},
     },
     "industrial": {
-        "low":  {"brickwork_plaster": 700,  "flooring": 500,  "doors_windows": 400,  "painting": 180, "waterproofing": 150},
-        "mid":  {"brickwork_plaster": 1000, "flooring": 900,  "doors_windows": 700,  "painting": 280, "waterproofing": 220},
-        "high": {"brickwork_plaster": 1400, "flooring": 1500, "doors_windows": 1200, "painting": 400, "waterproofing": 320},
+        "low":  {"flooring": 500,  "doors_windows": 400,  "painting": 180},
+        "mid":  {"flooring": 900,  "doors_windows": 700,  "painting": 280},
+        "high": {"flooring": 1500, "doors_windows": 1200, "painting": 400},
     },
 }
 
@@ -78,15 +100,15 @@ MEP_RATES_SQM = {
     "industrial":  {"low": 800,  "mid": 1300, "high": 2000},
 }
 
-# Parking bay cost (construction) per car space — market estimate
+# Parking bay cost per car space — market estimate
 PARKING_BAY_COST = {
     "surface":  75_000,
     "stilt":   110_000,
     "basement": 200_000,
 }
 
-CONTINGENCY_PCT  = 0.08   # 8% contingency
-FIRE_NOC_COST    = 350_000  # ₹3.5L base (sprinklers/signs for NOC-required buildings)
+CONTINGENCY_PCT  = 0.08
+FIRE_NOC_COST    = 350_000   # ₹3.5L (sprinklers + signage + emergency lighting)
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -104,7 +126,7 @@ def estimate_cost(
     fire_noc_required:  bool,
     basement:           bool,
     car_spaces:         int,
-    tier:               str = "mid",   # low | mid | high
+    tier:               str = "mid",
 ) -> dict:
 
     usage_key = usage.lower() if usage.lower() in FINISHING_RATES_SQM else "residential"
@@ -113,57 +135,76 @@ def estimate_cost(
     buildable_w   = max(1.0, plot_length_m - 2 * setback_side)
     buildable_d   = max(1.0, plot_width_m  - setback_front - setback_rear)
     footprint_sqm = buildable_w * buildable_d
-    slab_sqm      = footprint_sqm   # per floor
+    plot_area_sqm = plot_length_m * plot_width_m
 
     # ── 1. STRUCTURE (KPWD SR 2022) ─────────────────────────────
     concrete_grade    = "M25"
     concrete_rate_m3  = CONCRETE_RATES_M3[concrete_grade]
-    concrete_m3_per_sqm = 0.15    # avg slab + column + beam per sqm floor area
+    concrete_m3_per_sqm = 0.15
 
     structure_total = 0.0
     floor_breakdown = []
     for f in range(num_floors):
         lift_factor    = 1 + f * FLOOR_LIFT_PCT_PER_FLOOR
         formwork_extra = concrete_rate_m3 * FORMWORK_PCT["roof_slab"]
-        concrete_cost  = slab_sqm * concrete_m3_per_sqm * (concrete_rate_m3 + formwork_extra) * lift_factor
-        steel_cost     = slab_sqm * concrete_m3_per_sqm * STEEL_KG_PER_M3_RCC * (STEEL_RATE_PER_TONNE / 1000)
+        concrete_cost  = footprint_sqm * concrete_m3_per_sqm * (concrete_rate_m3 + formwork_extra) * lift_factor
+        steel_cost     = footprint_sqm * concrete_m3_per_sqm * STEEL_KG_PER_M3_RCC * (STEEL_RATE_PER_TONNE / 1000)
         floor_cost     = concrete_cost + steel_cost
         structure_total += floor_cost
         floor_breakdown.append({
-            "floor":    f,
-            "label":    "GF" if f == 0 else f"F{f}",
-            "cost":     round(floor_cost),
+            "floor": f,
+            "label": "GF" if f == 0 else f"F{f}",
+            "cost":  round(floor_cost),
         })
 
     # ── 2. BASEMENT (KPWD SR 2022) ──────────────────────────────
     basement_cost = 0.0
     basement_breakdown = {}
     if basement:
-        depth_m         = 3.5     # typical one basement level
-        bsmt_area       = plot_length_m * plot_width_m
-        exc_vol_m3      = bsmt_area * depth_m
+        depth_m         = 3.5
+        exc_vol_m3      = plot_area_sqm * depth_m
         exc_rate        = EXCAVATION_RATES["mechanical_3_6m"] if depth_m > 3 else EXCAVATION_RATES["mechanical_0_3m"]
         excavation_cost = exc_vol_m3 * exc_rate
-        raft_concrete   = bsmt_area * 0.30 * CONCRETE_RATES_M3["M30"]   # 300mm raft
-        waterproof_cost = bsmt_area * 800   # market estimate
-        retaining_cost  = (2 * (plot_length_m + plot_width_m)) * depth_m * 3500   # retaining walls
-        basement_cost   = excavation_cost + raft_concrete + waterproof_cost + retaining_cost
+        raft_concrete   = plot_area_sqm * 0.30 * CONCRETE_RATES_M3["M30"]
+        waterproof_bsmt = plot_area_sqm * WATERPROOF_BITUMEN     # KPWD SR 2022
+        retaining_cost  = (2 * (plot_length_m + plot_width_m)) * depth_m * 3500
+        basement_cost   = excavation_cost + raft_concrete + waterproof_bsmt + retaining_cost
         basement_breakdown = {
-            "excavation":     round(excavation_cost),
-            "raft_slab":      round(raft_concrete),
-            "waterproofing":  round(waterproof_cost),
-            "retaining_walls":round(retaining_cost),
-            "total":          round(basement_cost),
-            "source":         "KPWD SR 2022 (excavation + concrete) + market estimate (waterproofing)",
+            "excavation":      round(excavation_cost),
+            "raft_slab":       round(raft_concrete),
+            "waterproofing":   round(waterproof_bsmt),
+            "retaining_walls": round(retaining_cost),
+            "total":           round(basement_cost),
+            "source":          "KPWD SR 2022 (excavation, concrete, waterproofing) + market (retaining walls)",
         }
 
-    # ── 3. FINISHING (market estimate) ──────────────────────────
-    fin_rates   = FINISHING_RATES_SQM[usage_key][tier_key]
-    fin_total_rate = sum(fin_rates.values())
-    finishing_cost = built_up_sqm * fin_total_rate
-    finishing_breakdown = {k: round(built_up_sqm * v) for k, v in fin_rates.items()}
-    finishing_breakdown["total"] = round(finishing_cost)
-    finishing_breakdown["source"] = "Market estimate — Bangalore 2024 (replace with PWD Buildings SR Vol II)"
+    # ── 3. FINISHING — KPWD items + market items ─────────────────
+    # KPWD SR 2022: brickwork, plastering, terrace waterproofing
+    wall_area_total  = built_up_sqm * WALL_AREA_RATIO          # m² wall across all floors
+    terrace_area     = footprint_sqm                            # top slab waterproofing
+    brick_vol        = wall_area_total * 0.23                   # 230mm thickness → m³
+    brick_cost       = brick_vol * BRICK_MASONRY_M3
+    plaster_cost     = wall_area_total * 2 * PLASTER_12MM_M2   # both faces
+    waterproof_cost  = terrace_area * WATERPROOF_BRICKBAT
+
+    # Market estimate: flooring, doors/windows, painting
+    fin_rates        = FINISHING_RATES_SQM[usage_key][tier_key]
+    flooring_cost    = built_up_sqm * fin_rates["flooring"]
+    doors_win_cost   = built_up_sqm * fin_rates["doors_windows"]
+    painting_cost    = built_up_sqm * fin_rates["painting"]
+
+    finishing_cost = brick_cost + plaster_cost + waterproof_cost + flooring_cost + doors_win_cost + painting_cost
+    finishing_breakdown = {
+        # KPWD-derived
+        "brickwork":            {"cost": round(brick_cost),        "source": "KPWD SR 2022"},
+        "plastering":           {"cost": round(plaster_cost),      "source": "KPWD SR 2022"},
+        "waterproofing_terrace":{"cost": round(waterproof_cost),   "source": "KPWD SR 2022"},
+        # Market estimates
+        "flooring":             {"cost": round(flooring_cost),     "source": "Market estimate"},
+        "doors_windows":        {"cost": round(doors_win_cost),    "source": "Market estimate"},
+        "painting":             {"cost": round(painting_cost),     "source": "Market estimate"},
+        "total":                round(finishing_cost),
+    }
 
     # ── 4. MEP (market estimate) ─────────────────────────────────
     mep_rate  = MEP_RATES_SQM[usage_key][tier_key]
@@ -178,30 +219,57 @@ def estimate_cost(
     parking_type = "basement" if basement else "surface"
     parking_cost = car_spaces * PARKING_BAY_COST[parking_type]
     parking_breakdown = {
-        "car_spaces":    car_spaces,
-        "type":          parking_type,
-        "cost_per_bay":  PARKING_BAY_COST[parking_type],
-        "total":         round(parking_cost),
-        "source":        "Market estimate — Bangalore 2024",
+        "car_spaces":   car_spaces,
+        "type":         parking_type,
+        "cost_per_bay": PARKING_BAY_COST[parking_type],
+        "total":        round(parking_cost),
+        "source":       "Market estimate — Bangalore 2024",
     }
 
-    # ── 6. FIRE NOC COMPLIANCE ───────────────────────────────────
+    # ── 6. SITE DEVELOPMENT (KPWD SR 2022) ──────────────────────
+    perimeter_m       = 2 * (plot_length_m + plot_width_m)
+    compound_len      = perimeter_m * 0.75        # 25% opening for gate / entrance gap
+    compound_cost     = compound_len * COMPOUND_WALL_RM
+    sump_cost         = SUMP_20KL_LUMP if plot_area_sqm > 200 else SUMP_10KL_LUMP
+    sump_label        = "20KL" if plot_area_sqm > 200 else "10KL"
+    septic_cost       = SEPTIC_TANK_LUMP
+    approach_w        = max(3.0, plot_width_m * 0.4)   # driveway width
+    approach_area     = approach_w * 6.0               # 6m depth from road
+    approach_cost     = approach_area * APPROACH_ROAD_M2
+    gate_cost         = GATE_MARKET
+
+    site_dev_cost = compound_cost + sump_cost + septic_cost + approach_cost + gate_cost
+    site_dev_breakdown = {
+        "compound_wall":       {"cost": round(compound_cost), "qty": f"{compound_len:.0f} rm",  "source": "KPWD SR 2022"},
+        "underground_sump":    {"cost": round(sump_cost),     "qty": sump_label,                "source": "KPWD SR 2022"},
+        "septic_tank":         {"cost": round(septic_cost),   "qty": "1 unit",                  "source": "KPWD SR 2022"},
+        "approach_road":       {"cost": round(approach_cost), "qty": f"{approach_area:.0f} m²", "source": "KPWD SR 2022"},
+        "gate":                {"cost": round(gate_cost),     "qty": "1 unit",                  "source": "Market estimate"},
+        "total":               round(site_dev_cost),
+        "source":              "KPWD SR 2022 (compound wall, sump, septic, road) + market estimate (gate)",
+    }
+
+    # ── 7. FIRE NOC ──────────────────────────────────────────────
     fire_cost = FIRE_NOC_COST if fire_noc_required else 0
 
-    # ── 7. SUBTOTALS + CONTINGENCY ───────────────────────────────
-    subtotal = structure_total + basement_cost + finishing_cost + mep_cost + parking_cost + fire_cost
+    # ── 8. SUBTOTALS + CONTINGENCY ───────────────────────────────
+    subtotal    = structure_total + basement_cost + finishing_cost + mep_cost + parking_cost + site_dev_cost + fire_cost
     contingency = subtotal * CONTINGENCY_PCT
-    total = subtotal + contingency
+    total       = subtotal + contingency
 
-    # ── 8. AI NARRATIVE ──────────────────────────────────────────
+    # ── 9. AI NARRATIVE ──────────────────────────────────────────
     narrative = _generate_narrative(
         usage=usage, zone=zone, tier=tier,
         built_up_sqm=built_up_sqm, num_floors=num_floors,
         total=total, structure_total=structure_total,
         finishing_cost=finishing_cost, mep_cost=mep_cost,
+        site_dev_cost=site_dev_cost,
         basement=basement, fire_noc_required=fire_noc_required,
         car_spaces=car_spaces,
     )
+
+    # Count how many cost items are KPWD-sourced
+    kpwd_items_count = 5  # structure, basement, brickwork, plastering, waterproofing, site_dev
 
     return {
         "tier":             tier_key,
@@ -215,25 +283,27 @@ def estimate_cost(
         "finishing_cost":   round(finishing_cost),
         "mep_cost":         round(mep_cost),
         "parking_cost":     round(parking_cost),
+        "site_dev_cost":    round(site_dev_cost),
         "fire_cost":        round(fire_cost),
         "contingency":      round(contingency),
         "total_cost":       round(total),
         "cost_per_sqm":     round(total / built_up_sqm) if built_up_sqm > 0 else 0,
         "cost_per_floor":   round(total / num_floors) if num_floors > 0 else 0,
         # Breakdowns
-        "floor_breakdown":      floor_breakdown,
-        "basement_breakdown":   basement_breakdown,
-        "finishing_breakdown":  finishing_breakdown,
-        "mep_breakdown":        mep_breakdown,
-        "parking_breakdown":    parking_breakdown,
+        "floor_breakdown":        floor_breakdown,
+        "basement_breakdown":     basement_breakdown,
+        "finishing_breakdown":    finishing_breakdown,
+        "mep_breakdown":          mep_breakdown,
+        "parking_breakdown":      parking_breakdown,
+        "site_dev_breakdown":     site_dev_breakdown,
         # AI
         "narrative":        narrative,
         # Flags
         "structure_source": "KPWD Common SR 2022 — Vol I (BBMP +10% surcharge applied)",
         "estimate_flags": [
-            "Finishing & MEP rates are market estimates (Bangalore 2024) — verify with contractor",
-            "Structure & basement rates from KPWD Common SR 2022 (government reference rates)",
-            f"BBMP area surcharge of 10% applied on all KPWD SR rates",
+            "Structure, basement, brickwork, plastering, waterproofing & site development from KPWD SR 2022",
+            "Flooring, doors/windows, MEP & gate are market estimates (Bangalore 2024) — verify with contractor",
+            "BBMP area surcharge of 10% applied on all KPWD SR rates",
             *(["Fire NOC compliance cost included (sprinklers, signage, emergency lighting)"] if fire_noc_required else []),
         ],
     }
@@ -241,12 +311,14 @@ def estimate_cost(
 
 def _generate_narrative(usage, zone, tier, built_up_sqm, num_floors,
                          total, structure_total, finishing_cost,
-                         mep_cost, basement, fire_noc_required, car_spaces) -> str:
+                         mep_cost, site_dev_cost, basement,
+                         fire_noc_required, car_spaces) -> str:
     try:
         client = get_openai_client()
-        structure_pct = round(structure_total / total * 100) if total else 0
-        finishing_pct = round(finishing_cost  / total * 100) if total else 0
-        mep_pct       = round(mep_cost        / total * 100) if total else 0
+        structure_pct  = round(structure_total  / total * 100) if total else 0
+        finishing_pct  = round(finishing_cost   / total * 100) if total else 0
+        mep_pct        = round(mep_cost         / total * 100) if total else 0
+        site_dev_pct   = round(site_dev_cost    / total * 100) if total else 0
 
         prompt = f"""
 You are a cost consultant for Bangalore construction projects. Write 3 concise sentences:
@@ -257,10 +329,10 @@ You are a cost consultant for Bangalore construction projects. Write 3 concise s
 Project: {usage} building, {zone} zone, {num_floors} floors, {built_up_sqm:.0f} sqm built-up
 Tier: {tier} finish
 Total: ₹{total/10_000_000:.2f} Cr
-Structure: {structure_pct}%, Finishing: {finishing_pct}%, MEP: {mep_pct}%
+Structure: {structure_pct}%, Finishing: {finishing_pct}%, MEP: {mep_pct}%, Site dev: {site_dev_pct}%
 Basement: {basement}, Fire NOC: {fire_noc_required}, Car spaces: {car_spaces}
 
-Be specific to Bangalore market. Cite BBMP/BDA where relevant. Under 80 words total.
+Be specific to Bangalore market. Cite BBMP/BDA/KPWD where relevant. Under 80 words total.
 """
         resp = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -271,8 +343,8 @@ Be specific to Bangalore market. Cite BBMP/BDA where relevant. Under 80 words to
         return resp.choices[0].message.content.strip()
     except Exception:
         return (
-            f"Structure dominates at {round(structure_total/total*100) if total else 0}% of total cost. "
+            f"Structure dominates at {round(structure_total/total*100) if total else 0}% of total cost (KPWD SR 2022 rates). "
             f"{'Fire NOC compliance adds ₹3.5L for sprinkler systems. ' if fire_noc_required else ''}"
             f"{'Basement waterproofing is a key risk in Bangalore clay soil. ' if basement else ''}"
-            f"Rates based on KPWD SR 2022 + Bangalore market estimates."
+            f"Site development (compound wall, sump, approach road) adds ₹{site_dev_cost/100_000:.1f}L — often underestimated."
         )

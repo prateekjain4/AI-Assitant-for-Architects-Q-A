@@ -1,8 +1,8 @@
 import math
 from app.services.services import find_far_rule
 
-FLOOR_HEIGHT_M   = 3.2
-HIGH_RISE_CUTOFF = 11.5
+DEFAULT_FLOOR_HEIGHT_M = 3.2
+HIGH_RISE_CUTOFF       = 11.5
 
 GROUND_COVERAGE = {
     "R":   {12: 70, 18: 65, 24: 60, 9999: 55},
@@ -60,9 +60,10 @@ def _compute_scenario(
     usage: str,
     corner_plot: bool,
     basement: bool,
+    floor_height_m: float = DEFAULT_FLOOR_HEIGHT_M,
 ) -> dict:
 
-    building_height = floors * FLOOR_HEIGHT_M
+    building_height = floors * floor_height_m
     ground_cov_pct  = _get_ground_coverage(zone, road_width)
     max_built_sqft  = round(plot_area_sqft * far, 1)
     front, side, rear = _get_setbacks(plot_area_sqft, building_height, corner_plot)
@@ -77,7 +78,7 @@ def _compute_scenario(
     footprint_high_sqm  = max(0, (plot_length_m - 10)) * max(0, (plot_width_m - 10))
     footprint_high_sqft = round(footprint_high_sqm * 10.7639, 1)
 
-    cutoff_floor = math.ceil(HIGH_RISE_CUTOFF / FLOOR_HEIGHT_M)  # = 4
+    cutoff_floor = math.ceil(HIGH_RISE_CUTOFF / floor_height_m)  # = 4
 
     # Build floor table
     floor_table     = []
@@ -169,9 +170,11 @@ def calculate_scenarios(
     plot_length_m:  float,
     plot_width_m:   float,
     usage:          str,
-    corner_plot:    bool = False,
-    basement:       bool = False,
-    scenarios:      list = None,
+    corner_plot:    bool  = False,
+    basement:       bool  = False,
+    scenarios:      list  = None,
+    floor_height_m: float = DEFAULT_FLOOR_HEIGHT_M,
+    building_height_m: float = 0.0,
 ) -> dict:
 
     far = find_far_rule(f"{road_width}m") or 1.75
@@ -182,12 +185,20 @@ def calculate_scenarios(
 
     plot_area_sqm = round(plot_area_sqft / 10.7639, 2)
 
-    # ── How many floors does FAR actually allow? ──────────────────
+    # ── How many floors does FAR allow? ──────────────────────────
     ground_cov_pct = _get_ground_coverage(zone, road_width)
     footprint_sqm  = plot_area_sqm * (ground_cov_pct / 100)
     max_built_sqm  = plot_area_sqm * far
-    far_max_floors = math.ceil(max_built_sqm / max(footprint_sqm, 1))
-    far_max_floors = max(1, min(far_max_floors, 15))
+    far_max_by_far = math.ceil(max_built_sqm / max(footprint_sqm, 1))
+
+    # ── How many floors does building height allow? ───────────────
+    fh = floor_height_m or DEFAULT_FLOOR_HEIGHT_M
+    if building_height_m and building_height_m > 0:
+        far_max_by_height = max(1, math.floor(building_height_m / fh))
+    else:
+        far_max_by_height = 15   # no height cap supplied — use FAR only
+
+    far_max_floors = max(1, min(far_max_by_far, far_max_by_height, 15))
 
     if not scenarios:
         scenarios = [2, 3, 4, 5]
@@ -201,13 +212,15 @@ def calculate_scenarios(
             plot_length_m=plot_length_m, plot_width_m=plot_width_m,
             far=far, road_width=road_width, zone=zone,
             usage=usage, corner_plot=corner_plot, basement=basement,
+            floor_height_m=fh,
         )
-        # ── Mark FAR-exceeded scenarios ───────────────────────────
+        # ── Mark FAR-exceeded or height-exceeded scenarios ────────
         s["exceeds_far"]    = floors > far_max_floors
         s["far_max_floors"] = far_max_floors
         if s["exceeds_far"]:
+            reason = "FAR" if far_max_by_far <= far_max_by_height else "building height"
             s["warnings"].insert(0,
-                f"Exceeds FAR {far} — only {far_max_floors} floors "
+                f"Exceeds {reason} limit — only {far_max_floors} floors "
                 f"(G+{far_max_floors-1}) are viable on this {plot_area_sqm:.0f} sqm plot"
             )
         results.append(s)

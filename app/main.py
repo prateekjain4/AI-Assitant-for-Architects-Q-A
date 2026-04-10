@@ -95,15 +95,17 @@ def generate_report(data: dict):
 @app.post("/scenarios")
 def get_scenarios(request: ScenarioRequest):
     return calculate_scenarios(
-        zone           = request.zone,     
-        road_width     = request.road_width,
-        plot_area_sqft = request.plot_area_sqft,
-        plot_length_m  = request.plot_length_m,
-        plot_width_m   = request.plot_width_m,
-        usage          = request.usage,
-        corner_plot    = request.corner_plot,
-        basement       = request.basement,
-        scenarios      = request.scenarios,
+        zone              = request.zone,
+        road_width        = request.road_width,
+        plot_area_sqft    = request.plot_area_sqft,
+        plot_length_m     = request.plot_length_m,
+        plot_width_m      = request.plot_width_m,
+        usage             = request.usage,
+        corner_plot       = request.corner_plot,
+        basement          = request.basement,
+        scenarios         = request.scenarios,
+        floor_height_m    = request.floor_height_m,
+        building_height_m = request.building_height_m,
     )
 
 
