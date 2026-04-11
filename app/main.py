@@ -16,8 +16,17 @@ from app.model.parking_request import ParkingRequest
 from app.services.parking_service import calculate_parking
 from app.services.floor_plan_service import generate_floor_plan
 from app.services.cost_estimator_service import estimate_cost
+from app.routers.auth import router as auth_router
+from app.db.database import engine
+from app.model import db_models
+
+# Create DB tables on startup (SQLite file: bylaw_app.db)
+db_models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AI Bylaw Monitor API")
+
+# Auth routes
+app.include_router(auth_router)
 
 class QuestionRequest(BaseModel):
     question: str   

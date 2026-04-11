@@ -288,21 +288,168 @@ def generate_planning_report(data: dict) -> bytes:
         """,
         styles['Normal']
     ))
-    # ── AI Explanation ────────────────────────────────────────────
-    section_heading('Regulatory Analysis')
-    ai_text = data.get('ai_explanation', '')
-    # Split into paragraphs and render each
-    for para in ai_text.split('\n'):
-        para = para.strip()
-        if not para:
-            story.append(Spacer(1, 2*mm))
-            continue
-        # Bold numbered headings like "1. **SETBACK ANALYSIS**"
-        para = para.replace('**', '')
+    # ── Section AI Summaries ──────────────────────────────────────
+    section_summaries = data.get('section_summaries', {})
+    if section_summaries:
+        section_heading('AI Regulatory Summaries')
+        labels = {
+            'setbacks':    'Setbacks',
+            'far':         'FAR & Built-up',
+            'staircase':   'Staircase & Lift',
+            'projections': 'Balcony & Projections',
+            'basement':    'Basement',
+            'fire':        'Fire Safety',
+            'compliance':  'Mandatory Compliance',
+            'parking':     'Parking',
+        }
+        for key, label in labels.items():
+            val = section_summaries.get(key)
+            if val:
+                story.append(Paragraph(
+                    f'<font size="8" color="#1d4ed8"><b>{label}:</b></font> '
+                    f'<font size="8" color="#374151">{val}</font>',
+                    ParagraphStyle('airow', leading=13, spaceBefore=2, parent=styles['Normal'])
+                ))
+
+    # ── Scenario Comparison ───────────────────────────────────────
+    scenarios_data = data.get('scenarios', {})
+    if scenarios_data and scenarios_data.get('scenarios'):
+        section_heading('Scenario Comparison')
+        sc_header = ['Scenario', 'Built-up (sqft)', 'Height (m)', 'FAR Used', 'Fire NOC', 'Lift', 'Parking (cars)']
+        sc_rows   = [sc_header]
+        recommended = scenarios_data.get('recommended', '')
+        for s in scenarios_data['scenarios']:
+            label     = s.get('label', '')
+            is_rec    = '★ ' + label if label == recommended else label
+            noc       = 'Yes' if s.get('fire_noc_required') else 'No'
+            lift      = 'Yes' if s.get('lift_mandatory') else 'No'
+            exceeds   = ' ⚠' if s.get('exceeds_far') else ''
+            sc_rows.append([
+                is_rec,
+                f"{s.get('total_built_sqft', 0):,.0f}{exceeds}",
+                str(s.get('building_height_m', '-')),
+                f"{s.get('far_efficiency_pct', 0)}%",
+                noc,
+                lift,
+                str(s.get('parking_car', '-')),
+            ])
+        sc_table = Table(sc_rows, colWidths=[22*mm, 30*mm, 22*mm, 20*mm, 20*mm, 16*mm, 30*mm])
+        sc_table.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0), (-1,0),  PRIMARY),
+            ('TEXTCOLOR',     (0,0), (-1,0),  colors.white),
+            ('FONTSIZE',      (0,0), (-1,-1), 8),
+            ('FONTNAME',      (0,0), (-1,0),  'Helvetica-Bold'),
+            ('ROWBACKGROUNDS',(0,1), (-1,-1), [colors.white, SECONDARY]),
+            ('BOX',           (0,0), (-1,-1), 0.5, BORDER),
+            ('INNERGRID',     (0,0), (-1,-1), 0.3, BORDER),
+            ('TOPPADDING',    (0,0), (-1,-1), 5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+            ('LEFTPADDING',   (0,0), (-1,-1), 6),
+            ('ALIGN',         (1,0), (-1,-1), 'CENTER'),
+        ]))
+        story.append(sc_table)
         story.append(Paragraph(
-            f'<font size="9" color="#1e293b">{para}</font>',
-            ParagraphStyle('body', leading=14, parent=styles['Normal'])
+            f'<font size="8" color="#64748b">★ = Recommended scenario  ·  ⚠ = Exceeds FAR/height limit  ·  '
+            f'FAR {scenarios_data.get("far", "")} on {scenarios_data.get("road_width", "")}m road</font>',
+            ParagraphStyle('sc_note', spaceBefore=3, parent=styles['Normal'])
         ))
+
+    # ── Cost Estimate ─────────────────────────────────────────────
+    cost_data = data.get('cost_estimate', {})
+    if cost_data and cost_data.get('total_cost'):
+        section_heading('Contractor & Cost Estimate')
+
+        def fmt_cr(val):
+            if not val: return '—'
+            if val >= 10_000_000: return f'₹{val/10_000_000:.2f} Cr'
+            if val >= 100_000:    return f'₹{val/100_000:.1f} L'
+            return f'₹{val:,.0f}'
+
+        tier_label = {'low': 'Basic', 'mid': 'Standard', 'high': 'Premium'}.get(cost_data.get('tier','mid'), 'Standard')
+        story.append(Paragraph(
+            f'<font size="8" color="#64748b">Finish tier: <b>{tier_label}</b>  ·  '
+            f'Structure & basement: KPWD SR 2022 + BBMP 10%  ·  Finishing & MEP: Market estimates</font>',
+            styles['Normal']
+        ))
+        story.append(Spacer(1, 2*mm))
+
+        cost_header = ['Cost Component', 'Amount', 'Source']
+        cost_rows   = [cost_header]
+        components  = [
+            ('Structure',       cost_data.get('structure_cost', 0),  'KPWD SR 2022'),
+            ('Basement',        cost_data.get('basement_cost', 0),   'KPWD SR 2022'),
+            ('Finishing',       cost_data.get('finishing_cost', 0),  'Market estimate'),
+            ('MEP',             cost_data.get('mep_cost', 0),        'Market estimate'),
+            ('Site Development',cost_data.get('site_dev_cost', 0),   'KPWD SR 2022'),
+            ('Parking',         cost_data.get('parking_cost', 0),    'Market estimate'),
+            ('Fire/Safety',     cost_data.get('fire_cost', 0),       'Market estimate'),
+            ('Contingency (8%)',cost_data.get('contingency', 0),     ''),
+        ]
+        for name, val, source in components:
+            if val and val > 0:
+                cost_rows.append([name, fmt_cr(val), source])
+
+        # Total row
+        cost_rows.append(['TOTAL ESTIMATE', fmt_cr(cost_data.get('total_cost', 0)),
+                          f"₹{cost_data.get('cost_per_sqm', 0):,}/sqm"])
+
+        ct = Table(cost_rows, colWidths=[70*mm, 50*mm, 50*mm])
+        ct.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0),  (-1,0),   PRIMARY),
+            ('TEXTCOLOR',     (0,0),  (-1,0),   colors.white),
+            ('BACKGROUND',    (0,-1), (-1,-1),  DARK),
+            ('TEXTCOLOR',     (0,-1), (-1,-1),  colors.white),
+            ('FONTNAME',      (0,0),  (-1,0),   'Helvetica-Bold'),
+            ('FONTNAME',      (0,-1), (-1,-1),  'Helvetica-Bold'),
+            ('FONTSIZE',      (0,0),  (-1,-1),  9),
+            ('ROWBACKGROUNDS',(0,1),  (-1,-2),  [colors.white, SECONDARY]),
+            ('BOX',           (0,0),  (-1,-1),  0.5, BORDER),
+            ('INNERGRID',     (0,0),  (-1,-1),  0.3, BORDER),
+            ('TOPPADDING',    (0,0),  (-1,-1),  6),
+            ('BOTTOMPADDING', (0,0),  (-1,-1),  6),
+            ('LEFTPADDING',   (0,0),  (-1,-1),  8),
+        ]))
+        story.append(ct)
+
+        # Payment milestones
+        story.append(Spacer(1, 3*mm))
+        story.append(Paragraph(
+            '<font size="9" color="#1e293b"><b>Payment Milestone Schedule</b></font>',
+            styles['Normal']
+        ))
+        total_cost = cost_data.get('total_cost', 0)
+        milestones = [
+            ('1. Mobilisation & Foundation',  15),
+            ('2. Plinth & Ground Floor Slab', 25),
+            ('3. Structure & Brickwork',       20),
+            ('4. Finishing & Interiors',       30),
+            ('5. Handover & Completion',       10),
+        ]
+        ms_header = ['Stage', '%', 'Amount']
+        ms_rows   = [ms_header] + [[name, f'{pct}%', fmt_cr(total_cost * pct / 100)] for name, pct in milestones]
+        ms_table  = Table(ms_rows, colWidths=[95*mm, 20*mm, 55*mm])
+        ms_table.setStyle(TableStyle([
+            ('BACKGROUND',    (0,0), (-1,0),  DARK),
+            ('TEXTCOLOR',     (0,0), (-1,0),  colors.white),
+            ('FONTSIZE',      (0,0), (-1,-1), 8),
+            ('FONTNAME',      (0,0), (-1,0),  'Helvetica-Bold'),
+            ('ROWBACKGROUNDS',(0,1), (-1,-1), [colors.white, SECONDARY]),
+            ('BOX',           (0,0), (-1,-1), 0.5, BORDER),
+            ('INNERGRID',     (0,0), (-1,-1), 0.3, BORDER),
+            ('TOPPADDING',    (0,0), (-1,-1), 5),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+            ('LEFTPADDING',   (0,0), (-1,-1), 8),
+            ('ALIGN',         (1,0), (2,-1),  'CENTER'),
+        ]))
+        story.append(ms_table)
+
+        if cost_data.get('narrative'):
+            story.append(Spacer(1, 2*mm))
+            story.append(Paragraph(
+                f'<font size="8" color="#7c3aed">✦ </font>'
+                f'<font size="8" color="#374151">{cost_data["narrative"]}</font>',
+                ParagraphStyle('narrative', leading=12, parent=styles['Normal'])
+            ))
 
     # ── Footer ────────────────────────────────────────────────────
     story.append(Spacer(1, 8*mm))
