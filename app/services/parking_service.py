@@ -58,8 +58,10 @@ def calculate_parking(
     Calculate mandatory parking per BBMP Table 23 and
     generate a layout plan showing how spaces fit.
     """
-    usage     = usage.lower()
-    rules     = PARKING_RULES.get(usage, PARKING_RULES["residential"])
+    usage     = usage.lower().strip() if usage else "residential"
+    if usage not in PARKING_RULES:
+        usage = "residential"
+    rules     = PARKING_RULES[usage]
     built_sqm = built_up_sqft / 10.7639
 
     # ── Calculate required spaces ─────────────────────────────────

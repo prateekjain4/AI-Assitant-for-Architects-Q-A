@@ -1,0 +1,258 @@
+[
+  {
+    "key": "far.R.9",
+    "question": "What is the Floor Area Ratio (FAR) for R residential zone on a road width up to 9 metres in Bangalore BBMP bylaws?",
+    "expected": 1.5,
+    "extracted": 1.75,
+    "match": false,
+    "raw_answer": "The permissible FAR according to BDA zoning regulations is approximately 1.75."
+  },
+  {
+    "key": "far.R.12",
+    "question": "What is the FAR for R residential zone on a 12 metre road in Bangalore BBMP bylaws?",
+    "expected": 1.75,
+    "extracted": 1.75,
+    "match": true,
+    "raw_answer": "The permissible FAR according to BDA zoning regulations is approximately 1.75."
+  },
+  {
+    "key": "far.R.24",
+    "question": "What is the FAR for R residential zone on a 24 metre road in Bangalore BBMP bylaws?",
+    "expected": 2.25,
+    "extracted": 2.5,
+    "match": false,
+    "raw_answer": "The permissible FAR according to BDA zoning regulations is approximately 2.5."
+  },
+  {
+    "key": "far.R.9999",
+    "question": "What is the maximum FAR for R residential zone on roads above 30 metres in Bangalore?",
+    "expected": 2.5,
+    "extracted": 3.0,
+    "match": false,
+    "raw_answer": "The permissible FAR according to BDA zoning regulations is approximately 3.0."
+  },
+  {
+    "key": "far.C1.24",
+    "question": "What is the FAR for C1 commercial zone on a 24 metre road in Bangalore BBMP bylaws?",
+    "expected": 2.5,
+    "extracted": 2.5,
+    "match": true,
+    "raw_answer": "The permissible FAR according to BDA zoning regulations is approximately 2.5."
+  },
+  {
+    "key": "far.C1.9999",
+    "question": "What is the FAR for C1 commercial zone on roads above 30 metres in Bangalore?",
+    "expected": 3.25,
+    "extracted": 3.0,
+    "match": false,
+    "raw_answer": "The permissible FAR according to BDA zoning regulations is approximately 3.0."
+  },
+  {
+    "key": "far.C2.9999",
+    "question": "What is the maximum FAR for C2 commercial zone in Bangalore BBMP bylaws?",
+    "expected": 3.5,
+    "extracted": 1.75,
+    "match": false,
+    "raw_answer": "The permissible FAR according to BDA zoning regulations is approximately 1.75."
+  },
+  {
+    "key": "far.IT.9999",
+    "question": "What is the FAR for IT zone on wide roads in Bangalore BBMP bylaws?",
+    "expected": 3.0,
+    "extracted": null,
+    "match": null,
+    "raw_answer": ""
+  },
+  {
+    "key": "ground_coverage.R.12",
+    "question": "What is the maximum ground coverage percentage for R zone on roads up to 12 metres in Bangalore BBMP bylaws?",
+    "expected": 70,
+    "extracted": 1.75,
+    "match": false,
+    "raw_answer": "The permissible FAR according to BDA zoning regulations is approximately 1.75."
+  },
+  {
+    "key": "ground_coverage.R.24",
+    "question": "What is the maximum ground coverage percentage for R zone on a 24 metre road in Bangalore?",
+    "expected": 60,
+    "extracted": 2.5,
+    "match": false,
+    "raw_answer": "The permissible FAR according to BDA zoning regulations is approximately 2.5."
+  },
+  {
+    "key": "ground_coverage.C1.24",
+    "question": "What is the maximum ground coverage percentage for C1 commercial zone on a 24 metre road in Bangalore?",
+    "expected": 55,
+    "extracted": 2.5,
+    "match": false,
+    "raw_answer": "The permissible FAR according to BDA zoning regulations is approximately 2.5."
+  },
+  {
+    "key": "ground_coverage.IT.9999",
+    "question": "What is the ground coverage percentage for IT zone on wide roads in Bangalore BBMP bylaws?",
+    "expected": 40,
+    "extracted": 20,
+    "match": false,
+    "raw_answer": "The provided sections do not contain specific information regarding the ground coverage percentage for the IT zone on wide roads in Bangalore BBMP bylaws. The sections primarily discuss regulations related to commercial land use, FAR, and ground coverage for plots/sites up to 20,000 sqm in Planning "
+  },
+  {
+    "key": "setbacks.small_plot.front",
+    "question": "What is the front setback required for small residential plots below 1500 sqft in Bangalore BBMP bylaws?",
+    "expected": 3.0,
+    "extracted": 1500,
+    "match": false,
+    "raw_answer": "The front setback required for small residential plots below 1500 sqft in Bangalore according to the BBMP bylaws is determined by the building lines prescribed for various roads and the specific requirements for setbacks.\n\n1. **Building Lines**: According to Section 73, building lines are prescribed"
+  },
+  {
+    "key": "setbacks.standard_plot.front",
+    "question": "What is the front setback required for plots above 1500 sqft in Bangalore BBMP bylaws?",
+    "expected": 4.0,
+    "extracted": 1500,
+    "match": false,
+    "raw_answer": "The front setback required for plots above 1500 sqft in Bangalore BBMP bylaws is determined by the height of the building and the specific regulations outlined in the bylaws.\n\n1. **General Requirement**: According to Section 24, Note 4, the front setback or building line must be the higher of the tw"
+  },
+  {
+    "key": "setbacks.standard_plot.side",
+    "question": "What is the side setback for standard plots in Bangalore BBMP bylaws?",
+    "expected": 1.5,
+    "extracted": 7,
+    "match": false,
+    "raw_answer": "The side setback for standard plots in Bangalore, according to the BBMP bylaws, is determined by the requirements for semi-detached buildings. Specifically, Section 7 states:\n\n\"On a plot on which a semi detached building side is proposed the left and the right side setbacks shall be the same as requ"
+  },
+  {
+    "key": "setbacks.standard_plot.rear",
+    "question": "What is the rear setback for standard plots in Bangalore BBMP bylaws?",
+    "expected": 2.0,
+    "extracted": 24,
+    "match": false,
+    "raw_answer": "The rear setback for standard plots in Bangalore according to the BBMP bylaws is determined by the depth of the site. Specifically, Section 24, Note 3(a) states that \"the front and rear set backs shall be with reference to the depth of the site.\" \n\nHowever, the specific dimensions for rear setbacks "
+  },
+  {
+    "key": "setbacks.high_rise_threshold_m",
+    "question": "At what building height do setbacks increase to 5 metres on all sides in Bangalore BBMP bylaws?",
+    "expected": 11.5,
+    "extracted": 5,
+    "match": false,
+    "raw_answer": "According to the Bangalore BBMP bylaws, setbacks increase to 5 metres on all sides when the height of the building exceeds 24 metres. This is inferred from Table 4 in Section 21, which specifies that for buildings over 24 metres in height, the front setback is 5.00 metres, and the side setbacks are "
+  },
+  {
+    "key": "setbacks.high_rise.all_sides",
+    "question": "What is the required setback on all sides for buildings above 11.5 metres in Bangalore?",
+    "expected": 5.0,
+    "extracted": 11.5,
+    "match": false,
+    "raw_answer": "For buildings exceeding 11.5 metres in height in Bangalore, the required setbacks on all sides are as follows:\n\n1. **Front Setback**: The minimum required front setback is 8.0 metres, but if the height of the building exceeds 9.5 metres, the setback must be the higher of the two specified in Tables "
+  },
+  {
+    "key": "fire_noc.height_threshold_m",
+    "question": "At what building height is a Fire NOC from KSFES mandatory in Bangalore?",
+    "expected": 15.0,
+    "extracted": null,
+    "match": null,
+    "raw_answer": "The provided sections do not specify the exact building height at which a Fire NOC (No Objection Certificate) from KSFES (Karnataka State Fire and Emergency Services) is mandatory in Bangalore. Therefore, based on the available information, I cannot provide a definitive answer regarding the specific"
+  },
+  {
+    "key": "fire_noc.strict_height_m",
+    "question": "At what building height are stricter fire requirements like fire command centre and refuge area mandatory in Bangalore?",
+    "expected": 24.0,
+    "extracted": 1,
+    "match": false,
+    "raw_answer": "Stricter fire requirements, including the establishment of a Fire Command Centre (FCC) and the provision of a refuge area, are mandated for high-rise buildings. Specifically, the requirements for these provisions are detailed in the following sections:\n\n1. **Fire Command Centre (FCC)**: A separate c"
+  },
+  {
+    "key": "fire_noc.commercial_bua_threshold_sqm",
+    "question": "What is the minimum built-up area for commercial buildings that triggers mandatory Fire NOC in Bangalore regardless of height?",
+    "expected": 500,
+    "extracted": 500,
+    "match": true,
+    "raw_answer": "The minimum built-up area for commercial buildings that triggers mandatory Fire NOC (No Objection Certificate) in Bangalore, regardless of height, is 500 square meters. This requirement is specified in Section 90 of the National Building Code of India 2016, which outlines the fire protection systems"
+  },
+  {
+    "key": "staircase.below_high_rise_min_width_m",
+    "question": "What is the minimum staircase width for buildings below 11.5 metres in Bangalore BBMP bylaws?",
+    "expected": 1.0,
+    "extracted": 11.5,
+    "match": false,
+    "raw_answer": "The minimum staircase width for buildings below 11.5 metres in Bangalore BBMP bylaws is as follows:\n\n1. For residential buildings (dwellings), the minimum width of staircases is **1.0 metre** (Section 20.6 (1)(a)).\n2. For all other buildings, which includes buildings not specified under residential,"
+  },
+  {
+    "key": "staircase.above_high_rise_min_width_m",
+    "question": "What is the minimum staircase width for buildings above 11.5 metres in Bangalore?",
+    "expected": 1.2,
+    "extracted": 11.5,
+    "match": false,
+    "raw_answer": "The minimum staircase width for buildings above 11.5 metres in Bangalore is 1.5 metres. This requirement is specified in Section 20.6 of the BBMP Bye-Laws, which states that for \"all other buildings,\" the minimum width of staircases shall be 1.5 metres. \n\nAdditionally, Section 8 of Part V - Miscella"
+  },
+  {
+    "key": "staircase.lift_mandatory_above_floors",
+    "question": "Above how many floors is a lift mandatory in Bangalore BBMP bylaws?",
+    "expected": 4,
+    "extracted": 15,
+    "match": false,
+    "raw_answer": "In Bangalore BBMP bylaws, a lift is mandatory for buildings that are either 15 meters in height or have more than ground plus three floors. This requirement is specified in Section 20.7 of Part III - General Building Requirements, which states:\n\n\"Provision of lifts shall be made for all buildings wi"
+  },
+  {
+    "key": "staircase.dual_staircase_bua_threshold_sqft",
+    "question": "What is the minimum built-up area that requires two staircases in Bangalore BBMP bylaws?",
+    "expected": 2000,
+    "extracted": null,
+    "match": null,
+    "raw_answer": "The provided sections do not explicitly state the minimum built-up area that requires two staircases in Bangalore BBMP bylaws. Therefore, based on the information available, I cannot provide a specific answer regarding the minimum built-up area requirement for two staircases. \n\nIf you have any furth"
+  },
+  {
+    "key": "basement.max_depth_m",
+    "question": "What is the maximum permitted depth for a basement in Bangalore BBMP bylaws?",
+    "expected": 3.6,
+    "extracted": 18.7,
+    "match": false,
+    "raw_answer": "The maximum permitted depth for a basement in Bangalore BBMP bylaws is not explicitly stated in the provided sections. However, we can infer relevant information regarding the height of the basement.\n\nAccording to Section 18.7, every basement storey must be at least 2.4 meters in height from the flo"
+  },
+  {
+    "key": "basement.max_number",
+    "question": "How many basement levels are permitted under BBMP bylaws in Bangalore?",
+    "expected": 2,
+    "extracted": 500,
+    "match": false,
+    "raw_answer": "Under the BBMP bylaws in Bangalore, one basement level is permitted in the intensely populated area (A Zone) specifically for parking purposes. This is allowed only if the area of the premises is 500 square meters or more and the minimum road width is 12 meters. \n\nThis information is detailed in Sec"
+  },
+  {
+    "key": "projections.balcony_max_projection_m",
+    "question": "What is the maximum allowed balcony projection in Bangalore BBMP bylaws?",
+    "expected": 1.5,
+    "extracted": 1,
+    "match": false,
+    "raw_answer": "The maximum allowed balcony projection in Bangalore BBMP bylaws is as follows:\n\n1. For the first floor, the cantilever projection of the balcony shall not exceed 1.1 meters.\n2. For the second floor and above, the cantilever projection shall not exceed 1.75 meters.\n\nThis information is specified in S"
+  },
+  {
+    "key": "projections.chajja_max_projection_m",
+    "question": "What is the maximum projection for a chajja or sun shade in Bangalore BBMP bylaws?",
+    "expected": 0.75,
+    "extracted": 14.1,
+    "match": false,
+    "raw_answer": "According to the Bangalore BBMP bylaws, specifically in PART III - GENERAL BUILDING REQUIREMENTS - Section 14.1, the maximum projection for a chajja or sun shade is limited to 0.75 metres wide or 1/3 of the open space, whichever is less. \n\nThis means that if the open space is less than 2.25 metres w"
+  },
+  {
+    "key": "projections.balcony_far_exclusion_max_pct_of_floor_area",
+    "question": "What percentage of floor area can balconies occupy to be excluded from FAR calculation in Bangalore?",
+    "expected": 20,
+    "extracted": null,
+    "match": null,
+    "raw_answer": "The provided sections do not specify any percentage of floor area that balconies can occupy to be excluded from the Floor Area Ratio (FAR) calculation in Bangalore. The sections primarily outline the definitions and exclusions related to FAR but do not mention balconies specifically.\n\nTherefore, bas"
+  },
+  {
+    "key": "parking.residential.car_per_unit_sqm",
+    "question": "How many square metres per car parking space is required for residential buildings per BBMP Table 23?",
+    "expected": 50,
+    "extracted": 16.0,
+    "match": false,
+    "raw_answer": "According to the BBMP building regulations, specifically Section 16.0, each off-street car parking space provided for motor vehicles shall not be less than 18 square meters (3 meters x 6 meters). \n\nThis requirement is explicitly stated in Section 16.0(a), which outlines the standards for parking spa"
+  },
+  {
+    "key": "parking.commercial.car_per_100sqm",
+    "question": "How many car parking spaces are required per 100 sqm for commercial buildings per BBMP Table 23?",
+    "expected": 3,
+    "extracted": 100,
+    "match": false,
+    "raw_answer": "The required number of car parking spaces for commercial buildings per 100 sqm is not explicitly stated in the provided sections. However, we can infer from Section 14, which mentions that for public and semi-public buildings (which includes commercial buildings), a minimum of 10% additional parking"
+  }
+]

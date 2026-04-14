@@ -1,52 +1,32 @@
 import math
-from app.services.services import find_far_rule
+from app.services.city_rules_engine import get_far, get_setbacks, lift_mandatory_floors
 
 DEFAULT_FLOOR_HEIGHT_M = 3.2
-HIGH_RISE_CUTOFF       = 11.5
 
-GROUND_COVERAGE = {
-    "R":   {12: 70, 18: 65, 24: 60, 9999: 55},
-    "RM":  {12: 70, 18: 65, 24: 60, 9999: 55},
-    "C1":  {12: 65, 18: 60, 24: 55, 9999: 50},
-    "C2":  {12: 60, 18: 55, 24: 55, 9999: 50},
-    "C3":  {12: 60, 18: 55, 24: 55, 9999: 50},
-    "IT":  {12: 50, 18: 50, 24: 45, 9999: 40},
-    "PSP": {12: 40, 18: 40, 24: 40, 9999: 40},
-}
-
-def _get_ground_coverage(zone: str, road_width: float) -> int:
-    zone_map = GROUND_COVERAGE.get(zone.upper(), GROUND_COVERAGE["R"])
-    for threshold in sorted(zone_map.keys()):
-        if road_width <= threshold:
-            return zone_map[threshold]
-    return 55
-
-def _get_setbacks(plot_area: float, building_height: float, corner_plot: bool):
-    if plot_area < 1500:
-        front, side, rear = 3.0, 1.0, 1.0
-    else:
-        front, side, rear = 4.0, 1.5, 2.0
-    if building_height > HIGH_RISE_CUTOFF:
-        front = max(front, 5.0)
-        side  = max(side,  5.0)
-        rear  = max(rear,  5.0)
-    if corner_plot:
-        side = max(1.0, side - 1.0)
-    return front, side, rear
-
-def _fire_rules(height: float, max_built: float, usage: str):
+# ── Fire rules ─────────────────────────────────────────────────────────────────
+def _fire_rules(height: float, max_built_sqm: float, usage: str):
+    """
+    BDA / NBC 2016 fire thresholds.
+    max_built_sqm: total built-up area in sqm (used for commercial threshold).
+    """
     rules = []
     noc   = False
+
     if height > 15:
         noc = True
         rules += ["Fire NOC from KSFES", "Sprinkler system", "Fire lift", "Wet riser"]
     if height > 24:
         rules += ["Fire command centre", "2 separate staircases", "Refuge area every 7 floors"]
-    if not noc and max_built > 500 and usage.lower() == "commercial":
+
+    # BDA RMP 2031: non-residential ≥ 5,000 sqm BUA → fire arrangements required
+    if not noc and max_built_sqm >= 5000 and usage.lower() in ("commercial", "mixed"):
         noc = True
-        rules.append("Fire NOC (commercial >500 sqm)")
+        rules.append("Fire NOC (non-residential BUA ≥ 5,000 sqm)")
+
     return noc, rules
 
+
+# ── Scenario compute ────────────────────────────────────────────────────────────
 def _compute_scenario(
     label: str,
     floors: int,
@@ -60,83 +40,78 @@ def _compute_scenario(
     usage: str,
     corner_plot: bool,
     basement: bool,
+    gc_pct: int,
     floor_height_m: float = DEFAULT_FLOOR_HEIGHT_M,
 ) -> dict:
 
     building_height = floors * floor_height_m
-    ground_cov_pct  = _get_ground_coverage(zone, road_width)
     max_built_sqft  = round(plot_area_sqft * far, 1)
-    front, side, rear = _get_setbacks(plot_area_sqft, building_height, corner_plot)
+    max_built_sqm   = round(plot_area_sqm  * far, 2)
 
-    # Footprint — lower floors (below cutoff)
-    max_footprint_gc   = plot_area_sqm * (ground_cov_pct / 100)
-    footprint_setback  = max(0, (plot_length_m - front - rear)) * max(0, (plot_width_m - side * 2))
-    footprint_low_sqm  = min(max_footprint_gc, footprint_setback)
-    footprint_low_sqft = round(footprint_low_sqm * 10.7639, 1)
+    # Setbacks: BDA RMP 2031 progressive table (uniform for all floors)
+    sb = get_setbacks(plot_area_sqm, building_height, road_width, corner_plot)
+    front, side, rear = sb["front"], sb["side"], sb["rear"]
 
-    # Footprint — upper floors (above 11.5m cutoff → 5m all sides)
-    footprint_high_sqm  = max(0, (plot_length_m - 10)) * max(0, (plot_width_m - 10))
-    footprint_high_sqft = round(footprint_high_sqm * 10.7639, 1)
+    # Footprint = min(ground coverage cap, setback-constrained area)
+    footprint_gc  = plot_area_sqm * (gc_pct / 100)
+    footprint_sb  = max(0.0, plot_length_m - front - rear) * max(0.0, plot_width_m - side * 2)
+    footprint_sqm = min(footprint_gc, footprint_sb)
+    footprint_sqft = round(footprint_sqm * 10.7639, 1)
 
-    cutoff_floor = math.ceil(HIGH_RISE_CUTOFF / floor_height_m)  # = 4
-
-    # Build floor table
-    floor_table     = []
-    cumulative      = 0.0
-    remaining_far   = max_built_sqft
-
+    # Build floor table — uniform footprint; cap at remaining FAR headroom
+    floor_table   = []
+    remaining_far = max_built_sqft
     for i in range(floors):
-        is_high = i >= cutoff_floor
-        fp      = footprint_high_sqft if is_high else footprint_low_sqft
-        area    = round(min(fp, max(0, remaining_far)), 1)
-        cumulative    += area
+        area = round(min(footprint_sqft, max(0.0, remaining_far)), 1)
         remaining_far -= area
         floor_table.append({
-            "floor":        i,
-            "label":        "Ground" if i == 0 else f"Floor {i}",
-            "area_sqft":    area,
-            "area_sqm":     round(area / 10.7639, 1),
-            "is_high_rise": is_high,
-            "setback_rule": "5m all sides" if is_high else f"F:{front}m R:{rear}m S:{side}m",
+            "floor":     i,
+            "label":     "Ground" if i == 0 else f"Floor {i}",
+            "area_sqft": area,
+            "area_sqm":  round(area / 10.7639, 1),
+            "is_high_rise": False,          # BDA: no mid-building setback change
+            "setback_rule": f"F:{front}m R:{rear}m S:{side}m",
         })
 
-    total_built = round(sum(f["area_sqft"] for f in floor_table), 1)
-    far_used    = round(total_built / (plot_area_sqft or 1), 2)
+    total_built     = round(sum(f["area_sqft"] for f in floor_table), 1)
+    total_built_sqm = round(total_built / 10.7639, 2)
+    far_used        = round(total_built / (plot_area_sqft or 1), 2)
 
-    fire_noc, fire_reqs = _fire_rules(building_height, total_built, usage)
+    fire_noc, fire_reqs = _fire_rules(building_height, total_built_sqm, usage)
 
-    num_floors_label  = f"G+{floors - 1}"
-    lift_mandatory    = floors > 4
-    num_staircases    = 2 if total_built > 2000 else 1
+    # BDA RMP 2031: lift mandatory above G+3 (more than 3 floors above ground)
+    lift_mandatory = floors > lift_mandatory_floors()
+    num_staircases = 2 if total_built_sqm > 200 else 1   # NBC 2016: dual staircase above 200 sqm
 
+    # Parking (BBMP Table 23 approx.)
     if usage.lower() == "residential":
-        # BBMP Table 23: 1 car per dwelling unit
-        # Estimate units: avg Bangalore apartment = 120-150 sqm
-        avg_unit_sqm = 130
-        estimated_units = max(1, math.ceil((total_built / 10.7639) / avg_unit_sqm))
-        parking_car = estimated_units + max(1, math.ceil(estimated_units * 0.10))  # +10% visitor
-        parking_2w = estimated_units
+        avg_unit_sqm    = 130
+        units           = max(1, math.ceil(total_built_sqm / avg_unit_sqm))
+        parking_car     = units + max(1, math.ceil(units * 0.10))   # +10% visitor
+        parking_2w      = units
     else:
-        # Commercial: 3 cars per 100 sqm
-        parking_car = math.ceil((total_built / 10.7639) / 100 * 3)
-        parking_2w = parking_car * 2
+        parking_car = math.ceil(total_built_sqm / 100 * 3)
+        parking_2w  = parking_car * 2
+
+    avg_floor_area_sqft = round(total_built / floors, 1) if floors else 0
 
     return {
         "label":              label,
         "num_floors":         floors,
-        "floors_label":       num_floors_label,
+        "floors_label":       f"G+{floors - 1}",
         "building_height_m":  round(building_height, 1),
         "far":                far,
         "far_used":           far_used,
-        "far_efficiency_pct": round((far_used / far) * 100, 1),
-        "ground_coverage_pct": ground_cov_pct,
+        "far_efficiency_pct": round((far_used / far) * 100, 1) if far else 0,
+        "ground_coverage_pct": gc_pct,
         "max_built_sqft":     max_built_sqft,
         "total_built_sqft":   total_built,
-        "total_built_sqm":    round(total_built / 10.7639, 1),
-        "footprint_sqft":     footprint_low_sqft,
+        "total_built_sqm":    round(total_built_sqm, 1),
+        "footprint_sqft":     footprint_sqft,
+        "avg_floor_area_sqft": avg_floor_area_sqft,
         "setbacks": {
             "front": front, "side": side, "rear": rear,
-            "high_rise_rule": building_height > HIGH_RISE_CUTOFF
+            "high_rise_rule": building_height > 15.0,
         },
         "fire_noc_required":  fire_noc,
         "fire_rules":         fire_reqs,
@@ -149,95 +124,229 @@ def _compute_scenario(
         "warnings":           _get_warnings(building_height, total_built, fire_noc, lift_mandatory, plot_area_sqft),
     }
 
-def _get_warnings(height, built, fire_noc, lift, plot_area):
+
+def _get_warnings(height, built_sqft, fire_noc, lift, plot_area_sqft):
     w = []
-    if height > HIGH_RISE_CUTOFF:
-        w.append("Setbacks jump to 5m all sides above 11.5m — buildable area reduces significantly on upper floors")
+    if height > 15.0:
+        w.append(
+            f"Above 15m setbacks increase progressively (BDA Table 2): "
+            f"6m at 15–18m, 7m at 18–21m, 8m at 21–24m — buildable area reduces on each tier"
+        )
     if fire_noc:
         w.append("Fire NOC from KSFES required — add 4–6 weeks to approval timeline")
     if lift:
-        w.append("Lift shaft must be planned — reduces net usable area per floor")
-    if plot_area < 1200 and height > 9.6:
+        w.append("Lift shaft must be planned above G+3 (BDA RMP 2031) — reduces net usable area")
+    if plot_area_sqft < 1200 and height > 9.6:
         w.append("Small plot with high building — verify structural feasibility with engineer")
     return w
 
-# REPLACE the entire calculate_scenarios() function
 
-def calculate_scenarios(
+# ── Regulatory height thresholds ───────────────────────────────────────────────
+# BDA RMP 2031 key breakpoints that drive distinct bylaw requirements:
+#   11.5 m → below G+3 height range; compact setbacks, no fire requirements
+#   15.0 m → last tier before Fire NOC AND before setbacks jump from 4m → 6m
+#   24.0 m → before fire command centre + refuge area mandate (G+7)
+BYLAW_HEIGHT_THRESHOLDS = [
+    (11.5, "No High-Rise"),  # G+3: before setbacks jump and before fire NOC
+    (15.0, "No Fire NOC"),   # G+4: max density before the regulatory jump at 15m
+    (24.0, "Below 24m"),     # G+7: before fire command centre mandate
+]
+
+
+# ── Floor-count helpers ──────────────────────────────────────────────────────────────────────────────
+def _built_at_floors(
+    floors: int,
+    plot_area_sqm: float,
+    gc_pct: int,
+    plot_length_m: float,
+    plot_width_m: float,
+    road_width: float,
+    corner_plot: bool,
+    floor_height_m: float,
+) -> float:
+    sb = get_setbacks(plot_area_sqm, floors * floor_height_m, road_width, corner_plot)
+    fp = min(plot_area_sqm * gc_pct / 100,
+             max(0.0, plot_length_m - sb["front"] - sb["rear"]) *
+             max(0.0, plot_width_m  - sb["side"]  * 2))
+    return fp * 10.7639 * floors
+
+
+def _floors_for_peak_far(
+    plot_area_sqm: float,
+    gc_pct: int,
+    plot_length_m: float,
+    plot_width_m: float,
+    road_width: float,
+    corner_plot: bool,
+    floor_height_m: float,
+) -> int:
+    """
+    Floor count that gives the HIGHEST total built-up area.
+
+    With BDA progressive setbacks, adding floors beyond a certain point
+    REDUCES total built area because the setback jumps eat the footprint
+    faster than the extra floor adds area. This finds the peak.
+    """
+    best_floors, best_built, declining = 1, 0.0, 0
+    prev_built = 0.0
+    for floors in range(1, 51):
+        built = _built_at_floors(floors, plot_area_sqm, gc_pct,
+                                 plot_length_m, plot_width_m,
+                                 road_width, corner_plot, floor_height_m)
+        if built <= 0:
+            break
+        if built > best_built:
+            best_built, best_floors, declining = built, floors, 0
+        elif built < prev_built:
+            declining += 1
+            if declining >= 3:
+                break
+        prev_built = built
+    return best_floors
+
+
+def _floors_for_far_pct(
+    far_pct: float,
+    plot_area_sqft: float,
+    plot_area_sqm: float,
+    far: float,
+    gc_pct: int,
+    plot_length_m: float,
+    plot_width_m: float,
     zone: str,
     road_width: float,
-    plot_area_sqft: float,
-    plot_length_m:  float,
-    plot_width_m:   float,
-    usage:          str,
-    corner_plot:    bool  = False,
-    basement:       bool  = False,
-    scenarios:      list  = None,
-    floor_height_m: float = DEFAULT_FLOOR_HEIGHT_M,
+    corner_plot: bool,
+    floor_height_m: float,
+) -> int:
+    """Minimum floors to reach far_pct of max FAR; falls back to peak if unreachable."""
+    target_sqft = plot_area_sqft * far * far_pct
+    last_valid  = 1
+    for floors in range(1, 51):
+        built = _built_at_floors(floors, plot_area_sqm, gc_pct,
+                                 plot_length_m, plot_width_m,
+                                 road_width, corner_plot, floor_height_m)
+        if built <= 0:
+            return last_valid
+        last_valid = floors
+        if built >= target_sqft:
+            return floors
+    return last_valid
+
+
+# ── Main entry point ────────────────────────────────────────────────────────────
+def calculate_scenarios(
+    zone:              str,
+    road_width:        float,
+    plot_area_sqft:    float,
+    plot_length_m:     float,
+    plot_width_m:      float,
+    usage:             str,
+    corner_plot:       bool  = False,
+    basement:          bool  = False,
+    scenarios:         list  = None,    # reserved; not used
+    floor_height_m:    float = DEFAULT_FLOOR_HEIGHT_M,
     building_height_m: float = 0.0,
+    planning_zone:     str   = "zone_A",
 ) -> dict:
+    """
+    Generate building scenarios anchored to BDA RMP 2031 bylaw height thresholds.
 
-    far = find_far_rule(f"{road_width}m") or 1.75
-    try:
-        far = float(far)
-    except Exception:
-        far = 1.75
-
+    Four regulatory tiers (deduplicated if plot FAR caps out early):
+      • No High-Rise (≤ 11.5 m) — standard setbacks, no fire requirements
+      • No Fire NOC  (≤ 15.0 m) — below fire NOC; max density before setback jump
+      • Below 24m    (≤ 24.0 m) — avoids fire command centre / refuge area
+      • Max FAR      (100 %)    — maximum density allowed by FAR + progressive setbacks
+    """
+    # ── FAR and ground coverage from BDA JSON ──────────────────────────────
     plot_area_sqm = round(plot_area_sqft / 10.7639, 2)
+    far_data  = get_far(zone, road_width, plot_area_sqm, planning_zone)
+    far       = far_data["total"]       # use total (base + TDR)
+    gc_pct    = far_data["coverage_pct"]
 
-    # ── How many floors does FAR allow? ──────────────────────────
-    ground_cov_pct = _get_ground_coverage(zone, road_width)
-    footprint_sqm  = plot_area_sqm * (ground_cov_pct / 100)
-    max_built_sqm  = plot_area_sqm * far
-    far_max_by_far = math.ceil(max_built_sqm / max(footprint_sqm, 1))
-
-    # ── How many floors does building height allow? ───────────────
     fh = floor_height_m or DEFAULT_FLOOR_HEIGHT_M
-    if building_height_m and building_height_m > 0:
-        far_max_by_height = max(1, math.floor(building_height_m / fh))
+    max_built_sqft = round(plot_area_sqft * far, 1)
+
+    # ── Absolute ceiling from user-supplied height cap ─────────────────────
+    height_cap_active = building_height_m > 0
+    height_cap_floors = max(1, math.floor(building_height_m / fh)) if height_cap_active else 50
+
+    # Peak FAR: floor count that gives the HIGHEST total built area.
+    # With progressive setbacks, adding floors beyond this point actually
+    # REDUCES built area (setback jumps eat footprint faster than floors add).
+    peak_far_floors = _floors_for_peak_far(
+        plot_area_sqm=plot_area_sqm, gc_pct=gc_pct,
+        plot_length_m=plot_length_m, plot_width_m=plot_width_m,
+        road_width=road_width, corner_plot=corner_plot, floor_height_m=fh,
+    )
+
+    # Ceiling for ALL scenarios = user height cap (default: no ceiling)
+    ceiling = height_cap_floors   # already set above; 50 if no cap
+
+    # Regulatory threshold scenarios: always show all 3 breakpoints, each
+    # clamped only to the ceiling (never to peak_far, so Below24m always appears)
+    floor_to_label: dict = {}
+    for height_threshold, label in BYLAW_HEIGHT_THRESHOLDS:
+        f = max(1, math.floor(height_threshold / fh))
+        f = min(f, ceiling)
+        if f not in floor_to_label:
+            floor_to_label[f] = label
+
+    # Max FAR slot: peak_far_floors clamped to ceiling
+    peak_clamped = min(peak_far_floors, ceiling)
+    if peak_clamped in floor_to_label:
+        floor_to_label[peak_clamped] += " / Max FAR"   # merge with threshold label
     else:
-        far_max_by_height = 15   # no height cap supplied — use FAR only
+        floor_to_label[peak_clamped] = "Max FAR"
 
-    far_max_floors = max(1, min(far_max_by_far, far_max_by_height, 15))
+    # Max Height slot: only add when user has an active height cap AND
+    # the height cap floor is different from the Max FAR floor
+    if height_cap_active and height_cap_floors != peak_clamped:
+        if height_cap_floors in floor_to_label:
+            floor_to_label[height_cap_floors] += " / Max Height"
+        else:
+            floor_to_label[height_cap_floors] = "Max Height"
 
-    if not scenarios:
-        scenarios = [2, 3, 4, 5]
-
+    # ── Compute each unique scenario ───────────────────────────────────────
     results = []
-    for floors in scenarios:
-        label = f"G+{floors - 1}"
+    for floors in sorted(floor_to_label):
+        label = floor_to_label[floors]
         s = _compute_scenario(
-            label=label, floors=floors,
-            plot_area_sqft=plot_area_sqft, plot_area_sqm=plot_area_sqm,
-            plot_length_m=plot_length_m, plot_width_m=plot_width_m,
-            far=far, road_width=road_width, zone=zone,
-            usage=usage, corner_plot=corner_plot, basement=basement,
-            floor_height_m=fh,
+            label          = label,
+            floors         = floors,
+            plot_area_sqft = plot_area_sqft,
+            plot_area_sqm  = plot_area_sqm,
+            plot_length_m  = plot_length_m,
+            plot_width_m   = plot_width_m,
+            far            = far,
+            road_width     = road_width,
+            zone           = zone,
+            usage          = usage,
+            corner_plot    = corner_plot,
+            basement       = basement,
+            gc_pct         = gc_pct,
+            floor_height_m = fh,
         )
-        # ── Mark FAR-exceeded or height-exceeded scenarios ────────
-        s["exceeds_far"]    = floors > far_max_floors
-        s["far_max_floors"] = far_max_floors
-        if s["exceeds_far"]:
-            reason = "FAR" if far_max_by_far <= far_max_by_height else "building height"
-            s["warnings"].insert(0,
-                f"Exceeds {reason} limit — only {far_max_floors} floors "
-                f"(G+{far_max_floors-1}) are viable on this {plot_area_sqm:.0f} sqm plot"
-            )
+        s["far_pct"]         = round(s["far_efficiency_pct"] / 100, 2)
+        s["far_target_sqft"] = max_built_sqft   # 100% FAR reference line for bar chart
+        s["floors_label"]    = f"G+{floors - 1}"
+        s["exceeds_far"]     = False
         results.append(s)
 
-    # ── Recommended: highest built-up among FAR-viable, prefer no NOC ──
-    viable    = [s for s in results if not s["exceeds_far"]]
-    no_noc    = [s for s in viable  if not s["fire_noc_required"]]
-    best_pool = no_noc if no_noc else (viable if viable else results)
+    # ── Recommended: highest density without Fire NOC ──────────────────────
+    no_noc    = [s for s in results if not s["fire_noc_required"]]
+    best_pool = no_noc if no_noc else results
     best      = max(best_pool, key=lambda s: s["total_built_sqft"])
 
     return {
-        "plot_area_sqft": plot_area_sqft,
-        "plot_area_sqm":  plot_area_sqm,
-        "far":            far,
-        "far_max_floors": far_max_floors,          # ← new field
-        "zone":           zone,
-        "road_width":     road_width,
-        "recommended":    best["label"],
-        "scenarios":      results,
+        "plot_area_sqft":  plot_area_sqft,
+        "plot_area_sqm":   plot_area_sqm,
+        "far":             far,
+        "far_base":        far_data["base"],
+        "far_tdr":         far_data["tdr"],
+        "max_built_sqft":  max_built_sqft,
+        "zone":            zone,
+        "road_width":      road_width,
+        "planning_zone":   planning_zone,
+        "recommended":     best["label"],
+        "scenarios":       results,
     }

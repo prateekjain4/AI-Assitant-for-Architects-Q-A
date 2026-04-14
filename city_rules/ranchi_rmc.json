@@ -1,0 +1,98 @@
+{
+  "_meta": {
+    "city": "ranchi",
+    "authority": "RMC",
+    "document": "Ranchi Planning Standards & Building Bye-Laws, 2009 (Amended)",
+    "schema_version": "1.0"
+  },
+  "far": {
+    "zones": {
+      "district_and_commercial_centre": { "far": 3.0 },
+      "core_inner_zone":                { "far": 2.50 },
+      "general_zone":                   { "far": 2.0 }
+    }
+  },
+  "ground_coverage": {
+    "plot_upto_1000sqm_ht_upto_16m":  { "max_coverage_pct": 60 },
+    "plot_above_1000sqm_ht_above_16m":{ "max_coverage_pct": 50 }
+  },
+  "height": {
+    "height_tiers_m": [12.0, 16.0],
+    "max_height_by_road_width": {
+      "above_12m_requires_min_road_m": 6.0,
+      "above_16m_requires_min_road_m": 12.0
+    },
+    "plot_width_upto_10m_max_ht_residential_m": 11.40,
+    "plot_width_upto_10m_max_ht_commercial_m":  12.0,
+    "tandem_site_access_below_4.5m_max_ht_m":   9.0
+  },
+  "setbacks": {
+    "residential": {
+      "front_rear_by_plot_depth": {
+        "upto_10m":    { "ht_upto_12m": { "front": 2.4, "rear": 0.9 }, "ht_12_to_16m": null, "ht_above_16m": null },
+        "10_to_15m":   { "ht_upto_12m": { "front": 3.0, "rear": 1.5 }, "ht_12_to_16m": { "front": 3.0, "rear": 2.5 }, "ht_above_16m": { "front": 4.5, "rear": 3.0 } },
+        "15_to_21m":   { "ht_upto_12m": { "front": 3.0, "rear": 1.8 }, "ht_12_to_16m": { "front": 3.0, "rear": 3.0 }, "ht_above_16m": { "front": 6.0, "rear": 3.0 } },
+        "21_to_27m":   { "ht_upto_12m": { "front": 3.0, "rear": 2.0 }, "ht_12_to_16m": { "front": 3.5, "rear": 3.0 }, "ht_above_16m": { "front": 6.0, "rear": 4.0 } },
+        "27_to_33m":   { "ht_upto_12m": { "front": 3.0, "rear": 2.5 }, "ht_12_to_16m": { "front": 4.0, "rear": 3.5 }, "ht_above_16m": { "front": 6.5, "rear": 4.0 } },
+        "33_to_39m":   { "ht_upto_12m": { "front": 3.5, "rear": 2.5 }, "ht_12_to_16m": { "front": 4.5, "rear": 4.0 }, "ht_above_16m": { "front": 7.0, "rear": 4.5 } },
+        "39_to_45m":   { "ht_upto_12m": { "front": 4.0, "rear": 3.0 }, "ht_12_to_16m": { "front": 5.0, "rear": 4.5 }, "ht_above_16m": { "front": 7.5, "rear": 5.0 } },
+        "above_45m":   { "ht_upto_12m": { "front": 5.0, "rear": 3.0 }, "ht_12_to_16m": { "front": 6.0, "rear": 5.0 }, "ht_above_16m": { "front": 8.0, "rear": 6.0 } }
+      },
+      "sides_by_plot_width": {
+        "upto_10m":    { "ht_upto_12m": 0.9,  "ht_12_to_16m": null, "ht_above_16m": null },
+        "10_to_15m":   { "ht_upto_12m": 0.9,  "ht_12_to_16m": 1.5,  "ht_above_16m": 3.0 },
+        "15_to_21m":   { "ht_upto_12m": 1.2,  "ht_12_to_16m": 1.5,  "ht_above_16m": 3.0 },
+        "21_to_27m":   { "ht_upto_12m": 1.5,  "ht_12_to_16m": 1.8,  "ht_above_16m": 3.5 },
+        "27_to_33m":   { "ht_upto_12m": 1.8,  "ht_12_to_16m": 2.1,  "ht_above_16m": 3.5 },
+        "33_to_39m":   { "ht_upto_12m": 2.0,  "ht_12_to_16m": 2.4,  "ht_above_16m": 4.0 },
+        "39_to_45m":   { "ht_upto_12m": 2.5,  "ht_12_to_16m": 2.7,  "ht_above_16m": 4.5 },
+        "above_45m":   { "ht_upto_12m": 3.0,  "ht_12_to_16m": 3.0,  "ht_above_16m": 5.0 }
+      },
+      "additional_above_22m": {
+        "22_to_28m": { "extra_front": 1.0, "extra_rear": 1.0, "extra_side": 0.3 },
+        "28_to_34m": { "extra_front": 2.0, "extra_rear": 1.5, "extra_side": 0.6 },
+        "above_34m": { "extra_front": 3.0, "extra_rear": 2.0, "extra_side": 1.0 }
+      }
+    },
+    "commercial": {
+      "front_rear_by_plot_depth": {
+        "upto_10m":  { "ht_upto_12m": { "front": 3.0, "rear": 1.5 }, "ht_12_to_16m": null, "ht_above_16m": null },
+        "10_to_15m": { "ht_upto_12m": { "front": 3.0, "rear": 1.8 }, "ht_12_to_16m": { "front": 3.5, "rear": 2.5 }, "ht_above_16m": { "front": 4.5, "rear": 3.0 } },
+        "15_to_21m": { "ht_upto_12m": { "front": 4.5, "rear": 2.0 }, "ht_12_to_16m": { "front": 4.5, "rear": 3.0 }, "ht_above_16m": { "front": 6.0, "rear": 3.0 } },
+        "21_to_27m": { "ht_upto_12m": { "front": 5.0, "rear": 2.5 }, "ht_12_to_16m": { "front": 6.0, "rear": 3.0 }, "ht_above_16m": { "front": 6.0, "rear": 4.0 } },
+        "27_to_33m": { "ht_upto_12m": { "front": 6.0, "rear": 3.0 }, "ht_12_to_16m": { "front": 6.5, "rear": 3.5 }, "ht_above_16m": { "front": 7.0, "rear": 4.5 } },
+        "33_to_39m": { "ht_upto_12m": { "front": 6.5, "rear": 3.66}, "ht_12_to_16m": { "front": 7.0, "rear": 4.0 }, "ht_above_16m": { "front": 8.0, "rear": 5.0 } },
+        "39_to_45m": { "ht_upto_12m": { "front": 7.0, "rear": 4.0 }, "ht_12_to_16m": { "front": 7.5, "rear": 4.5 }, "ht_above_16m": { "front": 9.0, "rear": 5.5 } },
+        "above_45m": { "ht_upto_12m": { "front": 7.5, "rear": 4.5 }, "ht_12_to_16m": { "front": 8.0, "rear": 5.0 }, "ht_above_16m": { "front":10.0, "rear": 6.0 } }
+      },
+      "sides_by_plot_width": {
+        "upto_10m":  { "ht_upto_12m": 1.5, "ht_12_to_16m": null, "ht_above_16m": null },
+        "10_to_15m": { "ht_upto_12m": 1.5, "ht_12_to_16m": 2.0,  "ht_above_16m": 3.0 },
+        "15_to_21m": { "ht_upto_12m": 2.0, "ht_12_to_16m": 2.5,  "ht_above_16m": 3.5 },
+        "21_to_27m": { "ht_upto_12m": 2.5, "ht_12_to_16m": 3.0,  "ht_above_16m": 4.0 },
+        "27_to_33m": { "ht_upto_12m": 3.0, "ht_12_to_16m": 3.6,  "ht_above_16m": 4.5 },
+        "33_to_39m": { "ht_upto_12m": 3.6, "ht_12_to_16m": 4.0,  "ht_above_16m": 5.0 },
+        "39_to_45m": { "ht_upto_12m": 4.0, "ht_12_to_16m": 4.5,  "ht_above_16m": 5.5 },
+        "above_45m": { "ht_upto_12m": 4.5, "ht_12_to_16m": 5.0,  "ht_above_16m": 6.0 }
+      }
+    }
+  },
+  "fire_safety": {
+    "special_building_height_threshold_m": 16.0,
+    "special_building_coverage_threshold_sqm": 500,
+    "fire_noc_required_above_16m": true,
+    "fire_noc_required_coverage_above_500sqm": true
+  },
+  "lifts_and_stairs": {
+    "lift_mandatory_above_floors": 3
+  },
+  "parking": {
+    "residential_per_unit": { "cars": 1, "two_wheelers": 1 },
+    "commercial_per_100sqm": { "cars": 2, "two_wheelers": 4 }
+  },
+  "landscape": {
+    "trees_upto_250sqm": "2-4",
+    "trees_250_to_1000sqm": "4-6",
+    "trees_above_1000sqm": 8
+  }
+}

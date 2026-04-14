@@ -8,6 +8,6 @@ class ScenarioRequest(BaseModel):
     usage:           str   = "residential"
     corner_plot:     bool  = False
     basement:        bool  = False
-    scenarios:       list  = [2, 3, 4, 5]
+    scenarios:       list  = None   # reserved; scenarios are derived from bylaw thresholds
     floor_height_m:  float = 3.2
     building_height_m: float = 0.0   # 0 = no height cap, use FAR only

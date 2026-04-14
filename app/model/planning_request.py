@@ -18,6 +18,7 @@ class PlanningRequest(BaseModel):
     ward: Optional[str] = ""
     corner_plot: Optional[bool] = False
     basement: Optional[bool] = False
+    floor_height: Optional[float] = 3.2
     number_of_floors: Optional[int] = None
     number_of_units: Optional[int] = 1
     property_type: Optional[str] = "residential"

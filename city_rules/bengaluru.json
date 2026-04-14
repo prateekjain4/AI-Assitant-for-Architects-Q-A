@@ -1,0 +1,188 @@
+{
+  "_meta": {
+    "city": "bengaluru",
+    "authority": "BBMP",
+    "schema_version": "1.0",
+    "applicable_bylaws": [
+      "BBMP Building Bylaws 2003 (amended)",
+      "BDA RMP 2015 / RMP 2031",
+      "NBC 2016 Part IV (Fire & Life Safety)"
+    ],
+    "last_verified": null,
+    "verified_by": null,
+    "notes": "DRAFT — values extracted from codebase. Every field marked VERIFY must be cross-checked against the official gazette before use in production."
+  },
+
+  "far": {
+    "_note": "Floor Area Ratio by zone × road width. Key = upper boundary of road width bracket in metres. 9999 = above 30m road.",
+    "_status": "VERIFY — current code uses road-width-only flat table (no zone distinction). Zone-specific values below are indicative from BDA RMP 2015 Table 4.2 and must be confirmed.",
+    "R":   { "9": 1.50, "12": 1.75, "18": 2.00, "24": 2.25, "9999": 2.50 },
+    "RM":  { "9": 1.50, "12": 1.75, "18": 2.00, "24": 2.25, "9999": 2.50 },
+    "C1":  { "9": 1.75, "12": 2.00, "18": 2.25, "24": 2.50, "9999": 3.25 },
+    "C2":  { "9": 2.00, "12": 2.25, "18": 2.50, "24": 3.00, "9999": 3.50 },
+    "C3":  { "9": 2.25, "12": 2.50, "18": 3.00, "24": 3.50, "9999": 4.00 },
+    "IT":  { "9": 1.75, "12": 2.00, "18": 2.50, "24": 2.75, "9999": 3.00 },
+    "PSP": { "9": 1.50, "12": 1.50, "18": 1.75, "24": 2.00, "9999": 2.25 }
+  },
+
+  "ground_coverage_pct": {
+    "_note": "Maximum ground coverage percentage by zone × road width. Key = upper boundary of road width bracket.",
+    "_status": "VERIFY — currently in codebase, source unclear. Cross-check against BBMP Bylaws Table / BDA RMP.",
+    "R":   { "12": 70, "18": 65, "24": 60, "9999": 55 },
+    "RM":  { "12": 70, "18": 65, "24": 60, "9999": 55 },
+    "C1":  { "12": 65, "18": 60, "24": 55, "9999": 50 },
+    "C2":  { "12": 60, "18": 55, "24": 55, "9999": 50 },
+    "C3":  { "12": 60, "18": 55, "24": 55, "9999": 50 },
+    "IT":  { "12": 50, "18": 50, "24": 45, "9999": 40 },
+    "PSP": { "12": 40, "18": 40, "24": 40, "9999": 40 }
+  },
+
+  "setbacks": {
+    "_note": "All values in metres. Plot area threshold in sqft (1500 sqft ≈ 139 sqm).",
+    "_status": "VERIFY — confirm small/standard boundary and exact values from BBMP Bylaws Section 8.",
+    "plot_area_threshold_sqft": 1500,
+    "small_plot":    { "front": 3.0, "side": 1.0, "rear": 1.0 },
+    "standard_plot": { "front": 4.0, "side": 1.5, "rear": 2.0 },
+    "high_rise_threshold_m": 11.5,
+    "high_rise": { "front": 5.0, "side": 5.0, "rear": 5.0 },
+    "corner_plot_side_relaxation_m": 1.0,
+    "corner_plot_side_minimum_m": 1.0
+  },
+
+  "fire_noc": {
+    "_note": "Fire safety thresholds per NBC 2016 Part IV and KSFES requirements.",
+    "_status": "VERIFY — confirm height thresholds and commercial BUA threshold (currently coded as sqft, likely should be sqm).",
+    "height_threshold_m": 15.0,
+    "strict_height_m": 24.0,
+    "commercial_bua_threshold_sqm": 500,
+    "requirements_above_9m": [
+      "Fire escape staircase — minimum 1.2m clear width",
+      "Fire-rated doors on staircase landings",
+      "Emergency lighting in corridors and staircases",
+      "Fire tender access road — min 4.5m wide, 4.5m clearance, 9m turning radius"
+    ],
+    "requirements_above_15m": [
+      "Fire NOC from KSFES mandatory",
+      "Automatic sprinkler system throughout",
+      "Fire lift — minimum 1.1m x 2.1m car, 630kg capacity",
+      "Wet riser system",
+      "Public address system",
+      "Fire detection and alarm system",
+      "Hose reel and extinguishers on every floor",
+      "Terrace tank — minimum 25,000 litres"
+    ],
+    "requirements_above_24m": [
+      "Fire command centre at ground level",
+      "Pressurisation of staircases",
+      "Two separate fire escape staircases mandatory",
+      "Refuge area every 7 floors — minimum 15 sqm (not counted in FAR)"
+    ]
+  },
+
+  "staircase": {
+    "_note": "Staircase and lift requirements per BBMP Bylaws and NBC 2016.",
+    "_status": "VERIFY — confirm width thresholds and lift floor trigger from BBMP Section 20.7.",
+    "below_high_rise_min_width_m": 1.0,
+    "above_high_rise_min_width_m": 1.2,
+    "high_rise_threshold_m": 11.5,
+    "dual_staircase_bua_threshold_sqft": 2000,
+    "lift_mandatory_above_floors": 4
+  },
+
+  "basement": {
+    "_note": "Basement regulations per BBMP Bylaws Section 18.",
+    "_status": "VERIFY — confirm max depth, FAR exclusion conditions, and ventilation standard.",
+    "max_number": 2,
+    "max_depth_m": 3.6,
+    "counted_in_far": false,
+    "far_exclusion_condition": "Parking and services only — any habitable use makes it countable in FAR",
+    "permitted_uses": [
+      "Car parking (primary use)",
+      "Two-wheeler parking",
+      "Electrical room, pump room, generator",
+      "AC plant room",
+      "Storage (ancillary only)"
+    ],
+    "not_permitted": [
+      "Habitable rooms or residential use",
+      "Retail or commercial use",
+      "Kitchens or restaurants"
+    ],
+    "ventilation_min_air_changes_per_hour": 6,
+    "setback_in_basement": "May extend to plot boundary for parking/services — requires structural stability certificate"
+  },
+
+  "projections": {
+    "_note": "Balcony and projection rules per BBMP Bylaws Section 15.",
+    "_status": "VERIFY — confirm max projection limits and the 20% FAR exclusion rule.",
+    "balcony_max_projection_m": 1.5,
+    "balcony_far_exclusion_max_pct_of_floor_area": 20,
+    "chajja_max_projection_m": 0.75,
+    "projection_into_setback_max_pct": 50,
+    "projection_note": "No projection over road boundary"
+  },
+
+  "parking": {
+    "_note": "Parking requirements per BBMP Table 23.",
+    "_status": "VERIFY — confirm car-per-unit ratios and visitor percentages from actual Table 23.",
+    "space_dimensions": {
+      "car_length_m": 5.0,
+      "car_width_m": 2.5,
+      "car_area_sqm": 12.5,
+      "bike_length_m": 2.0,
+      "bike_width_m": 1.0,
+      "bike_area_sqm": 2.0,
+      "drive_aisle_width_m": 6.0
+    },
+    "residential": {
+      "car_per_unit_sqm": 50,
+      "bike_per_car": 2,
+      "visitor_pct": 10,
+      "source": "BBMP Table 23 — Residential"
+    },
+    "commercial": {
+      "car_per_100sqm": 3,
+      "bike_per_car": 2,
+      "visitor_pct": 20,
+      "source": "BBMP Table 23 — Commercial"
+    },
+    "mixed": {
+      "car_per_100sqm": 2,
+      "bike_per_car": 2,
+      "visitor_pct": 15,
+      "source": "BBMP Table 23 — Mixed Use"
+    },
+    "industrial": {
+      "car_per_100sqm": 1,
+      "bike_per_car": 3,
+      "visitor_pct": 10,
+      "source": "BBMP Table 23 — Industrial"
+    }
+  },
+
+  "far_exclusions": {
+    "_note": "Built-up areas NOT counted towards FAR per BBMP Bylaws.",
+    "_status": "VERIFY — confirm each exclusion and any area caps from BBMP Section 14.",
+    "items": [
+      "Staircase and lift shafts (full height)",
+      "Lift machine room (up to 16 sqm)",
+      "Staircase headroom / mumty (up to 2.4m height)",
+      "Basement parking floors — not counted in FAR if used for parking/services only",
+      "Balconies up to 1.5m projection (within 20% of floor area)",
+      "Utility ducts and service shafts",
+      "Watchman cabin up to 9 sqm at entrance",
+      "Refuge area (not counted in FAR per NBC 2016 Part IV Section 4.11)",
+      "Ramps for disabled access"
+    ]
+  },
+
+  "bylaw_thresholds": {
+    "_note": "Key height/area thresholds that trigger different regulatory tiers.",
+    "_status": "VERIFY — these drive the scenario comparison labels.",
+    "high_rise_setback_m": 11.5,
+    "fire_noc_height_m": 15.0,
+    "strict_fire_height_m": 24.0,
+    "lift_mandatory_floors": 4,
+    "dual_staircase_bua_sqft": 2000
+  }
+}

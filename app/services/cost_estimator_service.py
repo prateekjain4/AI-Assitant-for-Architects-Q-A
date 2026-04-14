@@ -152,9 +152,19 @@ def estimate_cost(
         floor_cost     = concrete_cost + steel_cost
         structure_total += floor_cost
         floor_breakdown.append({
-            "floor": f,
-            "label": "GF" if f == 0 else f"F{f}",
-            "cost":  round(floor_cost),
+            "floor":              f,
+            "label":              "GF" if f == 0 else f"F{f}",
+            "cost":               round(floor_cost),
+            "concrete_cost":      round(concrete_cost),
+            "steel_cost":         round(steel_cost),
+            "lift_factor":        round(lift_factor, 3),
+            "footprint_sqm":      round(footprint_sqm, 1),
+            "formula":            (
+                f"{footprint_sqm:.0f} m² × {concrete_m3_per_sqm} m³/m² × "
+                f"₹{concrete_rate_m3 + formwork_extra:,.0f}/m³ × {lift_factor:.2f} lift "
+                f"= ₹{concrete_cost:,.0f} (concrete) + "
+                f"₹{steel_cost:,.0f} (steel)"
+            ),
         })
 
     # ── 2. BASEMENT (KPWD SR 2022) ──────────────────────────────
@@ -170,12 +180,28 @@ def estimate_cost(
         retaining_cost  = (2 * (plot_length_m + plot_width_m)) * depth_m * 3500
         basement_cost   = excavation_cost + raft_concrete + waterproof_bsmt + retaining_cost
         basement_breakdown = {
-            "excavation":      round(excavation_cost),
-            "raft_slab":       round(raft_concrete),
-            "waterproofing":   round(waterproof_bsmt),
-            "retaining_walls": round(retaining_cost),
-            "total":           round(basement_cost),
-            "source":          "KPWD SR 2022 (excavation, concrete, waterproofing) + market (retaining walls)",
+            "excavation": {
+                "cost": round(excavation_cost), "source": "KPWD SR 2022",
+                "qty": f"{exc_vol_m3:.0f} m³", "rate": round(exc_rate),
+                "formula": f"{plot_area_sqm:.0f} m² × {depth_m}m × ₹{exc_rate:.0f}/m³ = ₹{excavation_cost:,.0f}",
+            },
+            "raft_slab": {
+                "cost": round(raft_concrete), "source": "KPWD SR 2022",
+                "qty": f"{plot_area_sqm:.0f} m² × 0.30m", "rate": round(CONCRETE_RATES_M3["M30"]),
+                "formula": f"{plot_area_sqm:.0f} m² × 0.30 m × ₹{CONCRETE_RATES_M3['M30']:,.0f}/m³ = ₹{raft_concrete:,.0f}",
+            },
+            "waterproofing": {
+                "cost": round(waterproof_bsmt), "source": "KPWD SR 2022",
+                "qty": f"{plot_area_sqm:.0f} m²", "rate": round(WATERPROOF_BITUMEN),
+                "formula": f"{plot_area_sqm:.0f} m² × ₹{WATERPROOF_BITUMEN:.0f}/m² = ₹{waterproof_bsmt:,.0f}",
+            },
+            "retaining_walls": {
+                "cost": round(retaining_cost), "source": "Market estimate",
+                "qty": f"{2*(plot_length_m+plot_width_m):.0f} rm × {depth_m}m", "rate": 3500,
+                "formula": f"2×({plot_length_m:.0f}+{plot_width_m:.0f})m × {depth_m}m × ₹3,500/m³ = ₹{retaining_cost:,.0f}",
+            },
+            "total":  round(basement_cost),
+            "source": "KPWD SR 2022 (excavation, concrete, waterproofing) + market (retaining walls)",
         }
 
     # ── 3. FINISHING — KPWD items + market items ─────────────────
@@ -195,15 +221,43 @@ def estimate_cost(
 
     finishing_cost = brick_cost + plaster_cost + waterproof_cost + flooring_cost + doors_win_cost + painting_cost
     finishing_breakdown = {
-        # KPWD-derived
-        "brickwork":            {"cost": round(brick_cost),        "source": "KPWD SR 2022"},
-        "plastering":           {"cost": round(plaster_cost),      "source": "KPWD SR 2022"},
-        "waterproofing_terrace":{"cost": round(waterproof_cost),   "source": "KPWD SR 2022"},
-        # Market estimates
-        "flooring":             {"cost": round(flooring_cost),     "source": "Market estimate"},
-        "doors_windows":        {"cost": round(doors_win_cost),    "source": "Market estimate"},
-        "painting":             {"cost": round(painting_cost),     "source": "Market estimate"},
-        "total":                round(finishing_cost),
+        "brickwork": {
+            "cost": round(brick_cost), "source": "KPWD SR 2022",
+            "qty": f"{wall_area_total:.0f} m² × 0.23 m = {brick_vol:.0f} m³",
+            "rate": BRICK_MASONRY_M3,
+            "formula": f"{wall_area_total:.0f} m² wall × 0.23 m thick × ₹{BRICK_MASONRY_M3:,.0f}/m³ = ₹{brick_cost:,.0f}",
+        },
+        "plastering": {
+            "cost": round(plaster_cost), "source": "KPWD SR 2022",
+            "qty": f"{wall_area_total:.0f} m² × 2 faces",
+            "rate": PLASTER_12MM_M2,
+            "formula": f"{wall_area_total:.0f} m² × 2 faces × ₹{PLASTER_12MM_M2:.1f}/m² = ₹{plaster_cost:,.0f}",
+        },
+        "waterproofing_terrace": {
+            "cost": round(waterproof_cost), "source": "KPWD SR 2022",
+            "qty": f"{terrace_area:.0f} m²",
+            "rate": WATERPROOF_BRICKBAT,
+            "formula": f"{terrace_area:.0f} m² terrace × ₹{WATERPROOF_BRICKBAT:.0f}/m² = ₹{waterproof_cost:,.0f}",
+        },
+        "flooring": {
+            "cost": round(flooring_cost), "source": "Market estimate",
+            "qty": f"{built_up_sqm:.0f} sqm",
+            "rate": fin_rates["flooring"],
+            "formula": f"{built_up_sqm:.0f} sqm × ₹{fin_rates['flooring']:,}/sqm = ₹{flooring_cost:,.0f}",
+        },
+        "doors_windows": {
+            "cost": round(doors_win_cost), "source": "Market estimate",
+            "qty": f"{built_up_sqm:.0f} sqm",
+            "rate": fin_rates["doors_windows"],
+            "formula": f"{built_up_sqm:.0f} sqm × ₹{fin_rates['doors_windows']:,}/sqm = ₹{doors_win_cost:,.0f}",
+        },
+        "painting": {
+            "cost": round(painting_cost), "source": "Market estimate",
+            "qty": f"{built_up_sqm:.0f} sqm",
+            "rate": fin_rates["painting"],
+            "formula": f"{built_up_sqm:.0f} sqm × ₹{fin_rates['painting']:,}/sqm = ₹{painting_cost:,.0f}",
+        },
+        "total": round(finishing_cost),
     }
 
     # ── 4. MEP (market estimate) ─────────────────────────────────
@@ -211,7 +265,9 @@ def estimate_cost(
     mep_cost  = built_up_sqm * mep_rate
     mep_breakdown = {
         "rate_per_sqm": mep_rate,
+        "qty_sqm":      round(built_up_sqm),
         "total":        round(mep_cost),
+        "formula":      f"{built_up_sqm:.0f} sqm × ₹{mep_rate:,}/sqm = ₹{mep_cost:,.0f}",
         "source":       "Market estimate — Bangalore 2024",
     }
 
@@ -223,6 +279,7 @@ def estimate_cost(
         "type":         parking_type,
         "cost_per_bay": PARKING_BAY_COST[parking_type],
         "total":        round(parking_cost),
+        "formula":      f"{car_spaces} bays × ₹{PARKING_BAY_COST[parking_type]:,}/bay ({parking_type}) = ₹{parking_cost:,.0f}",
         "source":       "Market estimate — Bangalore 2024",
     }
 
@@ -276,6 +333,8 @@ def estimate_cost(
         "usage":            usage,
         "zone":             zone,
         "built_up_sqm":     round(built_up_sqm),
+        "footprint_sqm":    round(footprint_sqm, 1),
+        "plot_area_sqm":    round(plot_area_sqm, 1),
         "num_floors":       num_floors,
         # Summary cards
         "structure_cost":   round(structure_total),

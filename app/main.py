@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Request
 import json
 import os
 from app.services.services import run_full_pipeline, JSON_FILE, change_report
@@ -16,21 +16,32 @@ from app.model.parking_request import ParkingRequest
 from app.services.parking_service import calculate_parking
 from app.services.floor_plan_service import generate_floor_plan
 from app.services.cost_estimator_service import estimate_cost
+from app.services.ranchi_planning_service import calculate_ranchi_planning
 from app.routers.auth import router as auth_router
+from app.routers.projects import router as projects_router
 from app.db.database import engine
 from app.model import db_models
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Create DB tables on startup (SQLite file: bylaw_app.db)
 db_models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="AI Bylaw Monitor API")
+# ── Rate limiter (keyed by client IP) ────────────────────────────
+limiter = Limiter(key_func=get_remote_address)
 
-# Auth routes
+app = FastAPI(title="AI Bylaw Monitor API")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Routers
 app.include_router(auth_router)
+app.include_router(projects_router)
 
 class QuestionRequest(BaseModel):
-    question: str   
-  
+    question: str
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:4200"],
@@ -65,32 +76,37 @@ def get_changes():
     return change_report
 
 @app.post("/ask")
-def ask_question(request: QuestionRequest):
-    return answer_question_from_bylaws(request.question)
+@limiter.limit("30/minute")
+def ask_question(request: Request, body: QuestionRequest):
+    return answer_question_from_bylaws(body.question)
 
 @app.post("/planning")
-def planning_tool(request: PlanningRequest):
-    return calculate_plot_planning(request)
+@limiter.limit("10/minute")
+def planning_tool(request: Request, body: PlanningRequest):
+    return calculate_plot_planning(body)
 
 @app.post("/chat")
-def chat_endpoint(data: dict):
-
-    question = data.get("question")
-    planning_data = data.get("planning_data", None)
-
-    answer = chat_with_context(question, planning_data)
-
+@limiter.limit("20/minute")
+def chat_endpoint(request: Request, data: dict):
+    answer = chat_with_context(
+        question      = data.get("question"),
+        planning_data = data.get("planning_data"),
+        scenario_data = data.get("scenario_data"),
+        cost_estimate = data.get("cost_estimate"),
+    )
     return {"answer": answer}
 
 @app.post("/detect-zone")
-def detect_zone(request: Coordinate):
-    result = detect_zone_from_coordinate(request.lat, request.lng)
+@limiter.limit("30/minute")
+def detect_zone(request: Request, body: Coordinate):
+    result = detect_zone_from_coordinate(body.lat, body.lng)
     if not result["found"]:
         return {"found": False, "message": "Coordinate is outside mapped zone boundaries."}
     return result
 
 @app.post("/generate-report")
-def generate_report(data: dict):
+@limiter.limit("5/minute")
+def generate_report(request: Request, data: dict):
     pdf_bytes = generate_planning_report(data)
     return Response(
         content=pdf_bytes,
@@ -100,26 +116,26 @@ def generate_report(data: dict):
         }
     )
 
-
 @app.post("/scenarios")
-def get_scenarios(request: ScenarioRequest):
+@limiter.limit("15/minute")
+def get_scenarios(request: Request, body: ScenarioRequest):
     return calculate_scenarios(
-        zone              = request.zone,
-        road_width        = request.road_width,
-        plot_area_sqft    = request.plot_area_sqft,
-        plot_length_m     = request.plot_length_m,
-        plot_width_m      = request.plot_width_m,
-        usage             = request.usage,
-        corner_plot       = request.corner_plot,
-        basement          = request.basement,
-        scenarios         = request.scenarios,
-        floor_height_m    = request.floor_height_m,
-        building_height_m = request.building_height_m,
+        zone              = body.zone,
+        road_width        = body.road_width,
+        plot_area_sqft    = body.plot_area_sqft,
+        plot_length_m     = body.plot_length_m,
+        plot_width_m      = body.plot_width_m,
+        usage             = body.usage,
+        corner_plot       = body.corner_plot,
+        basement          = body.basement,
+        scenarios         = body.scenarios,
+        floor_height_m    = body.floor_height_m,
+        building_height_m = body.building_height_m,
     )
 
-
 @app.post("/estimate-cost")
-def cost_estimate_endpoint(data: dict):
+@limiter.limit("15/minute")
+def cost_estimate_endpoint(request: Request, data: dict):
     return estimate_cost(
         plot_length_m     = float(data.get("plot_length_m",      20)),
         plot_width_m      = float(data.get("plot_width_m",       15)),
@@ -137,9 +153,9 @@ def cost_estimate_endpoint(data: dict):
         tier              = str(data.get("tier",                "mid")),
     )
 
-
 @app.post("/generate-floor-plan")
-def floor_plan_endpoint(data: dict):
+@limiter.limit("15/minute")
+def floor_plan_endpoint(request: Request, data: dict):
     return generate_floor_plan(
         plot_length_m       = float(data.get("plot_length_m",       20)),
         plot_width_m        = float(data.get("plot_width_m",        15)),
@@ -157,15 +173,32 @@ def floor_plan_endpoint(data: dict):
         basement            = bool(data.get("basement",           False)),
     )
 
-
 @app.post("/parking")
-def parking_calculator(request: ParkingRequest):
+@limiter.limit("20/minute")
+def parking_calculator(request: Request, body: ParkingRequest):
     return calculate_parking(
-        usage          = request.usage,
-        built_up_sqft  = request.built_up_sqft,
-        num_units      = request.num_units,
-        plot_length_m  = request.plot_length_m,
-        plot_width_m   = request.plot_width_m,
-        basement       = request.basement,
-        stilt          = request.stilt,
+        usage          = body.usage,
+        built_up_sqft  = body.built_up_sqft,
+        num_units      = body.num_units,
+        plot_length_m  = body.plot_length_m,
+        plot_width_m   = body.plot_width_m,
+        basement       = body.basement,
+        stilt          = body.stilt,
+    )
+
+@app.post("/planning-ranchi")
+@limiter.limit("10/minute")
+def planning_ranchi(request: Request, data: dict):
+    return calculate_ranchi_planning(
+        zone              = str(data.get("zone",              "general_zone")),
+        plot_length_m     = float(data.get("plot_length",              15)),
+        plot_width_m      = float(data.get("plot_width",               10)),
+        road_width_m      = float(data.get("road_width",                9)),
+        building_height_m = float(data.get("building_height",          10)),
+        usage             = str(data.get("usage",          "residential")),
+        corner_plot       = bool(data.get("corner_plot",          False)),
+        basement          = bool(data.get("basement",             False)),
+        floor_height_m    = float(data.get("floor_height",           3.2)),
+        locality          = str(data.get("locality",            "Ranchi")),
+        ward              = str(data.get("ward",                      "")),
     )

@@ -1,4 +1,5 @@
-from app.services.services import find_far_rule, get_openai_client
+from app.services.services import get_openai_client
+from app.services.city_rules_engine import get_far, get_setbacks, lift_mandatory_floors, get_basement_rules, get_balcony_rules
 from shapely.geometry import Polygon
 from pyproj import Transformer
 from shapely.ops import transform
@@ -30,24 +31,11 @@ def get_bylaw_context(question: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────────
-# Ground coverage by zone + road width (BDA RMP 2031)
+# Ground coverage — delegated to city_rules_engine (BDA RMP 2031)
 # ─────────────────────────────────────────────────────────────────
-GROUND_COVERAGE = {
-    "R":   {12: 70, 18: 65, 24: 60, 9999: 55},
-    "RM":  {12: 70, 18: 65, 24: 60, 9999: 55},
-    "C1":  {12: 65, 18: 60, 24: 55, 9999: 50},
-    "C2":  {12: 60, 18: 55, 24: 55, 9999: 50},
-    "C3":  {12: 60, 18: 55, 24: 55, 9999: 50},
-    "IT":  {12: 50, 18: 50, 24: 45, 9999: 40},
-    "PSP": {12: 40, 18: 40, 24: 40, 9999: 40},
-}
-
-def get_ground_coverage(zone: str, road_width: float) -> int:
-    zone_map = GROUND_COVERAGE.get(zone.upper(), GROUND_COVERAGE["R"])
-    for threshold in sorted(zone_map.keys()):
-        if road_width <= threshold:
-            return zone_map[threshold]
-    return 55
+def get_ground_coverage(zone: str, road_width: float, plot_area_sqm: float = 200.0,
+                        planning_zone: str = "zone_A") -> int:
+    return get_far(zone, road_width, plot_area_sqm, planning_zone).get("coverage_pct", 60)
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -65,9 +53,10 @@ def get_fire_requirements(building_height: float, max_built_area: float, usage: 
     if building_height > 15:
         fire["noc_required"] = True
         fire["thresholds_note"] = "Fire NOC from KSFES mandatory above 15m"
-    elif max_built_area > 500 and usage.lower() in ["commercial", "mixed"]:
+    elif max_built_area > 5000 and usage.lower() in ["commercial", "mixed"]:
+        # BDA RMP 2031: non-residential buildings ≥ 5,000 sqm BUA require fire arrangements
         fire["noc_required"] = True
-        fire["thresholds_note"] = "Fire NOC mandatory for commercial buildings above 500 sqm BUA"
+        fire["thresholds_note"] = "Fire NOC mandatory for non-residential buildings ≥ 5,000 sqm BUA (BDA RMP 2031)"
 
     if building_height > 9:
         fire["requirements"] += [
@@ -205,9 +194,9 @@ def get_staircase_requirements(building_height: float, max_built_area: float, fa
         num_staircases = 1
         staircase_note = "1 staircase sufficient for this BUA"
 
-    lift_mandatory = num_floors > 4
+    lift_mandatory = num_floors > lift_mandatory_floors()   # BDA: mandatory above G+3
     lift_note = (
-        f"Lift mandatory — {num_floors} floors (above G+4 threshold)"
+        f"Lift mandatory — {num_floors} floors (above G+3 per BDA RMP 2031)"
         if lift_mandatory
         else f"Lift not mandatory — {num_floors} floors (G+{num_floors - 1})"
     )
@@ -231,24 +220,24 @@ def get_basement_regulations(plot_area: float, basement_requested: bool) -> dict
         return {"requested": False}
 
     plot_area_sqm = plot_area / 10.7639
+    bda_bsmt = get_basement_rules()
     return {
         "requested": True,
-        "max_basements": 2,
-        "permitted_uses": [
-            "Car parking (primary use)",
-            "Two-wheeler parking",
+        "max_basements": bda_bsmt.get("max_number_of_levels", 5),
+        "permitted_uses": bda_bsmt.get("permitted_uses", [
+            "Car parking (primary use — up to 5 levels)",
             "Electrical room, pump room, generator",
-            "AC plant room",
-            "Storage (ancillary only)",
-        ],
+            "AC handling units and utilities/services",
+        ]),
         "not_permitted": [
             "Habitable rooms or residential use",
             "Retail or commercial use",
             "Kitchens or restaurants",
         ],
-        "setback_in_basement": "May extend up to plot boundary if used for parking/services only — subject to structural stability certificate",
+        "setback_in_basement": f"Minimum {bda_bsmt.get('setback_from_boundary_m', 2.0)} m from plot boundary; "
+                               f"+{bda_bsmt.get('additional_setback_per_extra_floor_m', 1.0)} m per additional level (BDA RMP 2031 Sec 4.9.2)",
         "ventilation": "Mechanical ventilation mandatory — minimum 6 air changes per hour (NBC 2016)",
-        "max_depth_m": 3.6,
+        "max_depth_m": bda_bsmt.get("max_overall_height_m", 4.5),
         "far_counted": False,
         "far_note": "Basement NOT counted in FAR if used for parking/services only",
         "fire_requirements": [
@@ -267,12 +256,16 @@ def get_basement_regulations(plot_area: float, basement_requested: bool) -> dict
 # Balcony & projection rules
 # ─────────────────────────────────────────────────────────────────
 def get_projection_rules(road_width: float) -> dict:
+    bda_bal = get_balcony_rules()
     return {
-        "balcony_max_projection_m": 1.5,
-        "balcony_far_note": "Balconies up to 1.5m excluded from FAR if total ≤ 20% of floor area (BBMP Bylaws Section 15)",
+        "balcony_ground_floor_allowed": bda_bal.get("ground_floor_allowed", False),
+        "balcony_first_floor_max_projection_m": bda_bal.get("first_floor_max_projection_m", 1.20),
+        "balcony_above_first_floor_max_projection_m": bda_bal.get("second_floor_and_above_max_projection_m", 1.75),
+        "balcony_far_note": "Balconies excluded from FAR within permitted projection limits (BDA RMP 2031 Sec 4.9.5)",
+        "balcony_ground_note": "Ground floor balconies NOT permitted (BDA RMP 2031)",
         "chajja_max_projection_m": 0.75,
         "chajja_note": "Chajja/sun shade up to 0.75m — not counted in FAR",
-        "projection_into_setback": "Projections may extend up to 50% into required setback but not beyond plot boundary",
+        "projection_rule": bda_bal.get("projection_rule", "1/3rd of setback or max projection limit — whichever is less"),
         "road_overhang_note": f"No projection over road boundary — {road_width}m road setback must be maintained",
     }
 
@@ -316,40 +309,35 @@ def calculate_plot_planning(request):
 
     plot_area_sqm = round(plot_area / 10.7639, 2)
 
-    # ── FAR ───────────────────────────────────────────────────────
-    far = find_far_rule(f"{road_width}m") or 1.75
+    planning_zone = getattr(request, 'planning_zone', 'zone_A') or 'zone_A'
 
-    # ── Ground Coverage ───────────────────────────────────────────
-    ground_coverage_pct = get_ground_coverage(zone, road_width)
+    # ── FAR + Ground Coverage (BDA RMP 2031 — zone & plot-size aware) ─────
+    far_data            = get_far(zone, road_width, plot_area_sqm, planning_zone)
+    far                 = far_data["total"]    # architects want max (base + TDR)
+    far_base            = far_data["base"]
+    far_tdr             = far_data["tdr"]
+    ground_coverage_pct = far_data["coverage_pct"]
     footprint_sqm       = plot_area_sqm * (ground_coverage_pct / 100)
     # ── Max Built Area ────────────────────────────────────────────
     max_built_sqm  = round(plot_area_sqm * far, 2)
     max_built_area = round(max_built_sqm * 10.7639, 2)   # sqft for display/return
 
     # How many floors are feasible?
-    # Two independent constraints — take the more restrictive:
-    # 1. FAR constraint: total built-up ÷ ground footprint
+    # Height is the architectural ceiling — FAR governs total AREA, not floor count.
+    # A tall building with small floors is still valid as long as total_built ≤ max_built.
     floor_height_m = getattr(request, 'floor_height', 3.2) or 3.2
-    far_floors_by_far    = math.ceil(max_built_sqm / max(footprint_sqm, 1))
-    # 2. Height constraint: building_height ÷ floor_height (each floor including slab ~floor_height_m)
+    # Height constraint: how many full floors fit within the declared building height
     far_floors_by_height = max(1, math.floor(building_height / floor_height_m))
-    # Use whichever is fewer — you cannot exceed either limit
-    far_floors = min(far_floors_by_far, far_floors_by_height)
-    far_floors = max(1, min(far_floors, 15))
+    far_floors = max(1, min(far_floors_by_height, 15))
+    # Informational: minimum floors to use the full FAR budget at this footprint
+    min_floors_for_max_far = max(1, math.ceil(max_built_sqm / max(footprint_sqm, 1)))
 
-    # ── Setbacks ──────────────────────────────────────────────────
-
-    if plot_area < 1500:
-        front_setback = 3.0
-        side_setback  = 1.0
-        rear_setback  = 1.0
-    else:
-        front_setback = 4.0
-        side_setback  = 1.5
-        rear_setback  = 2.0
-
-    if corner_plot:
-        side_setback = max(1.0, side_setback - 1.0)
+    # ── Setbacks — BDA RMP 2031 progressive table ─────────────────
+    far_building_height_for_setbacks = far_floors * floor_height_m
+    sb_data      = get_setbacks(plot_area_sqm, far_building_height_for_setbacks, road_width, corner_plot)
+    front_setback = sb_data["front"]
+    side_setback  = sb_data["side"]
+    rear_setback  = sb_data["rear"]
 
     setbacks = {
         "front": front_setback,
@@ -359,9 +347,9 @@ def calculate_plot_planning(request):
     }
 
     # ── Computed sections ─────────────────────────────────────────
-    far_building_height = far_floors * 3.2  # actual buildable height from FAR
-    fire_data      = get_fire_requirements(far_building_height, max_built_area, usage)
-    staircase_data = get_staircase_requirements(far_building_height, max_built_area, far_floors)
+    far_building_height = far_floors * floor_height_m  # actual buildable height from FAR
+    fire_data      = get_fire_requirements(far_building_height, max_built_sqm, usage)   # pass sqm
+    staircase_data = get_staircase_requirements(far_building_height, max_built_sqm, far_floors)
     basement_data    = get_basement_regulations(plot_area, basement)
     projection_rules = get_projection_rules(road_width)
 
@@ -477,6 +465,9 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
         "plot_area":          plot_area,
         "plot_area_sqm":      plot_area_sqm,
         "far":                far,
+        "far_base":           far_base,
+        "far_tdr":            far_tdr,
+        "planning_zone":      planning_zone,
         "locality":           locality,
         "ward":            getattr(request, 'ward', ''),
         "max_built_area":     max_built_area,
@@ -491,7 +482,8 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
         "staircase":          staircase_data,
         "basement":           basement_data,
         "projections":        projection_rules,
-        "far_exclusions":     FAR_EXCLUSIONS,
-        "parking":            parking,
-        "section_summaries":  section_summaries,
+        "far_exclusions":          FAR_EXCLUSIONS,
+        "parking":                 parking,
+        "section_summaries":       section_summaries,
+        "min_floors_for_max_far":  min_floors_for_max_far,
     }
