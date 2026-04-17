@@ -1,5 +1,5 @@
 from app.services.services import get_openai_client
-from app.services.city_rules_engine import get_far, get_setbacks, lift_mandatory_floors, get_basement_rules, get_balcony_rules
+from app.services.city_rules_engine import get_far, get_setbacks, lift_mandatory_floors, get_basement_rules, get_balcony_rules, get_accessibility_rules, get_compound_wall_rules
 from shapely.geometry import Polygon
 from pyproj import Transformer
 from shapely.ops import transform
@@ -102,7 +102,7 @@ def get_fire_requirements(building_height: float, max_built_area: float, usage: 
 # Feasibility & Compliance requirements
 # ─────────────────────────────────────────────────────────────────
 def generate_feasibility_summary(plot_area, max_built_area, far_floors):
-    avg_unit_size = 900  # sqft assumption
+    avg_unit_size = 84  # sqm (~900 sqft per unit)
     total_units = int(max_built_area / avg_unit_size)
 
     typology = "Apartment" if far_floors >= 4 else "Independent Floors"
@@ -123,14 +123,14 @@ def generate_design_options(far_floors, max_built_area):
         {
             "title": "Max FAR Apartment",
             "floors": f"G+{far_floors-1}",
-            "units": int(max_built_area / 900),
+            "units": int(max_built_area / 84),    # ~900 sqft per unit
             "parking": "Basement required",
             "risk": "High"
         },
         {
             "title": "Balanced Development",
             "floors": f"G+{max(2, far_floors-2)}",
-            "units": int(max_built_area / 1200),
+            "units": int(max_built_area / 111),    # ~1200 sqft per unit
             "parking": "Stilt + surface",
             "risk": "Medium"
         },
@@ -183,9 +183,12 @@ def get_staircase_requirements(building_height: float, max_built_area: float, fa
     if building_height <= 11.5:
         min_width = 1.0
         width_note = "Minimum 1.0m clear width (BBMP Bylaws)"
-    else:
+    elif building_height <= 15.0:
         min_width = 1.2
-        width_note = "Minimum 1.2m clear width for buildings above 11.5m"
+        width_note = "Minimum 1.2m clear width for buildings above 11.5m (BBMP Bylaws)"
+    else:
+        min_width = 1.5
+        width_note = "Minimum 1.5m clear width for fire escape staircase — buildings above 15m (NBC 2016 Part IV, Cl. 4.1)"
 
     if max_built_area > 2000:
         num_staircases = 2
@@ -215,11 +218,10 @@ def get_staircase_requirements(building_height: float, max_built_area: float, fa
 # ─────────────────────────────────────────────────────────────────
 # Basement regulations
 # ─────────────────────────────────────────────────────────────────
-def get_basement_regulations(plot_area: float, basement_requested: bool) -> dict:
+def get_basement_regulations(plot_area_sqm: float, basement_requested: bool) -> dict:
     if not basement_requested:
         return {"requested": False}
 
-    plot_area_sqm = plot_area / 10.7639
     bda_bsmt = get_basement_rules()
     return {
         "requested": True,
@@ -287,6 +289,56 @@ FAR_EXCLUSIONS = [
 
 
 # ─────────────────────────────────────────────────────────────────
+# Accessibility requirements (BBMP Schedule XI)
+# ─────────────────────────────────────────────────────────────────
+def get_accessibility_requirements(usage: str, plot_area_sqm: float, zone: str) -> dict:
+    rules = get_accessibility_rules()
+    mandatory_zones = rules.get("mandatory_for_zones", ["PSP"])
+    mandatory_area  = rules.get("mandatory_covered_area_sqm", 300)
+    is_psp          = zone.upper().startswith("PSP")
+    is_public_usage = usage.lower() in ["commercial", "mixed", "institutional", "public"]
+    required        = is_psp or (is_public_usage and plot_area_sqm >= mandatory_area)
+
+    return {
+        "required":         required,
+        "trigger":          f"Mandatory for PSP zones and public/semi-public buildings ≥ {mandatory_area} sqm covered area (BBMP Schedule XI)",
+        "ramp":             rules.get("ramp", {}),
+        "access_path":      rules.get("access_path", {}),
+        "corridor_min_width_m": rules.get("corridor_min_width_m", 1.80),
+        "staircase":        rules.get("staircase", {}),
+        "lift":             rules.get("lift", {}),
+        "wheelchair":       rules.get("wheelchair", {}),
+        "toilet":           rules.get("toilet", {}),
+        "handrails":        rules.get("handrails", {}),
+        "guiding_floor":    rules.get("guiding_floor_material", {}),
+        "signage":          rules.get("signage", {}),
+        "source":           "BBMP Building Bye-Laws 2003, Schedule XI (Bye-law 31.0)",
+    }
+
+
+# ─────────────────────────────────────────────────────────────────
+# Compound / boundary wall rules (BBMP Section 20.8)
+# ─────────────────────────────────────────────────────────────────
+def get_boundary_wall_rules(corner_plot: bool) -> dict:
+    rules = get_compound_wall_rules()
+    result = {
+        "front_and_side_max_m": rules.get("front_and_side_max_height_m", 1.5),
+        "rear_max_m":           rules.get("rear_max_height_m", 2.0),
+        "barbed_wire":          rules.get("barbed_wire_fence", "Prohibited"),
+        "prickly_hedge":        rules.get("prickly_hedge", "Prohibited"),
+        "source":               "BBMP Building Bye-Laws 2003, Section 20.8",
+    }
+    if corner_plot:
+        cp = rules.get("corner_plot", {})
+        result["corner_plot_restriction"] = {
+            "height_m":         cp.get("restricted_height_m", 0.75),
+            "length_from_intersection_m": cp.get("restricted_length_from_intersection_m", 5),
+            "note":             cp.get("note", "Corners must be rounded off or chamfered at intersection"),
+        }
+    return result
+
+
+# ─────────────────────────────────────────────────────────────────
 # Main planning function
 # ─────────────────────────────────────────────────────────────────
 def calculate_plot_planning(request):
@@ -298,16 +350,14 @@ def calculate_plot_planning(request):
     corner_plot     = getattr(request, 'corner_plot', False)
     basement        = getattr(request, 'basement', False)
 
-    # ── Plot Area ─────────────────────────────────────────────────
+    # ── Plot Area (all calculations in sqm) ──────────────────────
     if request.coordinates:
         coords    = [(p.lng, p.lat) for p in request.coordinates]
-        plot_area = calculate_area_sqft(coords)
+        plot_area_sqm = round(calculate_area_sqft(coords) / 10.7639, 2)
     else:
         plot_length = request.plot_length or 0
         plot_width  = request.plot_width  or 0
-        plot_area   = round((plot_length * plot_width) * 10.7639, 2)
-
-    plot_area_sqm = round(plot_area / 10.7639, 2)
+        plot_area_sqm = round(plot_length * plot_width, 2)
 
     planning_zone = getattr(request, 'planning_zone', 'zone_A') or 'zone_A'
 
@@ -320,7 +370,7 @@ def calculate_plot_planning(request):
     footprint_sqm       = plot_area_sqm * (ground_coverage_pct / 100)
     # ── Max Built Area ────────────────────────────────────────────
     max_built_sqm  = round(plot_area_sqm * far, 2)
-    max_built_area = round(max_built_sqm * 10.7639, 2)   # sqft for display/return
+    # All areas in sqm — no sqft conversion
 
     # How many floors are feasible?
     # Height is the architectural ceiling — FAR governs total AREA, not floor count.
@@ -350,15 +400,17 @@ def calculate_plot_planning(request):
     far_building_height = far_floors * floor_height_m  # actual buildable height from FAR
     fire_data      = get_fire_requirements(far_building_height, max_built_sqm, usage)   # pass sqm
     staircase_data = get_staircase_requirements(far_building_height, max_built_sqm, far_floors)
-    basement_data    = get_basement_regulations(plot_area, basement)
+    basement_data    = get_basement_regulations(plot_area_sqm, basement)
     projection_rules = get_projection_rules(road_width)
+    accessibility    = get_accessibility_requirements(usage, plot_area_sqm, zone)
+    boundary_wall    = get_boundary_wall_rules(corner_plot)
 
     fire_rules = fire_data["requirements"]
 
     # ── Parking ───────────────────────────────────────────────────
     parking_data = calculate_parking(
         usage=usage,
-        built_up_sqft=max_built_area,
+        built_up_sqft=round(max_built_sqm * 10.7639, 2),   # parking service uses sqft internally
         num_units=getattr(request, "number_of_units", 1),
         plot_length_m=request.plot_length or 0,
         plot_width_m=request.plot_width or 0,
@@ -385,8 +437,8 @@ def calculate_plot_planning(request):
         "basement regulations permitted uses ventilation parking"
     ) if basement else ""
 
-    summary = generate_feasibility_summary(plot_area, max_built_area, far_floors)
-    design_options = generate_design_options(far_floors, max_built_area)
+    summary = generate_feasibility_summary(plot_area_sqm, max_built_sqm, far_floors)
+    design_options = generate_design_options(far_floors, max_built_sqm)
     compliance = generate_compliance_score(fire_data, parking, far_floors)
 
     # ── Prompt ────────────────────────────────────────────────────
@@ -406,7 +458,7 @@ FIRE SAFETY: {fire_context}
 
 Plot facts (pre-computed — do NOT recalculate):
 Zone: {zone} | Locality: {locality} | Road: {road_width}m | Usage: {usage}
-FAR: {far} | Ground coverage: {ground_coverage_pct}% | Max built-up: {max_built_area:,.0f} sqft
+FAR: {far} | Ground coverage: {ground_coverage_pct}% | Max built-up: {max_built_sqm:,.0f} sqm
 Setbacks: Front {front_setback}m | Side {side_setback}m | Rear {rear_setback}m
 Lift mandatory: {staircase_data['lift_mandatory']} | Staircases: {staircase_data['num_staircases']}
 Fire NOC required: {fire_data['noc_required']} | Building height: {building_height}m
@@ -450,19 +502,19 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
     except Exception:
         section_summaries = {
             "setbacks":    f"Front {front_setback}m, Side {side_setback}m, Rear {rear_setback}m per BBMP bylaws for {zone} zone.",
-            "far":         f"FAR {far} allows max {max_built_area:,.0f} sqft built-up; basement and staircase excluded from FAR count.",
+            "far":         f"FAR {far} allows max {max_built_sqm:,.0f} sqm built-up; basement and staircase excluded from FAR count.",
             "staircase":   f"Min {staircase_data['min_staircase_width_m']}m staircase width required; {'lift mandatory' if staircase_data['lift_mandatory'] else 'lift not mandatory'} per BBMP Sec 20.7.",
             "projections":  "Max 1.5m balcony and 0.75m chajja projection permitted; balconies within 20% of floor area excluded from FAR.",
             "basement":    "Basement permitted for parking and utilities only; excluded from FAR calculation per BBMP Sec 18.2." if basement else None,
             "fire":        f"{'Fire NOC required' if fire_data['noc_required'] else 'Fire NOC not required'} for {building_height}m building under NBC 2016 Part IV.",
-            "compliance":  "Rainwater harvesting mandatory for plots above 2,400 sqft; solar panels required above 20m height.",
+            "compliance":  "Rainwater harvesting mandatory for plots above 120 sqm; solar panels required above 20m height.",
             "parking":     "Parking calculated per BBMP Table 23 based on built-up area and usage type.",
         }
 
     # ── Return ────────────────────────────────────────────────────
     return {
         "zone":               zone,
-        "plot_area":          plot_area,
+        "plot_area":          plot_area_sqm,
         "plot_area_sqm":      plot_area_sqm,
         "far":                far,
         "far_base":           far_base,
@@ -470,7 +522,7 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
         "planning_zone":      planning_zone,
         "locality":           locality,
         "ward":            getattr(request, 'ward', ''),
-        "max_built_area":     max_built_area,
+        "max_built_area":     max_built_sqm,
         "feasibility":        summary,
         "design_options":     design_options,
         "compliance":         compliance,
@@ -486,4 +538,6 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
         "parking":                 parking,
         "section_summaries":       section_summaries,
         "min_floors_for_max_far":  min_floors_for_max_far,
+        "accessibility":           accessibility,
+        "boundary_wall":           boundary_wall,
     }

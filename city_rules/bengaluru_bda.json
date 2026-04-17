@@ -296,6 +296,76 @@
     ]
   },
 
+  "accessibility": {
+    "_source": "BBMP Building Bye-Laws 2003, Schedule XI (Bye-law 31.0)",
+    "_trigger": "Public and semi-public buildings with covered area ≥ 300 sqm are mandated. Recommended for all buildings.",
+    "mandatory_for_zones": ["PSP"],
+    "mandatory_covered_area_sqm": 300,
+    "access_path": {
+      "min_width_m": 1.80,
+      "max_gradient_pct": 5,
+      "note": "From plot entry and surface parking to building entry"
+    },
+    "ramp": {
+      "min_width_m": 1.80,
+      "max_gradient": "1:10",
+      "landing_min_size": "1.80m × 2.00m",
+      "note": "At least one entrance must have ramp approach to plinth level"
+    },
+    "corridor_min_width_m": 1.80,
+    "staircase": {
+      "min_width_m": 1.50,
+      "max_risers_per_flight": 12,
+      "min_tread_mm": 300,
+      "max_riser_mm": 150
+    },
+    "lift": {
+      "cage_clear_depth_mm": 1100,
+      "cage_clear_width_mm": 2000,
+      "entrance_door_width_mm": 900,
+      "lobby_min_size": "1.80m × 1.80m",
+      "standard": "BIS 13 -person passenger lift dimensions"
+    },
+    "wheelchair": {
+      "standard_size_mm": "1050 × 750",
+      "min_door_width_mm": 900,
+      "surface_parking_spaces": 2,
+      "max_travel_distance_to_entrance_m": 30
+    },
+    "toilet": {
+      "min_size": "1.50m × 1.75m",
+      "max_wc_seat_height_m": 0.50,
+      "note": "One special WC per set of toilets with wash basin for handicapped persons"
+    },
+    "handrails": {
+      "height_above_floor_mm": 800,
+      "required_at": ["ramps", "staircases", "lifts", "toilets"]
+    },
+    "guiding_floor_material": {
+      "required_at": ["access path to building", "landing lobby towards lifts/staircases/toilets", "beginning/end of walkway with vehicular traffic", "level changes and ramp start/end", "entrance/exit of building"]
+    },
+    "signage": {
+      "min_letter_size_mm": 20,
+      "braille_board": "Required on walls at suitable height — approachable closely",
+      "note": "Contrasting colour, properly illuminated; no protruding signs that obstruct walking"
+    }
+  },
+
+  "compound_wall": {
+    "_source": "BBMP Building Bye-Laws 2003, Section 20.8",
+    "front_and_side_max_height_m": 1.5,
+    "rear_max_height_m": 2.0,
+    "corner_plot": {
+      "restricted_height_m": 0.75,
+      "restricted_length_from_intersection_m": 5,
+      "note": "Both corners must be rounded off or chamfered at the intersection"
+    },
+    "barbed_wire_fence": "Prohibited on all boundaries",
+    "prickly_hedge": "Prohibited on all boundaries",
+    "exceptions": ["Jails", "Sanatoria", "Heavy industries", "Women's hostels — may exceed standard height with special permission"],
+    "licence_fee": "Rs. 1 per running metre for compound wall licence"
+  },
+
   "special_zones": {
     "ToD": { "_note": "Transit Oriented Development zones around metro stations – additional FAR permissible per Section 4.18." },
     "heritage": {

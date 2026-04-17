@@ -300,6 +300,18 @@ def get_balcony_rules() -> dict:
     return rules.get("balcony", {})
 
 
+# ── Public: accessibility rules ──────────────────────────────────────────────
+def get_accessibility_rules() -> dict:
+    rules = _load()
+    return rules.get("accessibility", {})
+
+
+# ── Public: compound wall rules ───────────────────────────────────────────────
+def get_compound_wall_rules() -> dict:
+    rules = _load()
+    return rules.get("compound_wall", {})
+
+
 # ── Public: fire NOC threshold ────────────────────────────────────────────────
 def fire_noc_non_residential_bua_sqm() -> float:
     """BDA RMP 2031: non-residential buildings > 5,000 sqm BUA require fire arrangement."""

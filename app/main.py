@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Response, Request
+from fastapi.staticfiles import StaticFiles
 import json
 import os
 from app.services.services import run_full_pipeline, JSON_FILE, change_report
@@ -34,6 +35,10 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="AI Bylaw Monitor API")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Serve regulation PDFs as static files at /docs
+_DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)))
+app.mount("/docs", StaticFiles(directory=_DOCS_DIR, html=False), name="docs")
 
 # Routers
 app.include_router(auth_router)
