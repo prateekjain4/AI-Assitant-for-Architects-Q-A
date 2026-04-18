@@ -18,6 +18,7 @@ from app.services.parking_service import calculate_parking
 from app.services.floor_plan_service import generate_floor_plan
 from app.services.cost_estimator_service import estimate_cost
 from app.services.ranchi_planning_service import calculate_ranchi_planning
+from app.services.hyderabad_planning_service import calculate_hyderabad_planning
 from app.routers.auth import router as auth_router
 from app.routers.projects import router as projects_router
 from app.db.database import engine
@@ -206,4 +207,20 @@ def planning_ranchi(request: Request, data: dict):
         floor_height_m    = float(data.get("floor_height",           3.2)),
         locality          = str(data.get("locality",            "Ranchi")),
         ward              = str(data.get("ward",                      "")),
+    )
+
+@app.post("/planning-hyderabad")
+@limiter.limit("10/minute")
+def planning_hyderabad(request: Request, data: dict):
+    return calculate_hyderabad_planning(
+        zone              = str(data.get("zone",              "R2")),
+        plot_length_m     = float(data.get("plot_length",              15)),
+        plot_width_m      = float(data.get("plot_width",               10)),
+        road_width_m      = float(data.get("road_width",                9)),
+        building_height_m = float(data.get("building_height",          10)),
+        usage             = str(data.get("usage",          "residential")),
+        corner_plot       = bool(data.get("corner_plot",          False)),
+        basement          = bool(data.get("basement",             False)),
+        floor_height_m    = float(data.get("floor_height",            3.0)),
+        locality          = str(data.get("locality",        "Hyderabad")),
     )

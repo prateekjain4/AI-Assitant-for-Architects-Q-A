@@ -1,0 +1,553 @@
+{
+  "_meta": {
+    "city": "hyderabad",
+    "authority": "GHMC / HMDA",
+    "document": "Andhra Pradesh Building Rules 2012 — G.O.Ms.No.168, Dated 07-04-2012",
+    "schema_version": "1.0",
+    "applicable_bylaws": [
+      "A.P. Building Rules 2012 (G.O.Ms.No.168)",
+      "Greater Hyderabad Municipal Corporation Act, 1955",
+      "HMDA Act 2008",
+      "National Building Code 2005 / NBC 2016 Part IV (Fire & Life Safety)"
+    ],
+    "notes": "DRAFT — values extracted from G.O.Ms.No.168 (AP Building Rules 2012) and GHMC/HMDA zoning regulations. FAR values from GHMC Master Plan Zoning Regulations. VERIFY all fields against official gazette before use in production.",
+    "last_verified": null,
+    "verified_by": null
+  },
+
+  "zones": {
+    "_note": "GHMC/HMDA Zoning categories per Master Plan 2031 Zoning Regulations. FAR values from GHMC Master Plan — VERIFY against official gazette before production use.",
+    "R1":  { "label": "Residential — Very Low Density (Individual Houses)",  "far": 1.5, "ground_coverage_pct": 65 },
+    "R2":  { "label": "Residential — Low Density",                           "far": 2.0, "ground_coverage_pct": 60 },
+    "R3":  { "label": "Residential — Medium Density",                        "far": 2.5, "ground_coverage_pct": 55 },
+    "R4":  { "label": "Residential — High Density",                          "far": 3.0, "ground_coverage_pct": 50 },
+    "R5":  { "label": "Residential — Very High Density (Transit Corridors)",  "far": 3.5, "ground_coverage_pct": 45 },
+    "C1":  { "label": "Commercial — Neighbourhood / Local",                  "far": 2.0, "ground_coverage_pct": 60 },
+    "C2":  { "label": "Commercial — District / Community",                   "far": 2.5, "ground_coverage_pct": 55 },
+    "C3":  { "label": "Commercial — City / Regional (CBD)",                  "far": 3.5, "ground_coverage_pct": 50 },
+    "MU1": { "label": "Mixed Use — Low Intensity",                           "far": 2.5, "ground_coverage_pct": 55 },
+    "MU2": { "label": "Mixed Use — High Intensity (Near Metro / ORR)",       "far": 3.5, "ground_coverage_pct": 50 },
+    "I1":  { "label": "Industrial — Cottage / Household / Service",          "far": 1.5, "ground_coverage_pct": 55 },
+    "I2":  { "label": "Industrial — Light / IT Park / Hi-Tech",              "far": 2.0, "ground_coverage_pct": 50 },
+    "I3":  { "label": "Industrial — General / Medium",                       "far": 1.5, "ground_coverage_pct": 50 },
+    "I4":  { "label": "Industrial — Heavy / Hazardous",                      "far": 1.0, "ground_coverage_pct": 45 },
+    "PSP": { "label": "Public & Semi-Public / Institutional",                "far": 1.5, "ground_coverage_pct": 50 },
+    "T":   { "label": "Transportation Corridor / Hub",                       "far": 2.0, "ground_coverage_pct": 50 },
+    "OS":  { "label": "Open Space / Recreational / Green",                   "far": 0.0, "ground_coverage_pct": 10 },
+    "AG":  { "label": "Agriculture / Green Buffer",                          "far": 0.0, "ground_coverage_pct": 5  }
+  },
+
+  "ground_coverage_pct": {
+    "_note": "Maximum ground coverage by plot size. GHMC norms.",
+    "_status": "VERIFY — confirm exact thresholds from GHMC building permission rules.",
+    "plot_upto_750sqm":   60,
+    "plot_above_750sqm":  55,
+    "high_rise":          40
+  },
+
+  "setbacks_non_high_rise": {
+    "_note": "Setbacks for Non-High Rise buildings (height < 18m). Source: Table III, Rule 5, G.O.Ms.No.168.",
+    "_status": "VERIFY — sourced from Table III of AP Building Rules 2012.",
+    "_road_width_keys": "Road width upper boundary in metres: 12=up to 12m, 18=12 to 18m, 24=18 to 24m, 30=24 to 30m, 9999=above 30m",
+    "plot_upto_50": {
+      "max_height_m": 7,
+      "parking": "none",
+      "front": { "12": 1.5, "18": 1.5, "24": 3.0, "30": 3.0, "9999": 3.0 },
+      "side_rear_m": 1.5
+    },
+    "plot_50_to_100": {
+      "max_height_m": 10,
+      "parking": "optional",
+      "front": { "12": 1.5, "18": 1.5, "24": 3.0, "30": 3.0, "9999": 3.0 },
+      "side_rear_m": { "no_parking": 1.5, "with_parking": 0.5 }
+    },
+    "plot_100_to_200": {
+      "max_height_m": 10,
+      "parking": "none",
+      "front": { "12": 1.5, "18": 1.5, "24": 3.0, "30": 3.0, "9999": 3.0 },
+      "side_rear_m": 1.0
+    },
+    "plot_200_to_300": {
+      "max_height_m": 10,
+      "parking": "stilt",
+      "front": {
+        "7m_height":  { "12": 2.0, "18": 3.0, "24": 3.0, "30": 4.0, "9999": 5.0 },
+        "10m_height": { "12": 2.0, "18": 3.0, "24": 3.0, "30": 5.0, "9999": 6.0 }
+      },
+      "side_rear_m": { "7m": 1.0, "10m": 1.5 }
+    },
+    "plot_300_to_400": {
+      "max_height_m": 12,
+      "parking": "stilt",
+      "front": { "12": 3.0, "18": 4.0, "24": 5.0, "30": 6.0, "9999": 7.5 },
+      "side_rear_m": { "7m": 1.5, "12m": 2.0 }
+    },
+    "plot_400_to_500": {
+      "max_height_m": 12,
+      "parking": "stilt",
+      "front": { "12": 3.0, "18": 4.0, "24": 5.0, "30": 6.0, "9999": 7.5 },
+      "side_rear_m": { "7m": 2.0, "12m": 2.5 }
+    },
+    "plot_500_to_750": {
+      "max_height_m": 15,
+      "parking": "stilt",
+      "front": { "12": 3.0, "18": 4.0, "24": 5.0, "30": 6.0, "9999": 7.5 },
+      "side_rear_m": { "7m": 2.5, "12m": 3.0, "15m": 3.5 }
+    },
+    "plot_750_to_1000": {
+      "max_height_m": 15,
+      "parking": "stilt_plus_1_cellar",
+      "front": { "12": 3.0, "18": 4.0, "24": 5.0, "30": 6.0, "9999": 7.5 },
+      "side_rear_m": { "7m": 3.0, "12m": 3.5, "15m": 4.0 }
+    },
+    "plot_1000_to_1500": {
+      "max_height_m": 18,
+      "parking": "stilt_plus_2_cellar",
+      "front": { "12": 3.0, "18": 4.0, "24": 5.0, "30": 6.0, "9999": 7.5 },
+      "side_rear_m": { "7m": 3.5, "12m": 4.0, "15m": 5.0, "18m": 6.0 }
+    },
+    "plot_1500_to_2500": {
+      "max_height_m": 18,
+      "parking": "stilt_plus_2_cellar",
+      "front": { "12": 3.0, "18": 4.0, "24": 5.0, "30": 6.0, "9999": 7.5 },
+      "side_rear_m": { "15m": 5.0, "18m": 6.0 }
+    },
+    "plot_above_2500": {
+      "max_height_m": 18,
+      "parking": "stilt_plus_2plus_cellar",
+      "front": { "12": 3.0, "18": 4.0, "24": 5.0, "30": 6.0, "9999": 7.5 },
+      "side_rear_m": { "15m": 6.0, "18m": 7.0 }
+    }
+  },
+
+  "setbacks_high_rise": {
+    "_note": "All-round setbacks for High Rise buildings (height ≥ 18m). Source: Table IV, Rule 7, G.O.Ms.No.168.",
+    "_status": "VERIFY — sourced from Table IV of AP Building Rules 2012.",
+    "_key_note": "Height keys are upper boundary in metres. All-round setback applies to sides and rear; front setback = max(road-width setback from Table III, all-round setback).",
+    "21":   { "min_road_m": 12, "allround_m": 7  },
+    "24":   { "min_road_m": 12, "allround_m": 8  },
+    "27":   { "min_road_m": 18, "allround_m": 9  },
+    "30":   { "min_road_m": 18, "allround_m": 10 },
+    "35":   { "min_road_m": 24, "allround_m": 11 },
+    "40":   { "min_road_m": 24, "allround_m": 12 },
+    "45":   { "min_road_m": 24, "allround_m": 13 },
+    "50":   { "min_road_m": 30, "allround_m": 14 },
+    "55":   { "min_road_m": 30, "allround_m": 16 },
+    "above_55_increment_per_5m": 0.5
+  },
+
+  "minimum_road_width": {
+    "_note": "Minimum abutting road width for various building types. Source: Table II, Rule 4, G.O.Ms.No.168.",
+    "_status": "VERIFY — sourced from Table II of AP Building Rules 2012.",
+    "A_old_areas_max_10m_height": 9.0,
+    "B1_non_high_rise_residential_upto_5_floors": 9.0,
+    "B2_high_rise_upto_24m": 12.0,
+    "B2_group_housing_6_floors": 12.0,
+    "B3_high_rise_24m_to_30m": 18.0,
+    "B3_malls_above_4000sqm": 18.0,
+    "B3_hospitals_above_20_beds": 18.0,
+    "B4_high_rise_above_30m": "as per Table IV"
+  },
+
+  "parking": {
+    "_note": "Parking area as percentage of total built-up area. Source: Table V, Rule 13, G.O.Ms.No.168. Values for GHMC/HMDA Area.",
+    "_status": "VERIFY — sourced from Table V of AP Building Rules 2012.",
+    "space_dimensions": {
+      "car_length_m": 5.0,
+      "car_width_m": 2.5,
+      "car_area_sqm": 12.5,
+      "drive_aisle_width_m": 4.5,
+      "ramp_width_single_m": 5.4,
+      "ramp_width_dual_m": 3.6
+    },
+    "pct_of_bua": {
+      "multiplexes": { "hmda_ghmc": 60, "other_municipal_corp": 50 },
+      "malls_above_4000sqm_ites": { "hmda_ghmc": 60, "other_municipal_corp": 50 },
+      "hotels_restaurants_commercial_highrise_nonres": { "hmda_ghmc": 40, "other_municipal_corp": 30 },
+      "residential_hospitals_institutional_industrial_educational": { "hmda_ghmc": 30, "other_municipal_corp": 20 }
+    },
+    "visitor_pct": 10,
+    "notes": [
+      "Parking in basements/cellars allowed for plots ≥ 750 sqm (one or more levels)",
+      "Stilt floor for parking: entire stilt may satisfy requirement for plots ≤ 750 sqm",
+      "Up to 10% of cellar may be used for utilities (AC plant, generator, STP, electrical)"
+    ]
+  },
+
+  "fire_safety": {
+    "_note": "Fire NOC and safety requirements per Rule 5(f)(xv), Rule 7, Rule 15, G.O.Ms.No.168 and NBC 2005 / AP Fire Services Act 1999.",
+    "_status": "VERIFY — confirm height thresholds from AP State Disasters Response & Fire Services Dept rules.",
+    "noc_triggers": {
+      "residential_height_m": 18.0,
+      "commercial_height_m": 15.0,
+      "public_congregation_plot_sqm": 500,
+      "public_congregation_min_height_m": 6.0
+    },
+    "high_rise_threshold_m": 18.0,
+    "requirements_above_15m_commercial": [
+      "Prior clearance from AP State Disasters Response & Fire Services Department",
+      "Fire escape staircase and lift (in addition to regular staircase/lift)",
+      "NBC 2005 Part IV Fire Protection requirements"
+    ],
+    "requirements_above_18m": [
+      "Fire NOC from AP State Disasters Response & Fire Services Department mandatory",
+      "At least one fire escape staircase and fire lift in addition to regular",
+      "Power generator provision mandatory",
+      "NBC 2005 / NBC 2016 Part IV full fire protection compliance",
+      "Smoke containment and smoke management measures",
+      "Fire engineer / fire consultant to certify installations",
+      "NOC renewal required from time to time"
+    ],
+    "high_rise_open_space": {
+      "min_pct_of_site": 10,
+      "min_width_m": 3.0,
+      "min_area_per_pocket_sqm": 50,
+      "green_strip_width_m": 2.0
+    }
+  },
+
+  "staircase_lift": {
+    "_note": "Staircase and lift requirements per NBC 2005 and Rule 15 of G.O.Ms.No.168.",
+    "_status": "VERIFY — confirm staircase width and lift trigger from NBC 2005.",
+    "min_stair_width_m": 1.5,
+    "lift_mandatory_above_height_m": 15.0,
+    "lift_mandatory_above_floors": 4,
+    "high_rise_fire_escape_stair": true,
+    "notes": [
+      "All High Rise buildings must have at least one fire escape staircase and one fire lift (Rule 15(b)(i))",
+      "Staircase design per NBC 2005 Part III Section 4"
+    ]
+  },
+
+  "basement": {
+    "_note": "Basement/cellar rules per Rule 13, G.O.Ms.No.168.",
+    "_status": "VERIFY — confirm setback and use restrictions from Rule 13.",
+    "min_plot_for_cellar_sqm": 750,
+    "permitted_uses": [
+      "Parking (primary use)",
+      "Up to 10% for utilities: AC plant, generator, STP, electrical installations, laundry"
+    ],
+    "not_permitted": ["Habitation", "Commercial retail use", "Any occupation"],
+    "setback_upto_1000sqm_m": 1.5,
+    "setback_1000_to_2000sqm_m": 2.0,
+    "setback_above_2000sqm_m": 3.0,
+    "additional_setback_per_extra_cellar_m": 0.5,
+    "counted_in_far": false,
+    "ventilation_min_pct_of_floor_area": 2.5,
+    "notes": [
+      "Cellar floor shall be used only for parking and not for any habitation purpose (Rule 13(c)(iii))",
+      "Visitors' parking (min 10% of required parking) may be in mandatory setbacks (not front) where setback > 6m"
+    ]
+  },
+
+  "projections": {
+    "_note": "Projections in setbacks per Rule 6, G.O.Ms.No.168.",
+    "_status": "VERIFY — sourced from Rule 6.",
+    "chajja_max_projection_m": 0.60,
+    "balcony_projection_non_high_rise": "not permitted in mandatory setbacks for non-high-rise",
+    "balcony_projection_high_rise_m": 2.0,
+    "balcony_high_rise_min_from_ground_m": 6.0,
+    "portico_allowed_in_front_setback": true,
+    "guard_booth_max_sqm": 2.0,
+    "notes": [
+      "Chajjas/weather shades max 60 cm in mandatory setbacks (Rule 6a)",
+      "No balcony projections in setbacks for non-high-rise buildings (Rule 6b)",
+      "Balcony up to 2m may project into open space for upper floors (>6m) in high-rise (Rule 7a xiv)",
+      "Security guard booth of 2 sqm allowed in front setback for individual residential plots > 300 sqm"
+    ]
+  },
+
+  "group_development": {
+    "_note": "Group Development Scheme norms per Rule 8, G.O.Ms.No.168.",
+    "min_site_sqm": 4000,
+    "min_road_m": 12,
+    "open_space_min_pct": 10,
+    "ews_lig_provision_pct": 20,
+    "ews_lig_threshold_sqm": 4000,
+    "notes": [
+      "Minimum 10% of site as organised open space (Rule 8g)",
+      "Developer to provide 20% of land for EWS/LIG housing for sites ≥ 4000 sqm in HMDA area (Rule 11)"
+    ]
+  },
+
+  "special_zones": {
+    "banjara_jubilee_hills": {
+      "max_height_residential_apartments_m": 15,
+      "max_height_commercial_institutional_m": 15,
+      "buildings_above_10m_min_road_m": 12,
+      "jubilee_hills_society_max_height_m": 10,
+      "jubilee_hills_society_max_far": 1.0
+    },
+    "skyscraper_zone": {
+      "min_height_m": 36,
+      "min_floors": 12,
+      "min_plot_sqm": 4000,
+      "min_road_m": 24,
+      "locations": [
+        "All along the Inner Ring Road outside erstwhile MCH limits",
+        "Along River Musi outside erstwhile MCH limits",
+        "Gachi Bowli — Raidurg — Khajaguda"
+      ]
+    }
+  },
+
+  "bylaw_thresholds": {
+    "_note": "Key height/area thresholds that trigger different regulatory tiers.",
+    "high_rise_threshold_m": 18.0,
+    "fire_noc_residential_m": 18.0,
+    "fire_noc_commercial_m": 15.0,
+    "fire_noc_public_plot_sqm": 500,
+    "lift_mandatory_m": 15.0,
+    "lift_mandatory_floors": 4,
+    "min_plot_for_high_rise_sqm": 2000,
+    "min_plot_for_cellar_sqm": 750,
+    "road_width_non_high_rise_m": 9.0,
+    "road_width_high_rise_upto_24m": 12.0,
+    "road_width_high_rise_upto_30m": 18.0,
+    "road_width_high_rise_above_30m": 24.0
+  },
+
+  "accessibility": {
+    "_source": "AP Building Rules 2012, Rule 15.a.v & Annexure-V — NBC 2005 Part-III Clause 12.21 (pages 312–321)",
+    "applicability": "All public buildings and facilities used by the public; includes temporary/emergency conditions. Does NOT apply to private residences.",
+    "disability_types_covered": [
+      "Non-ambulatory disabilities", "Semi-ambulatory disabilities",
+      "Sight disabilities", "Hearing disabilities",
+      "Disabilities of in-coordination", "Aging",
+      "Allergies, heart and lung diseases", "Epilepsy, haemophilia, incontinence"
+    ],
+    "access_path": {
+      "min_width_mm": 1200,
+      "max_gradient": "1 in 20",
+      "clause": "D-2.2.1 of Annexure-V"
+    },
+    "parking": {
+      "ambulant_disabled_min_width_mm": 2700,
+      "ambulant_disabled_preferred_mm": 2800,
+      "wheelchair_min_width_mm": 3000,
+      "wheelchair_preferred_mm": 3300,
+      "clause": "D-2.3.2 of Annexure-V"
+    },
+    "ramp": {
+      "max_slope_general": "1 in 20",
+      "max_slope_short_distance": "1 in 12 (for distances up to 9000mm)",
+      "handrail_height_mm": 900,
+      "handrail_extension_beyond_top_bottom_mm": 300,
+      "clause": "D-3.1.1 and D-3.1.2 of Annexure-V"
+    },
+    "door": {
+      "min_clear_width_mm": 900,
+      "preferred_width_mm": 1000,
+      "max_threshold_height_mm": 25,
+      "note": "Self-closing doors: force minimised; sliding automatic preferred",
+      "clause": "D-3.3.1 of Annexure-V"
+    },
+    "staircase": {
+      "tread_depth_mm": 300,
+      "max_riser_height_mm": 150,
+      "note": "Consistent height/depth throughout; avoid projecting nosings and open stairs",
+      "clause": "D-3.5.1 of Annexure-V"
+    },
+    "toilet": {
+      "ambulant_disabled_min_width_mm": 900,
+      "ambulant_disabled_min_depth_mm": 1500,
+      "preferred_depth_mm": 1600,
+      "door_width_mm": 800,
+      "door_swing": "outward",
+      "wc_seat_height_mm": 500,
+      "clause": "D-3.7.2 and D-3.7.3 of Annexure-V"
+    },
+    "controls": {
+      "zone_min_height_mm": 800,
+      "zone_max_height_mm": 1200,
+      "note": "All controls (switches, intercoms, etc.) must be within this zone",
+      "clause": "D-3.12.1 of Annexure-V"
+    },
+    "handrails": {
+      "height_above_floor_mm": 900,
+      "diameter_mm": 40,
+      "note": "Circular section ~40mm diameter; colour contrast with wall behind; ~50mm curb at exposed sides of ramps",
+      "clause": "D-3.10.1 of Annexure-V"
+    }
+  },
+
+  "solar": {
+    "_source": "AP Building Rules 2012, Rule 15.a.xi (page 21) and Rule 22 (page 26)",
+    "mandatory_threshold_units": 100,
+    "mandatory_for": [
+      "Group Housing Buildings with 100 units and above",
+      "Nursing Homes", "Hospitals", "Hotels"
+    ],
+    "requirements": [
+      "Solar Water Heating System in the building",
+      "Solar Lighting System in the building and on site for outdoor lighting"
+    ],
+    "bank_guarantee_required": true,
+    "bank_guarantee_note": "Applicant shall give bank guarantee to sanctioning authority for compliance",
+    "incentive_property_tax_rebate_pct": 10,
+    "incentive_clause": "Rule 22(i) — 10% rebate on property tax for installing and using solar heating and lighting system"
+  },
+
+  "water_recycling": {
+    "_source": "AP Building Rules 2012, Rule 15.a.xii (page 21) and Rule 22 (page 26)",
+    "mandatory_for": [
+      "Group Housing Buildings with 100 units and above",
+      "Nursing Homes", "Hospitals", "Hotels"
+    ],
+    "requirement": "Provision for Recycling of Water shall be made",
+    "incentive_property_tax_rebate_pct": 10,
+    "incentive_clause": "Rule 22(ii) — 10% rebate on property tax for undertaking BOTH recycling of waste water AND rainwater harvesting structures"
+  },
+
+  "rainwater_harvesting": {
+    "_source": "AP Building Rules 2012, Rule 15.a.vii & Annexure-VI (G.O.Ms.No.350 M.A., Dated 09-06-2000), pages 322–324",
+    "mandatory": true,
+    "applicable_to": "ALL buildings in all Municipal Corporations, Urban Development Authorities, and Municipalities",
+    "plot_threshold_for_technical_specs_sqm": 300,
+    "technical_specs_note": "Plots 300 sqm and above: Part-A compulsory; Part-B, C or D optional",
+    "percolation_volume_per_100sqm_roof_cum": 6,
+    "pit_dimensions": {
+      "width_m": 1.2,
+      "length_m": 1.2,
+      "depth_m": "2.0 to 2.5"
+    },
+    "trench_dimensions": {
+      "width_m": 0.6,
+      "length_m": "2 to 6",
+      "depth_m": "1.5 to 2.0"
+    },
+    "filter_media_layers": [
+      "40mm road metals — bottom layer up to 50% of depth",
+      "20mm road metal — lower middle layer up to 20% of depth",
+      "Coarse sand — upper middle layer up to 20% of depth",
+      "Top 10% empty with splash pad"
+    ],
+    "terrace_connection": "Terrace connected to sump or wall through filtering tank by PVC pipe; valve to discharge first dirty rainwater to ground",
+    "penalty_acts": [
+      "Section 41 of A.P. Urban Development Authority Act, 1975",
+      "Section 596 & 597 of Hyderabad Municipal Corporation Act, 1955",
+      "Section 340 of A.P. Municipalities Act, 1965"
+    ],
+    "incentive": "10% property tax rebate when BOTH recycling of waste water AND rainwater harvesting structures are undertaken (Rule 22.ii)"
+  },
+
+  "sanction_clearance": {
+    "_source": "AP Building Rules 2012, Rules 19, 24, 25 (pages 24–27)",
+    "initial_fee": "2% of Building Permit / Licence fees",
+    "initial_fee_max_inr": 10000,
+    "initial_fee_note": "Collected with application. Balance fees due before permission issued. If application rejected, initial fee forfeited.",
+    "no_fee_for_parking_floors": true,
+    "permission_validity": {
+      "high_rise_and_group_development_schemes_yrs": 5,
+      "non_high_rise_yrs": 3,
+      "construction_must_commence_within_months": 18,
+      "revalidation_yrs": 2
+    },
+    "approval_authorities": {
+      "GHMC": "Chief City Planner / Town Planning Section Head (Convener) — Commissioner, GHMC",
+      "HMDA_UDA": "Head of Town Planning Wing of UDA (Convener) — Metropolitan Commissioner / Vice Chairman",
+      "Other_Corps_Municipalities": "Town Planning Section Head (Convener) — Director of Town & Country Planning",
+      "Gram_Panchayats": "Regional Deputy Director of Town Planning (Convener) — Director of Town & Country Planning"
+    },
+    "mandatory_documents_above_10m": [
+      "Soil Test / Geo-technical Investigation Report (Rule 5.f.xviii.a)",
+      "Structural designs and drawings certified by licensed Structural Engineer (Rule 5.f.xviii.b)",
+      "Plans signed by Owner, Builder, Architect, and Structural Engineer (Rule 5.f.xviii.c)",
+      "Registered agreement between owner and builder, if applicable (Rule 5.f.xviii.d)",
+      "Undertaking on Rs.100 stamp paper — no possession without Occupancy Certificate (Rule 5.f.xviii.e)",
+      "All-Risks Insurance Policy for construction period (Rule 5.f.xviii.f)"
+    ],
+    "mandatory_clearances_high_rise": [
+      "Fire NOC from AP State Disasters Response & Fire Services Dept (Rule 7.a.vi)",
+      "Airport Authority clearance if within restricted / air funnel zone (Rule 7.a.v)"
+    ]
+  },
+
+  "occupancy_certificate": {
+    "_source": "AP Building Rules 2012, Rule 26 (pages 28–29)",
+    "mandatory": true,
+    "exception": "Individual buildings on plots up to 100 sqm with height up to 7m — optional",
+    "partial_oc_allowed": true,
+    "partial_oc_condition": "Flats/units fulfilling all requirements plus basic facilities (lifts, water supply, sanitation, drainage, roads, common lighting)",
+    "authority_must_respond_within_days": 15,
+    "height_tolerance_m": 1.0,
+    "height_tolerance_note": "Total height may vary up to 1m with no change in permitted floors, subject to fire service norms",
+    "inspection_checks": [
+      "Number of Floors",
+      "External setbacks",
+      "Usage of the building",
+      "Parking space provision",
+      "Abutting road width"
+    ],
+    "high_rise_extra": "OC issued ONLY after fire safety clearance from AP State Disasters Response & Fire Services Dept",
+    "penalties_without_oc": [
+      "Utility agencies (electricity, water, drainage, sewerage) must deny regular connections OR charge 3x tariff until OC produced",
+      "Local Body must collect 2x property tax annually from owner / occupier",
+      "Registration Authority: register ONLY permitted built-up area per sanctioned plan",
+      "Financial agencies: extend loans ONLY to permitted built-up area"
+    ]
+  },
+
+  "open_space": {
+    "_source": "AP Building Rules 2012, Rules 5.f.v, 5.f.vii, 7.a.vii, 7.a.viii, 8.g, 15.a.x",
+    "non_high_rise_above_750sqm": {
+      "min_pct_of_site": 5,
+      "use": "Greenery, tot lot, or soft landscaping",
+      "above_setbacks": true,
+      "clause": "Rule 5.f.v"
+    },
+    "high_rise": {
+      "min_pct_of_site": 10,
+      "open_to_sky": true,
+      "min_pocket_width_m": 3.0,
+      "min_pocket_area_sqm": 50,
+      "green_strip_all_sides_m": 2.0,
+      "clause": "Rules 7.a.vii and 7.a.viii"
+    },
+    "group_development_above_4000sqm": {
+      "min_pct_of_site": 10,
+      "min_pocket_width_m": 3.0,
+      "min_pocket_area_sqm": 50,
+      "clause": "Rule 8.g"
+    },
+    "group_housing_above_100_units": {
+      "common_amenities_min_pct_of_bua": 3,
+      "amenities": ["Convenient shopping", "Committee hall / club house", "Creche", "Gymnasium"],
+      "standard": "As per NBC 2005",
+      "clause": "Rule 15.a.x"
+    },
+    "chowk_inner_courtyard": {
+      "min_area_sqm": 25,
+      "min_side_m": 3.0,
+      "note": "Allowed above stilt floor; must be open to sky",
+      "clause": "Rule 7.a.xv"
+    },
+    "inter_block_spacing": {
+      "note": "Space between two blocks must be >= all-round setback of tallest block (Table IV); NOT counted as organised open space",
+      "clause": "Rule 7.a.xii / Rule 5.f.xii"
+    }
+  },
+
+  "height_exemptions": {
+    "_source": "AP Building Rules 2012, Rule 2.e and Rule 2.f — Definitions (page 3)",
+    "excluded_from_building_height": [
+      "Parapet wall",
+      "Staircase head room (mumty)",
+      "Lift room",
+      "Water tank"
+    ],
+    "excluded_from_high_rise_classification": [
+      "Chimneys",
+      "Cooling towers",
+      "Boiler rooms",
+      "Lift machine rooms",
+      "Cold storage and other non-working areas (industrial buildings)",
+      "Water tanks (other buildings)",
+      "Architectural features (other buildings)"
+    ],
+    "stilt_floor_height_min_m": 2.5,
+    "stilt_mechanical_parking_floor_min_m": 4.5,
+    "stilt_excluded_from_height": true,
+    "stilt_clause": "Rule 5.c"
+  }
+}
