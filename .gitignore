@@ -1,7 +1,40 @@
+# ── Python ────────────────────────────────────────────────────────
 venv/
 env/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Environment / secrets ─────────────────────────────────────────
 .env
-node_modules/
-Dist/
+.env.*
+*.env
+
+# ── Database ──────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Large binary / downloaded files ──────────────────────────────
+*.pdf
+Bangalore-Building-Byelaws.txt
+
+# ── Generated files (auto-created at runtime) ─────────────────────
+last_hash.txt
+section_hashes.json
+structured_sections.json
+
+# ── IDE / OS ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────────────────
+*.log
