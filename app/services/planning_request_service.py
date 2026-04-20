@@ -225,7 +225,7 @@ def get_basement_regulations(plot_area_sqm: float, basement_requested: bool) -> 
     bda_bsmt = get_basement_rules()
     return {
         "requested": True,
-        "max_basements": bda_bsmt.get("max_number_of_levels", 5),
+        "max_basements": bda_bsmt.get("max_basement_levels_for_parking", bda_bsmt.get("max_number_of_levels", 5)),
         "permitted_uses": bda_bsmt.get("permitted_uses", [
             "Car parking (primary use — up to 5 levels)",
             "Electrical room, pump room, generator",
@@ -237,9 +237,9 @@ def get_basement_regulations(plot_area_sqm: float, basement_requested: bool) -> 
             "Kitchens or restaurants",
         ],
         "setback_in_basement": f"Minimum {bda_bsmt.get('setback_from_boundary_m', 2.0)} m from plot boundary; "
-                               f"+{bda_bsmt.get('additional_setback_per_extra_floor_m', 1.0)} m per additional level (BDA RMP 2031 Sec 4.9.2)",
+                               f"+{bda_bsmt.get('additional_setback_per_extra_level_m', bda_bsmt.get('additional_setback_per_extra_floor_m', 1.0))} m per additional level (BDA RMP 2031 Sec 4.9.2)",
         "ventilation": "Mechanical ventilation mandatory — minimum 6 air changes per hour (NBC 2016)",
-        "max_depth_m": bda_bsmt.get("max_overall_height_m", 4.5),
+        "max_depth_m": bda_bsmt.get("max_height_m", bda_bsmt.get("max_overall_height_m", 4.5)),
         "far_counted": False,
         "far_note": "Basement NOT counted in FAR if used for parking/services only",
         "fire_requirements": [
@@ -259,15 +259,21 @@ def get_basement_regulations(plot_area_sqm: float, basement_requested: bool) -> 
 # ─────────────────────────────────────────────────────────────────
 def get_projection_rules(road_width: float) -> dict:
     bda_bal = get_balcony_rules()
+    ground_str = bda_bal.get("ground_floor", "NOT permitted")
+    ground_floor_allowed = bda_bal.get("ground_floor_allowed",
+        "not permitted" not in str(ground_str).lower())
     return {
-        "balcony_ground_floor_allowed": bda_bal.get("ground_floor_allowed", False),
+        "balcony_ground_floor_allowed": ground_floor_allowed,
         "balcony_first_floor_max_projection_m": bda_bal.get("first_floor_max_projection_m", 1.20),
-        "balcony_above_first_floor_max_projection_m": bda_bal.get("second_floor_and_above_max_projection_m", 1.75),
+        "balcony_above_first_floor_max_projection_m": bda_bal.get(
+            "above_second_floor_max_projection_m",
+            bda_bal.get("second_floor_and_above_max_projection_m", 1.75)),
         "balcony_far_note": "Balconies excluded from FAR within permitted projection limits (BDA RMP 2031 Sec 4.9.5)",
         "balcony_ground_note": "Ground floor balconies NOT permitted (BDA RMP 2031)",
         "chajja_max_projection_m": 0.75,
         "chajja_note": "Chajja/sun shade up to 0.75m — not counted in FAR",
-        "projection_rule": bda_bal.get("projection_rule", "1/3rd of setback or max projection limit — whichever is less"),
+        "projection_rule": bda_bal.get("max_projection_as_fraction_of_setback",
+            bda_bal.get("projection_rule", "1/3rd of setback or max projection limit — whichever is less")),
         "road_overhang_note": f"No projection over road boundary — {road_width}m road setback must be maintained",
     }
 
@@ -460,8 +466,8 @@ Plot facts (pre-computed — do NOT recalculate):
 Zone: {zone} | Locality: {locality} | Road: {road_width}m | Usage: {usage}
 FAR: {far} | Ground coverage: {ground_coverage_pct}% | Max built-up: {max_built_sqm:,.0f} sqm
 Setbacks: Front {front_setback}m | Side {side_setback}m | Rear {rear_setback}m
-Lift mandatory: {staircase_data['lift_mandatory']} | Staircases: {staircase_data['num_staircases']}
-Fire NOC required: {fire_data['noc_required']} | Building height: {building_height}m
+Lift mandatory: {staircase_data['lift_mandatory']} (trigger: G+3 OR 15m, whichever first — BDA RMP 2031 Sec 4.9.1(iv)) | Staircases: {staircase_data['num_staircases']}
+Fire NOC required: {fire_data['noc_required']} | Building height: {building_height}m | Floors: {far_floors} (G+{far_floors-1})
 Basement requested: {basement} | Corner plot: {corner_plot}
 
 Return ONLY a JSON object with these keys. Each value must be ONE concise sentence (max 25 words) citing the relevant bylaw section. No bullet points, no markdown.
@@ -474,7 +480,7 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
   "basement": {"One sentence about permitted uses and FAR exclusion for basement" if basement else "null"},
   "fire": "One sentence about NOC requirement and key fire safety rule for {building_height}m building, citing NBC 2016.",
   "compliance": "One sentence about the most critical mandatory compliance for this plot size and usage.",
-  "parking": "One sentence about parking requirement under BBMP Table 23 for this usage.",
+  "parking": "One sentence about parking requirement under BDA RMP 2031 Sec 4.13 / Table 4 for this usage.",
 }}
 """
 
@@ -503,12 +509,14 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
         section_summaries = {
             "setbacks":    f"Front {front_setback}m, Side {side_setback}m, Rear {rear_setback}m per BBMP bylaws for {zone} zone.",
             "far":         f"FAR {far} allows max {max_built_sqm:,.0f} sqm built-up; basement and staircase excluded from FAR count.",
-            "staircase":   f"Min {staircase_data['min_staircase_width_m']}m staircase width required; {'lift mandatory' if staircase_data['lift_mandatory'] else 'lift not mandatory'} per BBMP Sec 20.7.",
+            "staircase":   f"Min {staircase_data['min_staircase_width_m']}m staircase width required; {'lift mandatory (G+3 or 15m trigger)' if staircase_data['lift_mandatory'] else 'lift not mandatory'} per BDA RMP 2031 Sec 4.9.1(iv).",
             "projections":  "Max 1.5m balcony and 0.75m chajja projection permitted; balconies within 20% of floor area excluded from FAR.",
             "basement":    "Basement permitted for parking and utilities only; excluded from FAR calculation per BBMP Sec 18.2." if basement else None,
             "fire":        f"{'Fire NOC required' if fire_data['noc_required'] else 'Fire NOC not required'} for {building_height}m building under NBC 2016 Part IV.",
-            "compliance":  "Rainwater harvesting mandatory for plots above 120 sqm; solar panels required above 20m height.",
-            "parking":     "Parking calculated per BBMP Table 23 based on built-up area and usage type.",
+            "compliance":  (f"Lift mandatory — {far_floors} floors (G+{far_floors-1}) exceeds G+3 threshold per BDA RMP 2031 Sec 4.9.1(iv)."
+                            if staircase_data['lift_mandatory']
+                            else "Rainwater harvesting mandatory for plots above 120 sqm; verify zone-specific bylaws."),
+            "parking":     "Parking calculated per BDA RMP 2031 Sec 4.13 / Table 4 based on built-up area and usage type.",
         }
 
     # ── Return ────────────────────────────────────────────────────

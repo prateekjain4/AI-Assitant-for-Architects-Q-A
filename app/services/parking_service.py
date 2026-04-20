@@ -1,31 +1,34 @@
 import math
 
-# ── BBMP Parking requirements (Table 23) ─────────────────────────
-# Car spaces per unit of built-up area
+# ── Parking requirements — BDA RMP 2031 Sec 4.13 / Table 4 ──────
 PARKING_RULES = {
     "residential": {
-        "car_per_unit_sqm":  50,    # 1 car per 50 sqm dwelling unit
-        "bike_per_car":       2,    # 2 two-wheelers per car space
-        "visitor_pct":       10,    # 10% extra for visitors
-        "note": "BBMP Bylaws Table 23 — Residential"
+        "bike_per_car":  2,    # 2 two-wheelers per car space (BBMP convention)
+        "visitor_pct":  10,    # 10% extra for visitors
+        "note": "BDA RMP 2031 Sec 4.13 / Table 4 — Residential Multi-Dwelling"
+    },
+    "residential_single": {
+        "bike_per_car":  2,
+        "visitor_pct":  10,
+        "note": "BDA RMP 2031 Sec 4.13 / Table 4 — Residential Single Dwelling (1 car / 100 sqm BUA)"
     },
     "commercial": {
-        "car_per_100sqm":    3,     # 3 cars per 100 sqm
-        "bike_per_car":      2,
-        "visitor_pct":       20,
-        "note": "BBMP Bylaws Table 23 — Commercial"
+        "car_per_100sqm": 2,   # 1 car per 50 sqm (office/retail, Table 4)
+        "bike_per_car":   2,
+        "visitor_pct":   20,
+        "note": "BDA RMP 2031 Sec 4.13 / Table 4 — Commercial (Office/Retail)"
     },
     "mixed": {
-        "car_per_100sqm":    2,
-        "bike_per_car":      2,
-        "visitor_pct":       15,
-        "note": "BBMP Bylaws Table 23 — Mixed Use"
+        "car_per_100sqm": 2,
+        "bike_per_car":   2,
+        "visitor_pct":   15,
+        "note": "BDA RMP 2031 Sec 4.13 / Table 4 — Mixed Use"
     },
     "industrial": {
-        "car_per_100sqm":    1,
-        "bike_per_car":      3,
-        "visitor_pct":       10,
-        "note": "BBMP Bylaws Table 23 — Industrial"
+        "car_per_100sqm": 1,   # 1 car per 100 sqm (Table 4)
+        "bike_per_car":   3,
+        "visitor_pct":   10,
+        "note": "BDA RMP 2031 Sec 4.13 / Table 4 — Industrial"
     },
 }
 
@@ -49,33 +52,55 @@ def calculate_parking(
     usage:           str,
     built_up_sqft:   float,
     num_units:       int   = 1,
+    avg_unit_sqm:    float = 0,
     plot_length_m:   float = 0,
     plot_width_m:    float = 0,
     basement:        bool  = False,
     stilt:           bool  = False,
 ) -> dict:
     """
-    Calculate mandatory parking per BBMP Table 23 and
-    generate a layout plan showing how spaces fit.
+    Calculate mandatory parking per BDA RMP 2031 Sec 4.13 / Table 4
+    and generate a layout plan showing how spaces fit.
     """
-    usage     = usage.lower().strip() if usage else "residential"
-    if usage not in PARKING_RULES:
-        usage = "residential"
-    rules     = PARKING_RULES[usage]
+    raw_usage = (usage or "").lower().strip()
+    # Normalise usage → rules key
+    if raw_usage.startswith("residential"):
+        if "single" in raw_usage or "dwelling" in raw_usage:
+            usage_key = "residential_single"
+        else:
+            usage_key = "residential"
+    elif raw_usage in PARKING_RULES:
+        usage_key = raw_usage
+    else:
+        usage_key = "residential"
+    rules     = PARKING_RULES[usage_key]
     built_sqm = built_up_sqft / 10.7639
 
-    # ── Calculate required spaces ─────────────────────────────────
-    if usage == "residential":
-        # BBMP Table 23: 1 car per dwelling unit
-        # If num_units not provided, estimate from built area
-        # Average Bangalore apartment = 120–150 sqm
-        avg_unit_sqm    = 130
-        estimated_units = max(1, math.ceil(built_sqm / avg_unit_sqm))
+    # ── Calculate required spaces (BDA Table 4) ──────────────────
+    if usage_key == "residential_single":
+        # Single dwelling: 1 car per 100 sqm BUA (mandatory for plots ≥ 90 sqm)
+        cars_req     = max(1, math.ceil(built_sqm / 100))
+        bikes_req    = cars_req * rules["bike_per_car"]
+        visitor_cars = max(1, math.ceil(cars_req * rules["visitor_pct"] / 100))
+        total_cars   = cars_req + visitor_cars
+    elif usage_key == "residential":
+        # Multi-dwelling — tiered by avg DU size (BDA Table 4)
+        #   DU <  50 sqm : 1 car per 2 DUs
+        #   DU 50-120    : 1 car per DU
+        #   DU > 120     : 1 car + 1 per 120 sqm above 120 per DU
+        avg_unit        = avg_unit_sqm if avg_unit_sqm > 0 else 130
+        estimated_units = max(1, math.ceil(built_sqm / avg_unit))
         actual_units    = num_units if num_units > 1 else estimated_units
-        cars_req        = actual_units                                    # 1 car per unit
-        bikes_req       = cars_req * rules["bike_per_car"]               # 2 bikes per car
-        visitor_cars    = max(1, math.ceil(cars_req * rules["visitor_pct"] / 100))
-        total_cars      = cars_req + visitor_cars
+        if avg_unit < 50:
+            cars_per_unit = 0.5
+        elif avg_unit <= 120:
+            cars_per_unit = 1.0
+        else:
+            cars_per_unit = 1 + math.floor((avg_unit - 120) / 120)
+        cars_req     = math.ceil(actual_units * cars_per_unit)
+        bikes_req    = cars_req * rules["bike_per_car"]
+        visitor_cars = max(1, math.ceil(cars_req * rules["visitor_pct"] / 100))
+        total_cars   = cars_req + visitor_cars
     else:
         cars_req     = math.ceil(built_sqm / 100 * rules["car_per_100sqm"])
         bikes_req    = cars_req * rules["bike_per_car"]
@@ -111,7 +136,7 @@ def calculate_parking(
     compliant     = available_sqm == 0 or total_parking_area_sqm <= available_sqm * 0.4
 
     return {
-        "usage":               usage,
+        "usage":               usage_key,
         "built_up_sqft":       round(built_up_sqft, 1),
         "built_up_sqm":        round(built_sqm, 1),
         "required": {

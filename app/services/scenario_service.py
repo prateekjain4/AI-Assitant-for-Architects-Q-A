@@ -83,12 +83,27 @@ def _compute_scenario(
     lift_mandatory = floors > lift_mandatory_floors()
     num_staircases = 2 if total_built_sqm > 200 else 1   # NBC 2016: dual staircase above 200 sqm
 
-    # Parking (BBMP Table 23 approx.)
-    if usage.lower() == "residential":
-        avg_unit_sqm    = 130
-        units           = max(1, math.ceil(total_built_sqm / avg_unit_sqm))
-        parking_car     = units + max(1, math.ceil(units * 0.10))   # +10% visitor
-        parking_2w      = units
+    # Parking — BDA RMP 2031 Sec 4.13 / Table 4
+    u = usage.lower().strip()
+    if u.startswith("residential"):
+        if "single" in u or "dwelling" in u:
+            # Single dwelling: 1 car per 100 sqm BUA
+            cars_req = math.ceil(total_built_sqm / 100)
+        else:
+            # Multi-dwelling: tiered by avg DU size
+            avg_unit_sqm = 130
+            units        = max(1, math.ceil(total_built_sqm / avg_unit_sqm))
+            if avg_unit_sqm < 50:
+                cars_per_unit = 0.5
+            elif avg_unit_sqm <= 120:
+                cars_per_unit = 1.0
+            else:
+                # +1 car per 120 sqm above 120 sqm per DU
+                cars_per_unit = 1 + math.floor((avg_unit_sqm - 120) / 120)
+            cars_req = math.ceil(units * cars_per_unit)
+        visitor_cars = max(1, math.ceil(cars_req * 0.10))
+        parking_car  = cars_req + visitor_cars
+        parking_2w   = parking_car * 2
     else:
         parking_car = math.ceil(total_built_sqm / 100 * 3)
         parking_2w  = parking_car * 2
@@ -257,8 +272,16 @@ def calculate_scenarios(
       • Below 24m    (≤ 24.0 m) — avoids fire command centre / refuge area
       • Max FAR      (100 %)    — maximum density allowed by FAR + progressive setbacks
     """
+    # ── Plot area: dimensions (in metres) are the source of truth.
+    # plot_area_sqft on the request has historically been mis-populated with
+    # the sqm value. Derive both from length × width when available.
+    if plot_length_m and plot_width_m:
+        plot_area_sqm  = round(plot_length_m * plot_width_m, 2)
+        plot_area_sqft = round(plot_area_sqm * 10.7639, 2)
+    else:
+        plot_area_sqm = round(plot_area_sqft / 10.7639, 2)
+
     # ── FAR and ground coverage from BDA JSON ──────────────────────────────
-    plot_area_sqm = round(plot_area_sqft / 10.7639, 2)
     far_data  = get_far(zone, road_width, plot_area_sqm, planning_zone)
     far       = far_data["total"]       # use total (base + TDR)
     gc_pct    = far_data["coverage_pct"]

@@ -2,388 +2,860 @@
   "_meta": {
     "city": "bengaluru",
     "authority": "BDA",
-    "document": "Revised Master Plan for Bengaluru - 2031 (Draft)",
-    "schema_version": "2.0",
+    "document": "Revised Master Plan for Bengaluru - 2031 (Draft) — Zoning Regulations",
+    "secondary_document": "BBMP Building Bye-Laws 2003 (amended, effective 5-Jun-2004)",
+    "schema_version": "3.0",
     "applicable_bylaws": [
-      "BDA Revised Master Plan 2031 (Draft) – Zoning Regulations",
+      "BDA Revised Master Plan 2031 (Draft) — Zoning Regulations",
+      "BBMP Building Bye-Laws 2003 (Sections 9, 14–21, 23, 29, 30, 31, 32 explicitly cross-checked)",
       "NBC 2016 Part IV (Fire & Life Safety)",
-      "BBMP Building Bylaws 2003 (amended)"
+      "IS 1893-2002 (Earthquake Resistant Design)"
     ],
     "planning_zones": {
       "Zone_A": "Area falling within the Outer Ring Road (ORR)",
       "Zone_B": "Area outside the ORR and up to the conurbation limit",
-      "Zone_C": "Area beyond the conurbation limit and up to the Local Planning Area boundary – Agricultural zone"
+      "Zone_C": "Area beyond the conurbation limit and up to the Local Planning Area boundary — Agricultural zone only"
     },
     "land_use_zones": [
-      "R  – Residential",
-      "C1 – Commercial Category 1 (neighbourhood shops, small offices)",
-      "C2 – Commercial Category 2 (retail, nursing homes, fuel stations)",
-      "C3 – Commercial Category 3 (offices, malls, hotels, hospitals)",
-      "C4 – Commercial Category 4 (warehouses, wholesale, junk yards)",
-      "C5 – Commercial Category 5 (agro mandis, heavy goods markets)",
-      "I1 – Industrial: Household Industries",
-      "I2 – Industrial: Service / Hi-Tech Industries (IT/BT/BPO)",
-      "I3 – Industrial: Light Industries",
-      "I4 – Industrial: Medium Industries",
-      "I5 – Industrial: Heavy Industries",
-      "T1 – Transportation & Communication Cat-1",
-      "T2 – Transportation & Communication Cat-2",
-      "T3 – Transportation & Communication Cat-3",
-      "T4 – Transportation & Communication Cat-4",
-      "PSP1 – Public & Semi-Public Cat-1 (local amenities, creches)",
-      "PSP2 – Public & Semi-Public Cat-2 (police, post offices, primary schools)",
-      "PSP3 – Public & Semi-Public Cat-3 (hospitals, colleges, government offices)",
-      "PSP4 – Public & Semi-Public Cat-4 (airports and ancillary uses)",
-      "PU  – Public Utilities (permitted in all zones)",
-      "OS  – Open Spaces / Parks",
-      "AG  – Agricultural (Planning Zone C only)"
+      "R    — Residential",
+      "C1   — Commercial Cat-1 (petty shops, STD/ATM, tutoring ≤50 sqm, tailoring, bakery)",
+      "C2   — Commercial Cat-2 (eateries, gyms, clinics, retail, banks, fuel stations)",
+      "C3   — Commercial Cat-3 (corporate offices, malls, hotels, hospitals, cinemas)",
+      "C4   — Commercial Cat-4 (warehouses, wholesale, junk yards)",
+      "C5   — Commercial Cat-5 (agro mandis, heavy goods markets)",
+      "I1   — Industrial: Household Industries (≤5 kW power)",
+      "I2   — Industrial: Service/Hi-Tech (IT/BT/BPO, R&D, film studios)",
+      "I3   — Industrial: Light Industries",
+      "I4   — Industrial: Medium Industries",
+      "I5   — Industrial: Heavy Industries (no new I5 in BMA per RMP 2031)",
+      "T1   — Transportation Cat-1 (bus bays, metro stations, parking areas)",
+      "T2   — Transportation Cat-2 (MLCP, filling stations, LMV workshops)",
+      "T3   — Transportation Cat-3 (godowns, truck workshops, bus terminals, telecom)",
+      "T4   — Transportation Cat-4 (airports, rail yards, truck terminals, cargo)",
+      "PSP1 — Public & Semi-Public Cat-1 (crèches, public libraries, distribution shops)",
+      "PSP2 — Public & Semi-Public Cat-2 (police stations, post offices, primary schools)",
+      "PSP3 — Public & Semi-Public Cat-3 (hospitals, colleges, govt buildings, fire stations)",
+      "PSP4 — Public & Semi-Public Cat-4 (airports and ancillary uses)",
+      "PU   — Public Utilities (permitted in all zones: water/sewerage/power/telecom plants)",
+      "OS   — Open Spaces / Parks / Playgrounds (up to 2% ancillary FAR 0.50 at G+1)",
+      "AG   — Agricultural (Planning Zone C only)"
     ],
-    "notes": "FAR has two components: Base FAR and Allowable-against-TDR FAR. Total Maximum = Base + TDR. All values sourced from BDA RMP 2031 Draft Tables 6, 7, 12, 13, 17, 20, 22. VERIFY all fields against the official gazette before use in production."
+    "notes": "All values sourced directly from BDA RMP 2031 Draft Zoning Regulations (Tables 1–27) and BBMP Bye-Laws 2003. FAR = Base FAR + Allowable-against-TDR FAR. VERIFY all fields against the official gazette before use in production."
+  },
+
+  "setbacks": {
+    "_source": "BDA RMP 2031 Table 1 (front setbacks by road width) and Table 2 (all-round setbacks by height). BBMP Bylaws 2003 Tables 4 & 5 for older buildings.",
+    "_note": "Table 1 governs front setback. Table 2 governs all-round setback once building height exceeds 9.5 m. The HIGHER of Table 1 front setback vs Table 2 front setback shall be applied.",
+
+    "front_setback_by_road_width": {
+      "_note": "Table 1: Minimum front setbacks for ALL types of buildings w.r.t. road width",
+      "road_6m":  { "min_front_setback_m": 1.0, "building_line_from_road_centre_m": 4.0 },
+      "road_7_5m":{ "min_front_setback_m": 1.0, "building_line_from_road_centre_m": 4.75 },
+      "road_9m":  { "min_front_setback_m": 1.75,"building_line_from_road_centre_m": 6.25 },
+      "road_12m": { "min_front_setback_m": 2.0, "building_line_from_road_centre_m": 8.0 },
+      "road_15m": { "min_front_setback_m": 2.5, "building_line_from_road_centre_m": 10.0 },
+      "road_18m": { "min_front_setback_m": 3.5, "building_line_from_road_centre_m": 12.5 },
+      "road_24m": { "min_front_setback_m": 3.5, "building_line_from_road_centre_m": 15.5 },
+      "road_30m": { "min_front_setback_m": 4.0, "building_line_from_road_centre_m": 19.0 },
+      "road_45m": { "min_front_setback_m": 6.0, "building_line_from_road_centre_m": 28.5 },
+      "road_60m": { "min_front_setback_m": 6.0, "building_line_from_road_centre_m": 36.0 }
+    },
+
+    "all_round_setback_by_height": {
+      "_note": "Table 2: Minimum setbacks for all buildings (EXCEPT Industrial) w.r.t. height. Front and Rear/Side values are equal for all rows.",
+      "_note2": "Number of floors EXCLUDES basement floors. Stilt floor height COUNTS towards total building height.",
+      "row_1":  { "max_floors": "G+1",    "height_m": "below 9.5",       "plot_area_sqm": "upto 60",          "front_m": 1.0,  "rear_and_sides_m": 0.5 },
+      "row_2":  { "max_floors": "G+1 or Stilt+2", "height_m": "below 9.5","plot_area_sqm": "above 60 upto 120","front_m": 1.0,  "rear_and_sides_m": 1.0 },
+      "row_3":  { "max_floors": "G+2 or Stilt+3", "height_m": "9.5 to below 12.5","plot_area_sqm": "above 120 upto 240", "front_m": 2.0, "rear_and_sides_m": 2.0 },
+      "row_4":  { "max_floors": "G+3 or Stilt+4", "height_m": "12.5 to below 15","plot_area_sqm": "above 240 upto 360", "front_m": 3.0, "rear_and_sides_m": 3.0 },
+      "row_5":  { "max_floors": "G+4 or Stilt+4", "height_m": "below 15",       "plot_area_sqm": "above 360",          "front_m": 4.0, "rear_and_sides_m": 4.0 },
+      "row_6":  { "max_floors": "G+5",    "height_m": "above 15 upto 18",  "plot_area_sqm": "any",               "front_m": 6.0,  "rear_and_sides_m": 6.0 },
+      "row_7":  { "max_floors": "G+6",    "height_m": "above 18 upto 21",  "plot_area_sqm": "any",               "front_m": 7.0,  "rear_and_sides_m": 7.0 },
+      "row_8":  { "max_floors": "G+7",    "height_m": "above 21 upto 24",  "plot_area_sqm": "any",               "front_m": 8.0,  "rear_and_sides_m": 8.0 },
+      "row_9":  { "max_floors": "G+8",    "height_m": "above 24 upto 27",  "plot_area_sqm": "any",               "front_m": 9.0,  "rear_and_sides_m": 9.0 },
+      "row_10": { "max_floors": "G+9",    "height_m": "above 27 upto 30",  "plot_area_sqm": "any",               "front_m": 10.0, "rear_and_sides_m": 10.0 },
+      "row_11": { "max_floors": "G+11",   "height_m": "above 30 upto 36",  "plot_area_sqm": "any",               "front_m": 11.0, "rear_and_sides_m": 11.0 },
+      "row_12": { "max_floors": "G+13",   "height_m": "above 36 upto 42",  "plot_area_sqm": "any",               "front_m": 12.0, "rear_and_sides_m": 12.0 },
+      "row_13": { "max_floors": "G+15",   "height_m": "above 42 upto 48",  "plot_area_sqm": "any",               "front_m": 13.0, "rear_and_sides_m": 13.0 },
+      "row_14": { "max_floors": "G+17",   "height_m": "above 48 upto 54",  "plot_area_sqm": "any",               "front_m": 14.0, "rear_and_sides_m": 14.0 },
+      "row_15": { "max_floors": "G+19",   "height_m": "above 54 upto 60",  "plot_area_sqm": "any",               "front_m": 15.0, "rear_and_sides_m": 15.0 },
+      "row_16": { "max_floors": "above G+19", "height_m": "above 60",      "plot_area_sqm": "any",               "front_m": 16.0, "rear_and_sides_m": 16.0 }
+    },
+
+    "rules_and_relaxations": {
+      "max_building_height_formula": "Max height = 1.5 × road width + front setback, subject to a maximum front setback of 16 m",
+      "corner_plots": "Both road-facing sides treated as FRONT — apply Table 1 front setback to both sides",
+      "multiple_road_plots": "Side facing road from which main motorable access is provided = front; others = rear/side",
+      "irregular_plots": "Side/rear setbacks at any critical point shall not be less than 75% of Table 2 value, min 6 m for buildings >15 m. Total setback area must equal full setback requirement",
+      "multiple_buildings_on_site": "Distance between buildings = ½ height of tallest building OR 16 m, whichever is LOWER",
+      "stilt_floor_height": "Stilt floor height is counted towards total building height for Table 2 calculations. Stilt floor clear height shall not exceed 2.7 m",
+      "residential_plot_upto_120sqm": "An open staircase may be permitted in side or rear setbacks",
+      "residential_plot_upto_60sqm": "A WC of 1 m × 1.2 m may be permitted in rear setback",
+      "scooter_garage_in_setback": "Permitted on side setback ≥1.5 m at rear side, max depth 2.5 m",
+      "mlcp_setback_relaxation": "Only 50% of Table 2 setback required for MLCP portion, min 6 m for buildings >G+4 or ≥15 m",
+      "road_widening_relaxation": "If proposed road width ≥ 2× existing width: front setback reduced to 50% of Table 2 (non-high-rise) or 25% (high-rise), subject to Table 1 minimum",
+      "setback_not_counted_from": "Public open spaces and conservancies cannot be counted as setbacks — must be in owner's plot"
+    },
+
+    "items_permitted_in_setback_without_affecting_driveway": [
+      "Pump room",
+      "Generator with outdoor acoustic enclosure (exhaust pipe ≥3 m above neighbouring building)",
+      "Watchman's cubicle ≤4 sqm at entry/exit — no setback from boundary",
+      "Fire control room max 4 m × 4 m — no setback from boundary",
+      "Sump tanks below ground level",
+      "STP below ground level",
+      "Solid waste drying yard / organic waste converter",
+      "Children's play area",
+      "Transformer/power substation — no setback required (per KPTCL rules)",
+      "Open wells and borewells",
+      "RCC vehicular ramps ≤6 m wide for movement/parking access",
+      "Architectural features not usable for living/storage (not within 5 m height from ground floor if in driveway area)",
+      "Cantilever porches, steps and corridor to ground floor entry",
+      "Car parking in basement — subject to applicable restrictions",
+      "NOTE for non-high-rise: Items pump room, generator, watchman cubicle, sump, STP, solid waste, children's play area, wells — may be abutting building with 1 m setback from boundary"
+    ],
+
+    "projections_in_setback": {
+      "chajja_max_m": 0.75,
+      "chajja_max_fraction_of_openspace": "1/3 of open space (whichever is less)",
+      "portico": {
+        "max_size_m": "3 m wide × 4.5 m long",
+        "clearance_from_boundary_m": 1.0,
+        "high_rise_min_clear_height_m": 5.5,
+        "high_rise_vehicle_passage_width_m": 6.0,
+        "note": "No access to top of portico as sit-out"
+      },
+      "balcony": {
+        "ground_floor": "NOT permitted into prescribed setbacks",
+        "first_floor_max_projection_m": 1.2,
+        "above_second_floor_max_projection_m": 1.75,
+        "max_projection_as_fraction_of_setback": "1/3 of setback — whichever is LESS between 1.2/1.75 m and 1/3 of setback",
+        "high_rise_restriction": "No projection allowed within 5.5 m vertical clearance from ground level into minimum prescribed setback",
+        "commercial_buildings": "Balconies NOT allowed beyond setbacks in commercial buildings"
+      }
+    }
   },
 
   "far": {
-    "_note": "FAR by zone x road width and plot size. RMP 2031 uses a plot-size + road-width matrix. Road width keys represent the UPPER boundary of the bracket in metres (9999 = 30.5m and above).",
-    "_status": "VERIFY – sourced from Tables 6, 7, 12, 13, 17, 20, 22 of BDA RMP 2031 Draft.",
+    "_source": "BDA RMP 2031 Tables 6, 7, 8, 9, 12, 13, 17, 20, 22, 23, 24",
+    "_note": "FAR = Base FAR + Allowable TDR FAR. Total Maximum = sum of both. TDR column blank = TDR not permitted for that bracket.",
 
     "R": {
-      "_note": "Residential – Planning Zone A (Table 6) and Zone B (Table 7). FAR varies by plot size AND road width. Values below are Base FAR / Total Maximum FAR per planning zone.",
+      "_note": "Residential use zone. Sites above 20,000 sqm governed by development plan norms (Table 8/9).",
+      "_apartment_min_site": "Apartments only on sites >360 sqm (Zone A) or >500 sqm (Zone B); road ≥12.5 m mandatory",
+      "_open_space_requirement": "Sites >2000 sqm: min 10% earmarked as open space/play area (min 200 sqm, min 10 m width), handed to RWA. Sites ≥10000 sqm: additional 5% for civic amenities relinquished to Authority",
+
       "zone_A": {
-        "_note": "Planning Zone A (within Outer Ring Road). Rows = plot size (sqm), cols = road width upper bracket (m).",
-        "plot_upto_60":        { "road_below_6":    { "base": 1.50, "tdr": 0.00, "total": 1.50 }, "coverage_pct": 75 },
-        "plot_60_to_120":      { "road_6_to_9.5":   { "base": 1.50, "tdr": 0.00, "total": 1.50 }, "coverage_pct": 75 },
-        "plot_120_to_240":     { "road_9.5_to_12.5":{ "base": 1.50, "tdr": 0.00, "total": 1.50 }, "coverage_pct": 70 },
-        "plot_240_to_360":     { "road_12.5_to_15.5":{ "base": 1.50, "tdr": 0.00, "total": 1.50 }, "coverage_pct": 70 },
-        "plot_360_to_750":     { "road_15.5_to_18.5":{ "base": 1.80, "tdr": 0.45, "total": 2.25 }, "coverage_pct": 65 },
-        "plot_750_to_2000":    { "road_18.5_to_24.5":{ "base": 1.80, "tdr": 0.60, "total": 2.40 }, "coverage_pct": 60 },
-        "plot_2000_to_4000":   { "road_24.5_to_30.5":{ "base": 1.80, "tdr": 0.70, "total": 2.50 }, "coverage_pct": 50 },
-        "plot_4000_to_20000":  { "road_30.5_and_above":{ "base": 1.80, "tdr": 0.90, "total": 2.70 }, "coverage_pct": 40 }
+        "_source": "Table 6: FAR and Ground Coverage for Plots/Sites up to 20,000 sqm — Planning Zone A",
+        "plot_upto_60":       { "max_coverage_pct": 75, "base_far": 1.50, "tdr_far": 0.00, "total_max_far": 1.50, "min_road_width_m": null,  "max_height_restriction": "below 6 m road" },
+        "plot_60_to_120":     { "max_coverage_pct": 75, "base_far": 1.50, "tdr_far": 0.00, "total_max_far": 1.50, "min_road_width_m": 6.0,   "max_height_restriction": "9.5 m max if road <9.5 m" },
+        "plot_120_to_240":    { "max_coverage_pct": 70, "base_far": 1.50, "tdr_far": 0.00, "total_max_far": 1.50, "min_road_width_m": 9.5,   "max_height_restriction": "12.5 m or Stilt+3/GF+2 if road 9.5–12.5 m" },
+        "plot_240_to_360":    { "max_coverage_pct": 70, "base_far": 1.50, "tdr_far": 0.00, "total_max_far": 1.50, "min_road_width_m": 12.5,  "max_height_restriction": "15 m or Stilt+4/GF+3 if road 12.5–15.5 m" },
+        "plot_360_to_750":    { "max_coverage_pct": 65, "base_far": 1.80, "tdr_far": 0.45, "total_max_far": 2.25, "min_road_width_m": 15.5 },
+        "plot_750_to_2000":   { "max_coverage_pct": 60, "base_far": 1.80, "tdr_far": 0.60, "total_max_far": 2.40, "min_road_width_m": 18.5 },
+        "plot_2000_to_4000":  { "max_coverage_pct": 50, "base_far": 1.80, "tdr_far": 0.70, "total_max_far": 2.50, "min_road_width_m": 24.5 },
+        "plot_4000_to_20000": { "max_coverage_pct": 40, "base_far": 1.80, "tdr_far": 0.90, "total_max_far": 2.70, "min_road_width_m": 30.5 }
       },
+
       "zone_B": {
-        "_note": "Planning Zone B (outside ORR to conurbation limit). Rows = plot size (sqm), cols = road width upper bracket (m).",
-        "plot_upto_60":        { "road_below_6":    { "base": 1.50, "tdr": 0.00, "total": 1.50 }, "coverage_pct": 75 },
-        "plot_60_to_120":      { "road_6_to_9.5":   { "base": 1.50, "tdr": 0.00, "total": 1.50 }, "coverage_pct": 75 },
-        "plot_120_to_240":     { "road_9.5_to_12.5":{ "base": 1.80, "tdr": 0.00, "total": 1.80 }, "coverage_pct": 70 },
-        "plot_240_to_360":     { "road_12.5_to_15.5":{ "base": 1.80, "tdr": 0.00, "total": 1.80 }, "coverage_pct": 70 },
-        "plot_360_to_750":     { "road_15.5_to_18.5":{ "base": 2.00, "tdr": 0.40, "total": 2.40 }, "coverage_pct": 65 },
-        "plot_750_to_2000":    { "road_18.5_to_24.5":{ "base": 2.00, "tdr": 0.70, "total": 2.70 }, "coverage_pct": 60 },
-        "plot_2000_to_4000":   { "road_24.5_to_30.5":{ "base": 2.00, "tdr": 1.00, "total": 3.00 }, "coverage_pct": 50 },
-        "plot_4000_to_20000":  { "road_30.5_and_above":{ "base": 2.00, "tdr": 1.20, "total": 3.20 }, "coverage_pct": 40 }
+        "_source": "Table 7: FAR and Ground Coverage for Plots/Sites up to 20,000 sqm — Planning Zone B",
+        "plot_upto_60":       { "max_coverage_pct": 75, "base_far": 1.50, "tdr_far": 0.00, "total_max_far": 1.50, "min_road_width_m": null },
+        "plot_60_to_120":     { "max_coverage_pct": 75, "base_far": 1.50, "tdr_far": 0.00, "total_max_far": 1.50, "min_road_width_m": 6.0 },
+        "plot_120_to_240":    { "max_coverage_pct": 70, "base_far": 1.80, "tdr_far": 0.00, "total_max_far": 1.80, "min_road_width_m": 9.5 },
+        "plot_240_to_360":    { "max_coverage_pct": 70, "base_far": 1.80, "tdr_far": 0.00, "total_max_far": 1.80, "min_road_width_m": 12.5 },
+        "plot_360_to_750":    { "max_coverage_pct": 65, "base_far": 2.00, "tdr_far": 0.40, "total_max_far": 2.40, "min_road_width_m": 15.5 },
+        "plot_750_to_2000":   { "max_coverage_pct": 60, "base_far": 2.00, "tdr_far": 0.70, "total_max_far": 2.70, "min_road_width_m": 18.5 },
+        "plot_2000_to_4000":  { "max_coverage_pct": 50, "base_far": 2.00, "tdr_far": 1.00, "total_max_far": 3.00, "min_road_width_m": 24.5 },
+        "plot_4000_to_20000": { "max_coverage_pct": 40, "base_far": 2.00, "tdr_far": 1.20, "total_max_far": 3.20, "min_road_width_m": 30.5 }
       },
-      "_large_plot_note": "For plots above 20,000 sqm, non-residential layout / development plan norms apply. Refer BDA RMP 2031 Table 8."
+
+      "development_plan_above_20000sqm_non_sdz": {
+        "_source": "Table 8: Residential DP on site >20,000 sqm — Non-SDZ areas",
+        "road_12_to_18_5m":   { "max_coverage_pct": 50, "base_far": 2.00, "tdr_far": 0.40, "total_max_far": 2.40 },
+        "road_18_5_to_24_5m": { "max_coverage_pct": 45, "base_far": 2.00, "tdr_far": 0.70, "total_max_far": 2.70 },
+        "road_24_5_to_30_5m": { "max_coverage_pct": 40, "base_far": 2.00, "tdr_far": 1.00, "total_max_far": 3.00 },
+        "road_above_30_5m":   { "max_coverage_pct": 35, "base_far": 2.00, "tdr_far": 1.20, "total_max_far": 3.20 }
+      },
+
+      "development_plan_above_40000sqm_sdz": {
+        "_source": "Table 9: Residential DP on site >40,000 sqm — Special Development Zones",
+        "road_15_to_18_5m":   { "max_coverage_pct": 50, "base_far": 2.25, "tdr_far": 0.50, "total_max_far": 2.75 },
+        "road_18_5_to_24_5m": { "max_coverage_pct": 45, "base_far": 2.25, "tdr_far": 0.75, "total_max_far": 3.00 },
+        "road_24_5_to_30_5m": { "max_coverage_pct": 40, "base_far": 2.25, "tdr_far": 1.00, "total_max_far": 3.25 },
+        "road_above_30_5m":   { "max_coverage_pct": 35, "base_far": 2.25, "tdr_far": 1.25, "total_max_far": 3.50 }
+      }
     },
 
     "C": {
-      "_note": "Commercial zones C1-C5. Plot size threshold for individual plot vs. development plan = 12,000 sqm. FAR governed by Table 12 (Zone A) and Table 13 (Zone B).",
+      "_source": "Tables 12 (Zone A) and 13 (Zone B) — Commercial plots up to 12,000 sqm",
+      "_note": "For plots >12,000 sqm, non-residential development plan norms (Table 23/24) apply. Plots >2,000 sqm: 10% area earmarked for open spaces.",
+      "_hi_tech_bonus": "I-2 (Hi-Tech Industrial): Base FAR = Commercial Base FAR + 0.25; Total Maximum FAR unchanged",
+      "_commercial_in_residential_zone": "Ancillary commercial in residential zone: up to 20% or 50 sqm (whichever lower) if road ≥12.5 m",
+      "_petta_area_exception": "In Redevelopment Area (Chickpet/Cubbonpet/Cottonpet/parts of Shivajinagar): No setbacks for plots ≤150 sqm except front. For 150–500 sqm, no rear/side setbacks. Max coverage 75%. Buildings ≤100 sqm FAR exempted from parking (parking fee levied instead).",
+
       "zone_A": {
-        "_source": "Table 12 – FAR and Ground Coverage for Commercial in Planning Zone A (up to 12,000 sqm)",
-        "road_below_9.5":     { "coverage_pct": 60, "base_far": 1.20, "tdr_far": 0.00, "total_far": 1.20 },
-        "road_9.5_to_12.5":   { "coverage_pct": 60, "base_far": 1.20, "tdr_far": 0.00, "total_far": 1.20 },
-        "road_12.5_to_18.5":  { "coverage_pct": 50, "base_far": 1.50, "tdr_far": 0.50, "total_far": 2.00 },
-        "road_18.5_to_24.5":  { "coverage_pct": 50, "base_far": 1.50, "tdr_far": 0.60, "total_far": 2.10 },
-        "road_24.5_to_30.5":  { "coverage_pct": 40, "base_far": 1.50, "tdr_far": 0.75, "total_far": 2.25 },
-        "road_30.5_and_above":{ "coverage_pct": 40, "base_far": 1.50, "tdr_far": 0.90, "total_far": 2.40 }
+        "_source": "Table 12: FAR and Ground Coverage for Commercial in Planning Zone A (up to 12,000 sqm)",
+        "road_below_9_5m":    { "max_coverage_pct": 60, "base_far": 1.20, "tdr_far": 0.00, "total_max_far": 1.20 },
+        "road_9_5_to_12_5m":  { "max_coverage_pct": 60, "base_far": 1.20, "tdr_far": 0.00, "total_max_far": 1.20 },
+        "road_12_5_to_18_5m": { "max_coverage_pct": 50, "base_far": 1.50, "tdr_far": 0.50, "total_max_far": 2.00 },
+        "road_18_5_to_24_5m": { "max_coverage_pct": 50, "base_far": 1.50, "tdr_far": 0.60, "total_max_far": 2.10 },
+        "road_24_5_to_30_5m": { "max_coverage_pct": 40, "base_far": 1.50, "tdr_far": 0.75, "total_max_far": 2.25 },
+        "road_above_30_5m":   { "max_coverage_pct": 40, "base_far": 1.50, "tdr_far": 0.90, "total_max_far": 2.40 }
       },
+
       "zone_B": {
-        "_source": "Table 13 – FAR and Ground Coverage for Commercial in Planning Zone B (up to 12,000 sqm)",
-        "road_below_9.5":     { "coverage_pct": 60, "base_far": 1.50, "tdr_far": 0.00, "total_far": 1.50 },
-        "road_9.5_to_12.5":   { "coverage_pct": 60, "base_far": 1.50, "tdr_far": 0.00, "total_far": 1.50 },
-        "road_12.5_to_18.5":  { "coverage_pct": 50, "base_far": 2.00, "tdr_far": 0.60, "total_far": 2.60 },
-        "road_18.5_to_24.5":  { "coverage_pct": 50, "base_far": 2.00, "tdr_far": 0.80, "total_far": 2.80 },
-        "road_24.5_to_30.5":  { "coverage_pct": 40, "base_far": 2.00, "tdr_far": 1.00, "total_far": 3.00 },
-        "road_30.5_and_above":{ "coverage_pct": 40, "base_far": 2.00, "tdr_far": 1.20, "total_far": 3.20 }
+        "_source": "Table 13: FAR and Ground Coverage for Commercial in Planning Zone B (up to 12,000 sqm)",
+        "road_below_9_5m":    { "max_coverage_pct": 60, "base_far": 1.50, "tdr_far": 0.00, "total_max_far": 1.50 },
+        "road_9_5_to_12_5m":  { "max_coverage_pct": 60, "base_far": 1.50, "tdr_far": 0.00, "total_max_far": 1.50 },
+        "road_12_5_to_18_5m": { "max_coverage_pct": 50, "base_far": 2.00, "tdr_far": 0.60, "total_max_far": 2.60 },
+        "road_18_5_to_24_5m": { "max_coverage_pct": 50, "base_far": 2.00, "tdr_far": 0.80, "total_max_far": 2.80 },
+        "road_24_5_to_30_5m": { "max_coverage_pct": 40, "base_far": 2.00, "tdr_far": 1.00, "total_max_far": 3.00 },
+        "road_above_30_5m":   { "max_coverage_pct": 40, "base_far": 2.00, "tdr_far": 1.20, "total_max_far": 3.20 }
       },
-      "_note_C1_C2": "C1 and C2 are the lower-order commercial categories. FAR governed by the same Table 12/13 applicable to the road width.",
-      "_note_C3_C5": "C3-C5 are higher-order commercial categories. Same FAR table applies; road width eligibility determines which category can be operated.",
-      "_note_hi_tech_bonus": "For Industrial Hi-Tech (I-2) plots, FAR = Base Commercial FAR + 0.25 over the prescribed Base FAR for commercial use.",
-      "_large_plot_note": "For plots above 12,000 sqm, non-residential layout/development plan norms apply per BDA RMP 2031 Tables 23 and 24."
+
+      "permissible_uses_by_road_width": {
+        "_source": "Table 11",
+        "road_below_9_5m":    "R, C-2*, I-1, PSP-1, T-1",
+        "road_9_5_to_12_5m":  "R, C-2*, I-1, PSP-2, T-2*",
+        "road_12_5_to_18_5m": "R, C-3*, I-2*, PSP-3*, T-2",
+        "road_18_5_to_24_5m": "R, C-3, I-3, PSP-3, T-3*",
+        "road_24_5_and_above":"R, C-5, I-3, PSP-4, T-4",
+        "_note": "* = Subject to space standards in Table 25"
+      }
     },
 
     "I": {
-      "_note": "Industrial zones I1-I5 (other than Hi-Tech). FAR governed by Table 17 of RMP 2031. Also keyed by plot size.",
-      "_source": "Table 17 – Setbacks and Coverage for Industrial Buildings",
-      "plot_upto_250":     { "far": 1.50, "coverage_pct": null, "road_width_required_m": 9,  "setbacks_m": { "front": 4.50, "rear": 2.50, "side": 1.50 }, "min_frontage_m": 9 },
-      "plot_250_to_500":   { "far": 1.50, "coverage_pct": null, "road_width_required_m": 12, "setbacks_m": { "front": 4.50, "rear": 3.00, "side": 3.00 }, "min_frontage_m": 12 },
-      "plot_500_to_1000":  { "far": 1.75, "coverage_pct": null, "road_width_required_m": 15, "setbacks_m": { "front": 4.50, "rear": 4.50, "side": 4.50 }, "min_frontage_m": 15 },
-      "plot_1000_to_2000": { "far": 1.75, "coverage_pct": null, "road_width_required_m": 18, "setbacks_m": { "front": 8.00, "rear": 6.00, "side": 6.00 }, "min_frontage_m": 18 },
-      "plot_2000_to_4000": { "far": 2.00, "coverage_pct": 55,  "road_width_required_m": 18, "setbacks_m": { "front": 10.00,"rear": 8.00, "side": 8.00 }, "min_frontage_m": 24 },
-      "plot_4000_to_8000": { "far": 2.00, "coverage_pct": 55,  "road_width_required_m": 24, "setbacks_m": { "front": 10.00,"rear": 8.00, "side": 8.00 }, "min_frontage_m": 30 },
-      "plot_above_8000":   { "far": 2.25, "coverage_pct": 55,  "road_width_required_m": 24, "setbacks_m": { "front": 10.00,"rear": 8.00, "side": 8.00 }, "min_frontage_m": 30 },
+      "_note": "Industrial zones. I-2 (Hi-Tech) uses Commercial FAR + 0.25 Base FAR bonus. I-3 to I-5 use Table 17.",
+      "_no_new_heavy_industry": "No further Heavy Industries (I-5), Red Category or quarrying/mining in BMA area",
+      "_open_space_requirement": "Plots >2000 sqm: 10% earmarked for open spaces",
+
+      "I2_hitech": {
+        "_note": "FAR follows Commercial zone tables (Table 12 or 13 by planning zone). Base FAR = Commercial Base + 0.25. Total Maximum FAR = same as Commercial.",
+        "_max_plot_for_individual": 12000,
+        "_above_12000sqm": "Non-residential development plan norms apply (Table 23/24)"
+      },
+
+      "I3_to_I5_other": {
+        "_source": "Table 17: Setbacks and Coverage for Industrial Buildings",
+        "plot_upto_250":     { "min_frontage_m": 9,  "base_far": 1.50, "coverage_pct": null, "front_setback_m": 4.50, "rear_setback_m": 2.50, "side_setback_m": 1.50, "min_road_width_m": 9  },
+        "plot_250_to_500":   { "min_frontage_m": 12, "base_far": 1.50, "coverage_pct": null, "front_setback_m": 4.50, "rear_setback_m": 3.00, "side_setback_m": 3.00, "min_road_width_m": 12 },
+        "plot_500_to_1000":  { "min_frontage_m": 15, "base_far": 1.75, "coverage_pct": null, "front_setback_m": 4.50, "rear_setback_m": 4.50, "side_setback_m": 4.50, "min_road_width_m": 15 },
+        "plot_1000_to_2000": { "min_frontage_m": 18, "base_far": 1.75, "coverage_pct": null, "front_setback_m": 8.00, "rear_setback_m": 6.00, "side_setback_m": 6.00, "min_road_width_m": 18 },
+        "plot_2000_to_4000": { "min_frontage_m": 24, "base_far": 2.00, "coverage_pct": 55,   "front_setback_m": 10.00,"rear_setback_m": 8.00, "side_setback_m": 8.00, "min_road_width_m": 18 },
+        "plot_4000_to_8000": { "min_frontage_m": 30, "base_far": 2.00, "coverage_pct": 55,   "front_setback_m": 10.00,"rear_setback_m": 8.00, "side_setback_m": 8.00, "min_road_width_m": 24 },
+        "plot_above_8000":   { "min_frontage_m": 30, "base_far": 2.25, "coverage_pct": 55,   "front_setback_m": 10.00,"rear_setback_m": 8.00, "side_setback_m": 8.00, "min_road_width_m": 24 }
+      },
+
       "flatted_factory": {
-        "_note": "Special norms for flatted factories (industrial stacked buildings)",
-        "min_plot_sqm": 1000, "coverage_pct": 40, "far": 2.00,
-        "setbacks_m": { "front": 8.00, "side": 6.00, "rear": 6.00 }, "max_height_m": 15
+        "_source": "Section 6.2.4",
+        "min_plot_sqm": 1000,
+        "max_coverage_pct": 40,
+        "max_allowable_far": 2.00,
+        "min_setbacks_m": { "front": 8.0, "side": 6.0, "rear": 6.0 },
+        "max_height_m": 15
       }
     },
 
     "PSP": {
-      "_note": "Public and Semi-Public zones PSP1-PSP4. FAR governed by Table 20 of RMP 2031.",
-      "_source": "Table 20 – FAR and Ground Coverage in Public and Semi-public Zone",
-      "plot_upto_500":     { "far": 1.50, "coverage_pct": 60 },
-      "plot_upto_1000":    { "far": 1.75, "coverage_pct": 55 },
-      "plot_1000_to_2000": { "far": 2.00, "coverage_pct": 50 },
-      "plot_above_2000":   { "far": 2.25, "coverage_pct": 45 },
-      "_note_ancillary": "Ancillary uses shall not exceed 20% of site area."
+      "_source": "Table 20: FAR and Ground Coverage in Public and Semi-public Zone",
+      "_note": "Ancillary uses shall not exceed 20% of site area. For PSP developed as DP/sub-division: non-residential layout norms apply for everything except FAR and coverage (use Table 20).",
+      "plot_upto_500":     { "max_coverage_pct": 60, "max_allowable_far": 1.50 },
+      "plot_upto_1000":    { "max_coverage_pct": 55, "max_allowable_far": 1.75 },
+      "plot_1000_to_2000": { "max_coverage_pct": 50, "max_allowable_far": 2.00 },
+      "plot_above_2000":   { "max_coverage_pct": 45, "max_allowable_far": 2.25 },
+
+      "permissible_uses_by_road_width": {
+        "_source": "Table 19",
+        "road_below_12_5m":   "R* (staff only), PSP-1, T-1",
+        "road_12_5_to_18_5m": "R* (staff only), C-2, PSP-3*, T-2",
+        "road_18_to_24m":     "R* (staff only), C-3*, PSP-3, T-3",
+        "road_above_24m":     "R* (staff only), C-3, PSP-4, T-3"
+      }
     },
 
     "T": {
-      "_note": "Transportation and Communication zones T1-T4. FAR governed by Table 22 of RMP 2031.",
-      "_source": "Table 22 – FAR and Ground Coverage in Transportation and Communication Zone",
-      "plot_upto_500":    { "far": 1.00, "coverage_pct": 60 },
-      "plot_500_to_1000": { "far": 1.25, "coverage_pct": 55 },
-      "plot_1000_to_2000":{ "far": 1.50, "coverage_pct": 50 },
-      "_note_MLCP": "For Multi-Level Car Parking (MLCP) as independent activity, there is no FAR or height limitation subject to fire safety and airport clearances."
+      "_source": "Table 22: FAR and Ground Coverage in Transportation and Communication Zone",
+      "_note": "For MLCP as independent activity: no FAR or height limitation (subject to fire and airport restrictions). Bus terminals: FAR as per commercial zone; min area 4000 sqm.",
+      "plot_upto_500":      { "max_coverage_pct": 60, "max_far": 1.00 },
+      "plot_500_to_1000":   { "max_coverage_pct": 55, "max_far": 1.25 },
+      "plot_1000_to_2000":  { "max_coverage_pct": 50, "max_far": 1.50 },
+      "_note_setbacks": "Setbacks as per Table 2"
+    },
+
+    "non_residential_dp": {
+      "above_12000sqm_non_sdz": {
+        "_source": "Table 23: Non-residential DP on site >12,000 sqm — Non-SDZ",
+        "road_15_to_18m":     { "max_coverage_pct": 50, "base_far": 2.00, "tdr_far": 0.40, "total_max_far": 2.40 },
+        "road_18_to_24m":     { "max_coverage_pct": 45, "base_far": 2.00, "tdr_far": 0.80, "total_max_far": 2.80 },
+        "road_24_to_30m":     { "max_coverage_pct": 40, "base_far": 2.00, "tdr_far": 1.00, "total_max_far": 3.00 },
+        "road_above_30m":     { "max_coverage_pct": 35, "base_far": 2.00, "tdr_far": 1.20, "total_max_far": 3.20 }
+      },
+      "above_24000sqm_sdz": {
+        "_source": "Table 24: Non-residential DP on site >24,000 sqm — Special Development Zones",
+        "road_18_to_24m":     { "max_coverage_pct": 45, "base_far": 2.50, "tdr_far": 0.50, "total_max_far": 3.00 },
+        "road_24_to_30m":     { "max_coverage_pct": 40, "base_far": 2.50, "tdr_far": 0.75, "total_max_far": 3.25 },
+        "road_30_to_36m":     { "max_coverage_pct": 35, "base_far": 2.50, "tdr_far": 1.00, "total_max_far": 3.50 },
+        "road_above_36m":     { "max_coverage_pct": 30, "base_far": 2.50, "tdr_far": 1.50, "total_max_far": 4.00 }
+      }
     },
 
     "AG": {
-      "_note": "Agricultural zone (Planning Zone C). No FAR prescribed for agricultural uses.",
-      "far": null
+      "_note": "Agricultural zone (Planning Zone C only)",
+      "gramathana_and_expansion": { "far": 1.00, "max_floors": "G+1", "coverage": "as per respective use" },
+      "farmhouse_upto_2ha":        { "max_plinth_sqm": 100, "max_floors": "G+1", "max_height_m": 7 },
+      "farmhouse_above_2ha":       { "max_plinth_sqm": 150, "max_floors": "G+1", "max_height_m": 7 },
+      "other_uses":                { "max_coverage_pct": 5, "max_floors": "G+1" },
+      "educational_health":        { "max_coverage_pct": 20, "max_floors": "G+1", "note": "No basement permitted" }
     }
-  },
-
-  "setbacks": {
-    "_note": "All values in metres. Two tables govern setbacks: Table 1 (front setback by road width) and Table 2 (all-round setbacks by building height and plot area).",
-    "_source": "BDA RMP 2031, Section 4.5, Table 1 and Table 2",
-
-    "front_setback_by_road_width": {
-      "road_6m":  { "min_front_setback_m": 1.0,  "building_line_from_road_centre_m": 4.0 },
-      "road_7.5m":{ "min_front_setback_m": 1.0,  "building_line_from_road_centre_m": 4.75 },
-      "road_9m":  { "min_front_setback_m": 1.75, "building_line_from_road_centre_m": 6.25 },
-      "road_12m": { "min_front_setback_m": 2.0,  "building_line_from_road_centre_m": 8.0 },
-      "road_15m": { "min_front_setback_m": 2.5,  "building_line_from_road_centre_m": 10.0 },
-      "road_18m": { "min_front_setback_m": 3.5,  "building_line_from_road_centre_m": 12.5 },
-      "road_24m": { "min_front_setback_m": 3.5,  "building_line_from_road_centre_m": 15.5 },
-      "road_30m": { "min_front_setback_m": 4.0,  "building_line_from_road_centre_m": 19.0 },
-      "road_45m": { "min_front_setback_m": 6.0,  "building_line_from_road_centre_m": 28.5 },
-      "road_60m": { "min_front_setback_m": 6.0,  "building_line_from_road_centre_m": 36.0 }
-    },
-
-    "setbacks_by_building_height": {
-      "_note": "Table 2 – Minimum all-round setbacks by height and plot area.",
-      "G+1_below_9.5m": [
-        { "plot_area": "upto 60 sqm",         "front_m": 1.0, "rear_and_sides_m": 0.5 },
-        { "plot_area": "above 60 to 120 sqm", "front_m": 1.0, "rear_and_sides_m": 1.0 }
-      ],
-      "G+2_or_stilt+3_9.5_to_12.5m": [
-        { "plot_area": "above 120 to 240 sqm","front_m": 2.0, "rear_and_sides_m": 2.0 }
-      ],
-      "G+3_or_stilt+4_12.5_to_15m": [
-        { "plot_area": "above 240 to 360 sqm","front_m": 3.0, "rear_and_sides_m": 3.0 }
-      ],
-      "G+4_or_stilt+4_below_15m": [
-        { "plot_area": "above 360 sqm",       "front_m": 4.0, "rear_and_sides_m": 4.0 }
-      ],
-      "G+5_15_to_18m":        { "front_m": 6.0,  "rear_and_sides_m": 6.0 },
-      "G+6_18_to_21m":        { "front_m": 7.0,  "rear_and_sides_m": 7.0 },
-      "G+7_21_to_24m":        { "front_m": 8.0,  "rear_and_sides_m": 8.0 },
-      "G+8_24_to_27m":        { "front_m": 9.0,  "rear_and_sides_m": 9.0 },
-      "G+9_27_to_30m":        { "front_m": 10.0, "rear_and_sides_m": 10.0 },
-      "G+11_30_to_36m":       { "front_m": 11.0, "rear_and_sides_m": 11.0 },
-      "G+13_36_to_42m":       { "front_m": 12.0, "rear_and_sides_m": 12.0 },
-      "G+15_42_to_48m":       { "front_m": 13.0, "rear_and_sides_m": 13.0 },
-      "G+17_48_to_54m":       { "front_m": 14.0, "rear_and_sides_m": 14.0 },
-      "G+19_54_to_60m":       { "front_m": 15.0, "rear_and_sides_m": 15.0 },
-      "above_G+19_above_60m": { "front_m": 16.0, "rear_and_sides_m": 16.0 }
-    },
-
-    "height_limit_rule": "Maximum building height shall not exceed 1.5 x (abutting road width + front setback), subject to a maximum front open space of 16m.",
-    "corner_plot_note": "Both sides facing road shall be treated as front; FAR computed on the wider road.",
-    "multi_building_distance_m": "Distance between buildings on same site = 0.5 x height of tallest building, or 16m, whichever is lower.",
-    "setback_projections": {
-      "balcony_max_projection_m": 1.20,
-      "balcony_projection_rule": "1/3rd of setback or 1.2m (first floor); max 1.75m beyond second floor – whichever is less",
-      "chajja_cornice_max_m": 0.75,
-      "portico_max_size_m": "3m x 4.5m at ground floor only; 1m clearance from boundary"
-    }
-  },
-
-  "height": {
-    "exempted_from_height_calc": [
-      "AC chiller plants, solar panels, radio antennas on terrace (up to 3.5m)",
-      "Lift machine rooms (up to 3.5m above terrace)",
-      "Overhead tanks", "Staircase headroom cover slabs (up to 3.5m)",
-      "Chimneys", "Parapet walls up to 1.2m",
-      "Internal open space rain cover (up to 2m)"
-    ],
-    "height_formula": "Max height = 1.5 x (road_width + front_setback), max 16m front open space",
-    "earthquake_safety_above_m": 15
-  },
-
-  "fire_safety": {
-    "_status": "VERIFY exact thresholds with KSFES.",
-    "general_rule": "NBC 2016 Part IV applies to all buildings.",
-    "non_residential_bua_threshold_sqm": 5000,
-    "non_residential_rule": "All non-residential buildings with BUA above 5,000 sqm require firefighting arrangements per Authority directions irrespective of height."
-  },
-
-  "basement": {
-    "_source": "BDA RMP 2031, Section 4.9.2",
-    "max_height_above_avg_ground_level_m": 1.2,
-    "max_overall_height_m": 4.5,
-    "min_floor_to_ceiling_m": 2.4,
-    "max_number_of_levels": 5,
-    "setback_from_boundary_m": 2.0,
-    "additional_setback_per_extra_floor_m": 1.0,
-    "counted_in_far": false,
-    "site_size_exclusion": "Car parking not permitted in basement if site area < 200 sqm and depth < 20m",
-    "permitted_uses": [
-      "Car parking (primary use – up to 5 levels)",
-      "Dark rooms for X-ray and light-sensitive material storage",
-      "Air conditioning handling units and utilities/services"
-    ],
-    "ramp": { "min_width_m": 3.5, "slope_normal": "1 in 10", "slope_special": "1 in 8", "min_clearance_from_boundary_m": 2.0 }
-  },
-
-  "balcony": {
-    "_source": "BDA RMP 2031, Section 4.9.5",
-    "ground_floor_allowed": false,
-    "first_floor_max_projection_m": 1.20,
-    "second_floor_and_above_max_projection_m": 1.75,
-    "projection_rule": "Lesser of 1/3rd of setback on that side or the maximum limits above"
-  },
-
-  "lifts": {
-    "_source": "BDA RMP 2031, Section 4.9.6",
-    "mandatory_above_floors": "G+3 (more than 3 floors above ground)",
-    "high_rise_service_lift": "All high-rise buildings shall mandatorily provide at least one service lift",
-    "service_lift_combined_threshold": "Buildings with fewer than 24 units OR less than 2,400 sqm BUA may use combined passenger + service lift"
-  },
-
-  "parking": {
-    "_source": "BDA RMP 2031, Section 4.13 and Table 4",
-    "space_dimensions": {
-      "car_length_m": 5.5, "car_width_m": 2.75,
-      "driveway_width_standard_m": 4.0, "driveway_width_minimum_m": 3.5,
-      "driveway_width_high_rise_m": 6.0
-    },
-    "requirements_by_use": {
-      "residential_multi_dwelling": {
-        "du_below_50sqm":  "1 car per 2 dwelling units",
-        "du_50_to_120sqm": "1 car per dwelling unit",
-        "du_above_120sqm": "1 car per DU + 1 additional car per 120 sqm above threshold",
-        "visitor_parking": "10% of total parking area"
-      },
-      "residential_single_dwelling": "1 car per 100 sqm BUA (mandatory for plots >= 90 sqm)",
-      "office_govt_private":         "1 car per 50 sqm",
-      "retail_shops_malls":          "1 car per 50 sqm + 1 lorry per 1,000 sqm",
-      "restaurant":                  "1 car per 50 sqm",
-      "hospital":                    "1 car per 75 sqm + 10% for ambulances",
-      "nursing_home":                "1 car per 50 sqm + 10% for ambulances",
-      "industrial":                  "1 car per 100 sqm + 1 lorry per 1,000 sqm",
-      "it_bt_office_above_20000sqm": "1 car per 50 sqm + 1 bus per 1,500 sqm",
-      "hotel_star":                  "1 car per 2 rooms + 1 car per 50 sqm (excl. room area) for visitors",
-      "educational":                 "1 car per 150 sqm + 1 bus per 120 students + drop-off lane"
-    },
-    "ev_charging_mandate_pct": 5,
-    "exemptions": ["Buildings with total floor area up to 100 sqm are exempted from parking"]
   },
 
   "far_exclusions": {
-    "_source": "BDA RMP 2031, Section 4.7(ii)",
+    "_source": "BDA RMP 2031 Section 4.7(ii)",
+    "_note": "These areas are NOT counted in FAR computation",
     "items": [
       "Service areas: electrical substation/panel room, generator, pump room, AC plant room, solid waste management, fire control room, security/CCTV room",
       "Refuge areas in high-rise buildings (per fire safety norms)",
-      "Separate public toilet block in non-residential complex",
-      "Building management/society room up to 40 sqm",
-      "Staircase and staircase rooms", "Architectural features not usable for living",
-      "Chimneys", "Ventilation ducts and garbage shafts", "Ducts",
+      "Separate public toilet block in non-residential complex/plot",
+      "Building management/society room ≤40 sqm",
+      "Staircase / staircase room",
+      "Architectural features not usable for living or other purposes",
+      "Chimneys",
+      "Ventilation ducts and garbage shafts",
+      "Ducts",
       "Parking areas including driveways and ramps",
-      "Swimming pools and attached toilets (common use)",
-      "Overhead tanks", "Escalators", "Lift wells and lift machine rooms",
-      "Watchman's cubicle up to 4 sqm",
-      "Sewerage Treatment Plant and pump rooms",
-      "Stilt parking floor (if fully open on all sides)",
-      "Basement floors used for parking and services only"
+      "Swimming pools and attached toilets (common use, constructed in open yard or any floor)",
+      "Overhead tanks",
+      "Escalators",
+      "Lift wells and lift machine rooms",
+      "Watchman's cubicle ≤4 sqm",
+      "Sewerage Treatment Plant (as per KSPCB) and pump rooms",
+      "Stilt parking floor — only if fully open on all sides (enclosed/partly enclosed portion counts in FAR)",
+      "Basement floors used exclusively for parking and services",
+      "Additional car parking in excess of requirements when provided as standalone parking complex or lot"
     ]
   },
 
-  "accessibility": {
-    "_source": "BBMP Building Bye-Laws 2003, Schedule XI (Bye-law 31.0)",
-    "_trigger": "Public and semi-public buildings with covered area ≥ 300 sqm are mandated. Recommended for all buildings.",
-    "mandatory_for_zones": ["PSP"],
-    "mandatory_covered_area_sqm": 300,
-    "access_path": {
-      "min_width_m": 1.80,
-      "max_gradient_pct": 5,
-      "note": "From plot entry and surface parking to building entry"
-    },
-    "ramp": {
-      "min_width_m": 1.80,
-      "max_gradient": "1:10",
-      "landing_min_size": "1.80m × 2.00m",
-      "note": "At least one entrance must have ramp approach to plinth level"
-    },
-    "corridor_min_width_m": 1.80,
-    "staircase": {
-      "min_width_m": 1.50,
-      "max_risers_per_flight": 12,
-      "min_tread_mm": 300,
-      "max_riser_mm": 150
-    },
-    "lift": {
-      "cage_clear_depth_mm": 1100,
-      "cage_clear_width_mm": 2000,
-      "entrance_door_width_mm": 900,
-      "lobby_min_size": "1.80m × 1.80m",
-      "standard": "BIS 13 -person passenger lift dimensions"
-    },
-    "wheelchair": {
-      "standard_size_mm": "1050 × 750",
-      "min_door_width_mm": 900,
-      "surface_parking_spaces": 2,
-      "max_travel_distance_to_entrance_m": 30
-    },
-    "toilet": {
-      "min_size": "1.50m × 1.75m",
-      "max_wc_seat_height_m": 0.50,
-      "note": "One special WC per set of toilets with wash basin for handicapped persons"
-    },
-    "handrails": {
-      "height_above_floor_mm": 800,
-      "required_at": ["ramps", "staircases", "lifts", "toilets"]
-    },
-    "guiding_floor_material": {
-      "required_at": ["access path to building", "landing lobby towards lifts/staircases/toilets", "beginning/end of walkway with vehicular traffic", "level changes and ramp start/end", "entrance/exit of building"]
-    },
-    "signage": {
-      "min_letter_size_mm": 20,
-      "braille_board": "Required on walls at suitable height — approachable closely",
-      "note": "Contrasting colour, properly illuminated; no protruding signs that obstruct walking"
+  "ground_coverage_exclusions": {
+    "_source": "BDA RMP 2031 Section 4.6",
+    "items": [
+      "Pump house ≤3 sqm",
+      "Swimming pool",
+      "Sump tank",
+      "Electric substation/transformer",
+      "Generator with enclosure",
+      "Fire control room (max 4 m × 4 m)",
+      "Security room (2 m × 2 m)",
+      "Note: above exclusions apply for plots >4000 sqm only"
+    ],
+    "note": "Area for road widening shall be deducted when calculating ground coverage of plot"
+  },
+
+  "height_regulations": {
+    "_source": "BDA RMP 2031 Section 4.8",
+    "height_formula": "Max height = 1.5 × (road width + front setback), with front setback capped at 16 m",
+    "high_rise_definition_m": 15.0,
+    "high_rise_definition_floors": "G+4 floors or above (height ≥15 m)",
+    "height_exclusions": [
+      "Service structures above terrace: AC chiller plants, solar panels, radio antennas, lift machine rooms, overhead tanks, staircase headroom cover slabs — capped at 3.5 m above terrace floor",
+      "Chimneys",
+      "Parapet walls — up to 1.2 m",
+      "Other architectural features",
+      "Rain-cover over internal open space — not exceeding 2 m"
+    ],
+    "ground_floor_max_above_ground_m": 1.2,
+    "stilt_floor_counted_in_height": true,
+    "stilt_floor_max_clear_height_m": 2.7,
+    "airport_zone_restriction": "Buildings within airport funnel zones must comply with Airport Authority of India height limits. NOC from AAI required.",
+    "noc_requirements": {
+      "fire_noc_height_m": 15.0,
+      "noc_for_fire_dept": "All buildings ≥15 m height",
+      "noc_for_airport_authority": "Wherever applicable (vicinity of Kempegowda Airport and others)",
+      "noc_for_pollution_control": "All development plans, apartment buildings and residential layouts under KSPCB category",
+      "earthquake_design_above_m": 15.0
     }
+  },
+
+  "building_regulations": {
+    "_source": "BDA RMP 2031 Section 4.9 and BBMP Bye-Laws 2003 Sections 18–21",
+
+    "lifts": {
+      "_source": "BDA RMP 2031 Section 4.9.1(iv) and 4.9.6; BBMP Bye-Laws Section 20.7",
+      "mandatory_above_floors": "G+3 (i.e., 4 floors and above) — lift is mandatory",
+      "mandatory_height_m": 15.0,
+      "high_rise_service_lift": "All high-rise buildings must provide at least one service lift",
+      "combined_passenger_service_lift": "Buildings with <24 units OR <2400 sqm BUA (whichever lower): service lift may double as passenger lift",
+      "disabled_access_lift": {
+        "min_cage_clear_depth_mm": 1100,
+        "min_cage_clear_width_mm": 2000,
+        "entrance_door_width_mm": 900,
+        "lobby_min_size_m": "1.80 × 1.80",
+        "standard": "BIS 13-person passenger lift (Schedule XI, BBMP Bye-Laws)"
+      }
+    },
+
+    "staircase": {
+      "_source": "BBMP Bye-Laws 2003 Section 20.6 and 21.8",
+      "residential_min_width_m": 1.0,
+      "residential_row_housing_two_storey_min_width_m": 0.75,
+      "hostel_min_width_m": 1.5,
+      "assembly_cinema_auditorium_min_width_m": 1.5,
+      "educational_upto_24m_height_min_width_m": 1.5,
+      "educational_above_24m_height_min_width_m": 2.0,
+      "institutional_upto_10beds_min_width_m": 1.5,
+      "institutional_above_10beds_min_width_m": 2.0,
+      "all_other_buildings_min_width_m": 1.5,
+      "min_tread_residential_mm": 250,
+      "min_tread_other_buildings_mm": 300,
+      "max_riser_residential_mm": 190,
+      "max_riser_other_buildings_mm": 150,
+      "max_risers_per_flight": 15,
+      "min_headroom_m": 2.2,
+      "handrail_min_height_mm": 1000,
+      "non_combustible_materials": true,
+      "high_rise_staircase_enclosure": "Buildings ≥15 m height: staircase must be fully enclosed",
+      "buildings_gf_plus_3_and_below": "Residential buildings up to G+3: staircase need not be self-contained unit adjacent to external wall",
+      "open_staircase_in_setback": "Permitted for residential plots ≤120 sqm (in side or rear setback)"
+    },
+
+    "basement": {
+      "_source": "BDA RMP 2031 Section 4.9.2; BBMP Bye-Laws 2003 Section 18",
+      "definition": "Storey partly or wholly below average ground level. Height projection above average ground: max 1.2 m (RMP 2031) / 1.0 m (BBMP 2003)",
+      "max_height_m": 4.5,
+      "min_height_m": 2.4,
+      "max_basement_levels_for_parking": 5,
+      "setback_from_boundary_m": 2.0,
+      "additional_setback_per_extra_level_m": 1.0,
+      "extension_below_ground_allowed_if_setback_above_m": 2.0,
+      "basement_beyond_building_line": "NOT allowed",
+      "small_plot_restriction": "Sites <200 sqm with depth <20 m: car parking NOT permitted in basement",
+      "intensely_developed_area_condition": "A-Zone: only 1 basement permitted if site ≥500 sqm with min road width 12 m",
+      "permitted_uses": [
+        "Car parking (primary use)",
+        "Two-wheeler parking",
+        "Electrical room, pump room, generator, AC plant room",
+        "Dark rooms for X-ray/light-sensitive materials",
+        "Bank safes/strong room (counted in FAR)",
+        "Services connected to the building"
+      ],
+      "permitted_only_for_3star_plus_hotels": [
+        "Health club and gym",
+        "Shopping arcade",
+        "Dining area with/without kitchen",
+        "Administrative office",
+        "Banquet/conference facility",
+        "Swimming pool (counted in FAR)"
+      ],
+      "not_permitted_general": [
+        "Habitable residential rooms",
+        "Retail or commercial use (except 3-star+ hotels as noted)",
+        "Restaurants/kitchens (except 3-star+ hotels)"
+      ],
+      "entry_exit": "Convenient entry and exit shall be provided. Adequate drainage, ventilation, lighting per NBC",
+      "ventilation_requirement": "Adequate — as per NBC provisions",
+      "fire_protection": "Roof separating basement from floor above must be RCC or equivalent with ≥2-hr fire resistance",
+      "waterproofing": "Walls and floors must be watertight to resist sub-soil hydraulic pressure",
+      "municipalisation_warning": "Parking area if misused is liable to be municipalized/taken over without compensation"
+    },
+
+    "ramp": {
+      "_source": "BDA RMP 2031 Section 4.9.3",
+      "min_width_m": 3.5,
+      "max_slope": "1 in 10 (1 in 8 in special cases)",
+      "min_clearance_from_boundary_m": 2.0,
+      "slope_commences_from": "Building line or front setback edge of property",
+      "high_rise_ramp_width_m": 6.0,
+      "disabled_ramp_max_gradient": "1:10",
+      "disabled_ramp_min_width_m": 1.80,
+      "disabled_ramp_note": "Mandatory in all public buildings"
+    },
+
+    "garage": {
+      "_source": "BDA RMP 2031 Section 4.9.4",
+      "applicable_to": "Individual residential buildings (not apartments) up to G+2 floors or 10 m height",
+      "location": "Rear corner of site — no side or rear setbacks required",
+      "min_setback_from_road_edge_m": 4.5,
+      "max_width_m": 4.0,
+      "max_height_from_ground_m": 3.0,
+      "max_combined_height_with_upper_floor_m": 6.5,
+      "upper_floor": "One upper floor ≤3 m permitted; no openings towards neighbouring buildings",
+      "store_room_max_depth_m": 1.25,
+      "max_total_length_m": "1/3 of site length or 6 m (whichever is less)",
+      "corner_plot": "Garage must be at rear corner diagonally opposite to road intersection"
+    },
+
+    "mezzanine_floor": {
+      "_source": "BBMP Bye-Laws 2003 Section 20.4; BDA RMP 2031 Section 4.9.1(iii)",
+      "permitted_between": "Any two floors in residential buildings",
+      "counted_in_far": true,
+      "min_area_sqm": 9.5,
+      "max_area_fraction": "1/3 of the respective floor area",
+      "min_height_m": 2.75,
+      "kitchen_use": "NOT permitted",
+      "accessibility": "Accessible only from its lower floor"
+    },
+
+    "plinth": {
+      "_source": "BDA RMP 2031 Section 4.9.1(ii); BBMP Bye-Laws Section 19",
+      "max_height_above_ground_m": 1.2,
+      "min_height_m": 0.45,
+      "note": "In low-lying areas, plinth height shall ensure adequate gradient for sewerage and flood protection"
+    }
+  },
+
+  "fire_safety": {
+    "_source": "BDA RMP 2031 Section 4.11 and 4.19; BBMP Bye-Laws 2003 Section 23",
+    "governing_code": "NBC 2016 Part IV — Fire and Life Safety",
+    "fire_noc_mandatory_height_m": 15.0,
+    "fire_noc_authority": "Director of Fire Services / KSFES",
+    "non_residential_fire_arrangement_above_sqm": 5000,
+    "minimum_exits_above_height_m": 15.0,
+    "minimum_exits_above_height_note": "At least 2 exits serving every floor for buildings ≥15 m; at least one must be internal stairway",
+
+    "staircase_for_fire_egress": {
+      "high_rise_fully_enclosed": true,
+      "non_combustible_materials": true,
+      "no_lift_shaft_wrapping": "Staircase shall not be arranged around a lift shaft unless lift is fully enclosed by fire-rated material"
+    },
+
+    "requirements_above_9m": {
+      "_source": "BBMP Bye-Laws 2003 Section 23.1 cross-referenced with NBC Part IV",
+      "items": [
+        "Fire escape staircase — minimum 1.2 m clear width",
+        "Fire-rated doors on staircase landings",
+        "Emergency lighting in corridors and staircases",
+        "Fire tender access road — min 4.5 m wide, 4.5 m clearance, 9 m turning radius"
+      ]
+    },
+    "requirements_above_15m": [
+      "Fire NOC from KSFES mandatory",
+      "Automatic sprinkler system throughout",
+      "Fire lift — minimum 1.1 m × 2.1 m car, 630 kg capacity",
+      "Wet riser system",
+      "Public address system",
+      "Fire detection and alarm system",
+      "Hose reel and extinguishers on every floor",
+      "Terrace tank — minimum 25,000 litres"
+    ],
+    "requirements_above_24m": [
+      "Fire command centre at ground level",
+      "Pressurisation of staircases",
+      "Two separate fire escape staircases mandatory",
+      "Refuge area every 7 floors — minimum 15 sqm (NOT counted in FAR)"
+    ],
+
+    "travel_distance_to_exit_m": {
+      "residential": 22.5,
+      "educational": 22.5,
+      "institutional": 22.5,
+      "assembly": 30.0,
+      "business": 45.0,
+      "commercial": 30.0,
+      "industrial": 30.0,
+      "storage": 30.0,
+      "hazardous": 22.5
+    },
+
+    "exit_door_min_width_m": {
+      "residential": 0.75,
+      "other_buildings": 1.00
+    },
+    "exit_door_min_height_m": 2.0
+  },
+
+  "parking": {
+    "_source": "BDA RMP 2031 Section 4.13 and Table 4",
+
+    "car_bay_dimensions": {
+      "standard_length_m": 5.5,
+      "standard_width_m": 2.75,
+      "driveway_for_2_75m_bay_m": 4.0,
+      "driveway_for_3_0m_bay_m": 3.5,
+      "parallel_parking_gap_m": 1.5,
+      "mechanical_parking_clear_height_m": 4.75,
+      "mechanical_parking_driveway_m": 4.5,
+      "lorry_length_m": 7.5,
+      "lorry_width_m": 3.5,
+      "auto_rickshaw_length_m": 2.25,
+      "auto_rickshaw_width_m": 1.75
+    },
+
+    "entry_exit_requirements": {
+      "low_rise_buildings": "Two entries of 3.5 m width each, OR one entry of 6 m width",
+      "high_rise_buildings": "Two entries of 3.5 m width minimum"
+    },
+
+    "ev_charging_mandate_pct": 5,
+
+    "requirements": {
+      "_note": "1 car = 1 parking bay of 2.75 m × 5.5 m. Additional parking for part area when part area exceeds 50% of prescribed limits.",
+      "theaters_auditoriums":             "1 car per 25 seats (min 20 cars) OR 1 car per 150 sqm — whichever is higher",
+      "multiplex_with_shopping":          "1 car per 40 sqm + parking for multiplex per Cinematographic Act",
+      "retail_shops_malls":               "1 car per 50 sqm + 1 lorry per 1000 sqm",
+      "wholesale_warehouse":              "1 car per 150 sqm + 1 lorry per 500 sqm",
+      "restaurant":                       "1 car per 50 sqm",
+      "hotel_lodge_tourist_home":         "1 car per 4 rooms OR 1 car per 50 sqm (lower applies) + 10% visitors",
+      "star_hotel":                       "1 car per 2 rooms + 1 car per 50 sqm (excl. room area) for visitors",
+      "office_govt_private":              "1 car per 50 sqm",
+      "hostel_professional_college":      "1 car per 5 rooms",
+      "hostel_other_college":             "1 car per 10 rooms",
+      "industrial":                       "1 car per 100 sqm + 1 lorry per 1000 sqm",
+      "nursing_home":                     "1 car per 50 sqm + 10% for ambulances/hospital vehicles",
+      "hospital":                         "1 car per 75 sqm + 10% for ambulances/hospital vehicles",
+      "residential_multi_dwelling": {
+        "du_below_50sqm":         "2 dwelling units per car",
+        "du_50_to_120sqm":        "1 car per DU",
+        "du_above_120sqm":        "1 car per DU + 1 additional per 120 sqm above 120 sqm",
+        "visitor_parking":        "10% of total parking area"
+      },
+      "residential_single_dwelling":      "1 car per 100 sqm BUA (mandatory for plots ≥90 sqm)",
+      "convention_recreational_clubs":    "1 car per 50 sqm",
+      "educational":                      "1 car per 150 sqm + 1 bus per 120 students + drop-off lane (class/faculty/admin rooms only)",
+      "banquet_kalyana_mantapa":          "20% of total land area + 1 car per 50 sqm of FAR area (open area: 25 sqm per car)",
+      "it_bt_major_complexes_above_20000sqm": "1 car per 50 sqm + 1 bus per 1500 sqm",
+      "parks_gardens_upto_5ha":           "5% of plot area exclusively for parking",
+      "parks_gardens_above_5ha":          "10% of plot area exclusively for parking",
+      "stadium":                          "10% of plot area OR 1 car per 20 seats — whichever is higher"
+    },
+
+    "auto_rickshaw_parking": "1 auto space (2.25 m × 1.75 m) per 2000 sqm or part thereof for commercial complexes/multiplexes ≥2000 sqm BUA; must be abutting road; treated as public parking",
+    "parking_exemptions": [
+      "Buildings ≤100 sqm total floor area: no parking insistence in intensively built-up area",
+      "Redevelopment/Petta area buildings ≤100 sqm: parking fee levied instead"
+    ],
+    "parking_in_setback": {
+      "non_high_rise": "Car parking allowed in setback; minimum 3.5 m driveway clearance from building",
+      "high_rise": "Car parking allowed in setback; minimum 6 m from building (fire engine movement)",
+      "commercial_front_setback": "May be used for visitors parking only if no compound wall; not counted towards parking requirements"
+    },
+    "lorry_exemption": "Lorry parking not required for household industries (I-1) and service industries"
+  },
+
+  "permissible_uses_residential_zone": {
+    "_source": "Table 5: Permissible Uses/Activities in Residential Land Use in Planning Zone A and B",
+    "road_below_9_5m":    ["R", "PSP-1"],
+    "road_9_5_to_12_5m":  ["R", "I-1", "PSP-1", "T-1"],
+    "road_12_5_to_15_5m": ["R", "C-2", "I-1", "PSP-2", "T-2"],
+    "road_15_5_to_18_5m": ["R", "C-3 (subject to space standards)", "PSP-3 (subject to space standards)", "T-3 (subject to space standards)", "I-2 (subject to space standards)"],
+    "road_18_5_to_24_5m": ["R", "C-3", "I-2", "PSP-3", "T-3"],
+    "road_24_5_and_above": ["R", "C-3", "I-2", "PSP-3", "T-3"],
+    "ancillary_use_limit": {
+      "note": "No commercial activity if road <12.5 m",
+      "max_area_sqm_or_pct": "20% or 50 sqm — whichever is lower",
+      "condition": "Road ≥12.5 m",
+      "zone_B_main_use": "Ancillary use may be permitted as main use in Zone B if site >1000 sqm with 20 m frontage on road ≥18 m"
+    }
+  },
+
+  "space_standards": {
+    "_source": "Table 25: Space Standards for Different Uses (applicable across all zones)",
+    "socio_cultural": {
+      "public_library":                     { "min_plot_sqm": 300,   "min_road_width_m": 12 },
+      "community_hall":                     { "min_plot_sqm": 750,   "min_road_width_m": 12 },
+      "social_clubs_amenities":             { "min_plot_sqm": 1000,  "min_road_width_m": 15 },
+      "places_of_congregation":             { "min_plot_sqm": 1000,  "min_road_width_m": 18 },
+      "kalyana_mantap_multiplex_mall_convention_auditorium_game_sports": { "min_plot_sqm": 2000, "min_road_width_m": 24 }
+    },
+    "educational": {
+      "primary_middle_school_1_to_8":       { "min_plot_sqm_bbmp": 2000,  "min_plot_sqm_outside_bbmp": 4000, "min_road_width_m": 15, "note": "Min 10% plot area as play area" },
+      "high_school_1_to_10":                { "min_plot_sqm": 4000,  "min_road_width_m": 18, "note": "Min 10% play area" },
+      "integrated_secondary_1_to_12":       { "min_plot_sqm": 10000, "min_road_width_m": 18, "note": "Min 10% play area" },
+      "integrated_residential_college":     { "min_plot_sqm": 20000, "min_road_width_m": 24, "note": "Min 10% play area" }
+    },
+    "health": {
+      "polyclinic_maternity_upto_10_beds":  { "min_plot_sqm": 300,  "min_road_width_m": 15 },
+      "nursing_home_11_30_beds":            { "min_plot_sqm": 600,  "min_road_width_m": 18 },
+      "nursing_home_hospital_31_50_beds":   { "min_plot_sqm": 2000, "min_road_width_m": 18 },
+      "specialty_hospital_above_50_beds":   { "min_plot_sqm": 5000, "min_road_width_m": 24 },
+      "teaching_hospital_medical_college":  { "min_plot_sqm": "as per MCI norms", "min_road_width_m": 24 }
+    },
+    "lodging": {
+      "service_apartments_hostels":         { "min_plot_sqm": 500,  "min_road_width_m": 15 },
+      "hotels_lodges":                      { "min_plot_sqm": 500,  "min_road_width_m": 18 },
+      "star_hotel_upto_3_star":             { "min_plot_sqm": 2000, "min_road_width_m": 18 },
+      "star_hotel_above_3_star":            { "min_plot_sqm": 6000, "min_road_width_m": 24 }
+    },
+    "storage": {
+      "lpg_storage":                        { "min_plot_sqm": 750,  "min_road_width_m": 15 },
+      "petrol_pump_fuel_station":           { "min_plot_sqm": 900,  "min_road_width_m": 15 },
+      "cold_storage_ice_plant":             { "min_plot_sqm": 2000, "min_road_width_m": 18 }
+    },
+    "transport": {
+      "automobile_workshop_2_wheeler":      { "min_plot_sqm": 250,  "min_road_width_m": 12 },
+      "automobile_workshop_lmv":            { "min_plot_sqm": 400,  "min_road_width_m": 15 },
+      "automobile_workshop_hmv":            { "min_plot_sqm": 750,  "min_road_width_m": 18 },
+      "mlcp_mechanised":                    { "min_plot_sqm": 1000, "min_road_width_m_bbmp": 12, "min_road_width_m_outside_bbmp": 15 },
+      "mlcp_ramp_based":                    { "min_plot_sqm": 2000, "min_road_width_m_bbmp": 12, "min_road_width_m_outside_bbmp": 15 },
+      "truck_terminal_hub":                 { "min_plot_sqm": 20000,"min_road_width_m": 24 }
+    },
+    "office_commercial": {
+      "office_commercial_c3_i2_upto_1000sqm": { "min_plot_sqm": 500,  "min_road_width_m": 18 },
+      "office_commercial_c3_i2_above_1000sqm": { "min_plot_sqm": 1000, "min_road_width_m": 24 },
+      "r_and_d_lab":                           { "min_plot_sqm": 2000, "min_road_width_m": 18 },
+      "c4_c5_uses":                            { "min_plot_sqm": 4000, "min_road_width_m": 24 }
+    }
+  },
+
+  "tdr_and_tod": {
+    "_source": "BDA RMP 2031 Sections 4.17 and 4.18",
+    "tdr_governed_by": "Section 14-B of KTCP Act; Government Notification UDD 283 BEMRUPRA 2015 dated 04-Mar-2017",
+    "metro_tod_zone": {
+      "radius_from_station_m": 150,
+      "applicable_zone": "Planning Zone B only",
+      "additional_far_ceiling": 4.0,
+      "conditions": [
+        "Traffic Impact Assessment mandatory",
+        "Setback, parking, height regulations must be satisfied for the road width",
+        "Only applicable after metro station is operational and confirmed by BMRCL",
+        "Charges as per rates notified by Government"
+      ],
+      "calculation": "Total FAR = (FAR for plot area within 150 m, capped at 4) + (max allowable FAR for plot area outside 150 m)"
+    },
+    "redevelopment_bonus_far": {
+      "additional_base_far": 0.50,
+      "conditions": [
+        "For areas identified as Redevelopment Areas in RMP 2031",
+        "Redevelopment area upto 5 Ha: min access road 15 m",
+        "Redevelopment area above 5 Ha: min access road 18 m",
+        "Traffic Impact Assessment mandatory"
+      ]
+    }
+  },
+
+  "means_of_access": {
+    "_source": "BDA RMP 2031 Section 4.2",
+    "exclusive_access_max_length_m": 30,
+    "exclusive_access_min_width_m": 3.5,
+    "far_governed_by_road_width_if_within_30m": true,
+    "far_governed_by_access_width_if_above_30m": true,
+    "access_width_3_5m": "FAR/height: up to G+1 or 7 m",
+    "access_width_4_5m": "FAR/height: up to G+2 floors",
+    "access_width_6m":   "FAR/height: up to G+3 floors",
+    "transformer_reservation": "Site >500 sqm: an area of min 3 m × 5 m abutting access road reserved for electrical transformer",
+    "service_road_width_aggregation": "For plots with service roads: aggregate width of service + main road used for determining FAR and height"
+  },
+
+  "rainwater_harvesting": {
+    "_source": "BDA RMP 2031 Section 4.14; BBMP Bye-Laws 2003 Section 32",
+    "mandatory_for_site_above_sqm": 120,
+    "recharge_pit_volume_cum_per_100sqm_roof": 6,
+    "percolation_pit_fill_material": "Small pebbles or brick jali or river sand, covered with perforated concrete slabs",
+    "additional_optional_systems": [
+      "Terrace water collection to sump via filtering tank",
+      "Open ground: replace topsoil with river sand for percolation"
+    ]
+  },
+
+  "solar_requirements": {
+    "_source": "BDA RMP 2031 Section 4.15",
+    "mandatory_for": [
+      "Group Housing Schemes / Group Development Schemes with ≥50 units",
+      "Nursing Homes, Hospitals, Hotels"
+    ],
+    "requirement": "Solar Water Heating System + Solar Lighting System in common areas and outdoor lighting",
+    "occupancy_certificate": "Issued only after installation of solar systems to satisfaction of Authority/local authority"
+  },
+
+  "tree_planting": {
+    "_source": "BDA RMP 2031 Section 4.16",
+    "site_180_to_240sqm": "Minimum 1 tree — in rear setback area",
+    "site_above_240sqm": "Minimum 2 trees — in rear setback area",
+    "apartment_group_housing_dp": "1 tree per 240 sqm of FAR area (or part thereof); trees must be ≥2 m height before OC",
+    "sub_division": "40 trees per hectare of land sub-division in addition to site-level plantation"
+  },
+
+  "electrical_line_clearances": {
+    "_source": "BDA RMP 2031 Table 3 / Section 4.10",
+    "LT_line":   { "vertical_from_sag_m": 3.5,  "horizontal_from_edge_m": 1.8, "corridor_width_m": 4.5  },
+    "HT_11kV":   { "vertical_from_sag_m": 4.5,  "horizontal_from_edge_m": 1.8, "corridor_width_m": 4.5  },
+    "HT_33kV":   { "vertical_from_sag_m": 4.5,  "horizontal_from_edge_m": 2.5, "corridor_width_m": 15.0 },
+    "HT_66kV":   { "vertical_from_sag_m": 4.58, "horizontal_from_edge_m": 3.0, "corridor_width_m": 18.0 },
+    "HT_110kV":  { "vertical_from_sag_m": 5.0,  "horizontal_from_edge_m": 3.2, "corridor_width_m": 22.0 },
+    "HT_132kV":  { "vertical_from_sag_m": 5.0,  "horizontal_from_edge_m": 3.5, "corridor_width_m": 27.0 },
+    "HT_220kV":  { "vertical_from_sag_m": 6.2,  "horizontal_from_edge_m": 4.2, "corridor_width_m": 35.0 },
+    "HT_400kV":  { "vertical_from_sag_m": "per Electrical Dept", "horizontal_from_edge_m": "per Electrical Dept", "corridor_width_m": 50.0 },
+    "note": "Buildings >10 m height and tall trees not permitted within corridor. Vertical clearance measured from maximum sag of electrical line."
+  },
+
+  "accessibility": {
+    "_source": "BBMP Building Bye-Laws 2003 Schedule XI (Bye-law 31.0); BDA RMP 2031 Section 4.9.1(vii)",
+    "mandatory_trigger": "Public and semi-public buildings with covered area ≥300 sqm",
+    "all_buildings_mandate": "All buildings shall be designed for differently abled persons with dedicated parking and supporting facilities",
+    "access_path": { "min_width_m": 1.80, "max_gradient_pct": 5 },
+    "ramp": { "min_width_m": 1.80, "max_gradient": "1:10", "landing_min_size": "1.80 m × 2.00 m" },
+    "corridor_min_width_m": 1.80,
+    "staircase": { "min_width_m": 1.50, "max_risers_per_flight": 12, "min_tread_mm": 300, "max_riser_mm": 150 },
+    "wheelchair": { "standard_size_mm": "1050 × 750", "min_door_width_mm": 900, "surface_parking_spaces": 2, "max_travel_m": 30 },
+    "lift": { "cage_clear_depth_mm": 1100, "cage_clear_width_mm": 2000, "entrance_door_width_mm": 900, "lobby_min": "1.80 m × 1.80 m" },
+    "toilet": { "min_size_m": "1.50 × 1.75", "max_wc_seat_height_m": 0.50, "note": "1 special WC per set with wash basin" },
+    "handrails": { "height_mm": 800, "required_at": ["ramps", "staircases", "lifts", "toilets"] },
+    "signage": { "min_letter_size_mm": 20, "braille_board": "Required on walls", "note": "Contrasting colour, illuminated; no protruding signs" }
   },
 
   "compound_wall": {
-    "_source": "BBMP Building Bye-Laws 2003, Section 20.8",
+    "_source": "BBMP Building Bye-Laws 2003 Section 20.8",
     "front_and_side_max_height_m": 1.5,
     "rear_max_height_m": 2.0,
-    "corner_plot": {
-      "restricted_height_m": 0.75,
-      "restricted_length_from_intersection_m": 5,
-      "note": "Both corners must be rounded off or chamfered at the intersection"
-    },
-    "barbed_wire_fence": "Prohibited on all boundaries",
-    "prickly_hedge": "Prohibited on all boundaries",
-    "exceptions": ["Jails", "Sanatoria", "Heavy industries", "Women's hostels — may exceed standard height with special permission"],
-    "licence_fee": "Rs. 1 per running metre for compound wall licence"
+    "corner_plot": { "restricted_height_m": 0.75, "restricted_length_from_intersection_m": 5, "note": "Boundary wall to be rounded or chamfered" },
+    "barbed_wire_prohibited": true,
+    "prickly_hedge_prohibited": true,
+    "exceptions": ["Jails", "Sanatoria", "Heavy industries", "Women's hostels — may exceed standard height with special permission"]
   },
 
-  "special_zones": {
-    "ToD": { "_note": "Transit Oriented Development zones around metro stations – additional FAR permissible per Section 4.18." },
-    "heritage": {
-      "zones_listed": ["Gavipuram/Basavanagudi/VV Puram", "M.G. Road", "Cleveland Town", "Richards Town", "Ulsoor", "Whitefield"]
+  "habitable_room_requirements": {
+    "_source": "BBMP Bye-Laws 2003 Sections 20.1–20.11",
+    "min_floor_area_sqm": 8.0,
+    "min_width_m": 2.4,
+    "min_height_m": 2.75,
+    "min_height_ac_room_m": 2.4,
+    "kitchen_min_area_sqm": 5.0,
+    "kitchen_with_dining_min_area_sqm": 7.5,
+    "kitchen_min_width_m": 1.8,
+    "bathroom_min_area_sqm": 1.8,
+    "combined_bath_wc_min_sqm": 2.0,
+    "wc_only_min_sqm": 1.1,
+    "wc_min_width_m": 0.9,
+    "lighting_ventilation_opening": "Min 1/6 of floor area for residential; 1/5 for offices/educational/hospital (openings excluding doors). Increase by 25% for kitchens"
+  },
+
+  "special_developments": {
+    "integrated_township_min_ha": 25,
+    "integrated_development_scheme_ha": "above 5 ha and upto 25 ha",
+    "heritage_zones_listed": [
+      "Gavipuram/Basavanagudi/VV Puram",
+      "M.G. Road",
+      "Cleveland Town",
+      "Richards Town",
+      "Ulsoor",
+      "Whitefield"
+    ],
+    "eco_sensitive_buffers": {
+      "lake_water_body_m": 75,
+      "primary_stream_each_side_m": 50,
+      "secondary_stream_each_side_m": 35,
+      "tertiary_stream_each_side_m": 25,
+      "note": "Buffers per NGT Order. No development zone in buffer unless for lake-associated activities"
     }
   },
 
-  "miscellaneous": {
-    "rain_water_harvesting": { "mandatory_above_sqm": 120, "recharge_pit_volume_cum_per_100sqm_roof": 6 },
-    "electrical_line_clearances": {
-      "LT_line":  { "vertical_m": 3.5, "horizontal_m": 1.8, "corridor_m": 4.5 },
-      "HT_11kV":  { "vertical_m": 4.5, "horizontal_m": 1.8, "corridor_m": 4.5 },
-      "HT_33kV":  { "vertical_m": 4.5, "horizontal_m": 2.5, "corridor_m": 15.0 },
-      "HT_66kV":  { "vertical_m": 4.58,"horizontal_m": 3.0, "corridor_m": 18.0 },
-      "HT_110kV": { "vertical_m": 5.0, "horizontal_m": 3.2, "corridor_m": 22.0 },
-      "HT_132kV": { "vertical_m": 5.0, "horizontal_m": 3.5, "corridor_m": 27.0 },
-      "HT_220kV": { "vertical_m": 6.2, "horizontal_m": 4.2, "corridor_m": 35.0 },
-      "HT_400kV": { "vertical_m": null,"horizontal_m": null, "corridor_m": 50.0 }
-    }
+  "noc_requirements_summary": {
+    "_source": "BDA RMP 2031 Section 4.19 and BBMP Bye-Laws 2003 Section 3.2(10)",
+    "fire_dept": "All buildings ≥15 m height",
+    "airport_authority": "Wherever applicable (near aerodromes)",
+    "pollution_control_kspcb": "Development plans, apartment buildings and residential layouts under KSPCB category (includes environmental clearance note)",
+    "bwssb": "High-rise buildings and group housing",
+    "bescom": "High-rise buildings and group housing",
+    "telecom_dept": "High-rise buildings above 7 floors",
+    "bda": "Change of land use, bifurcation/amalgamation of plot, group housing schemes >4000 sqm",
+    "district_magistrate": "Cinema theatres (permanent/semi-permanent) and petrol pumps"
+  },
+
+  "security_deposit": {
+    "_source": "BDA RMP 2031 Section 4.20; BBMP Bye-Laws 2003 Section 4.1.5",
+    "applicable_to": [
+      "Residential group housing/multi-dwelling/apartments with more than 4 dwelling units",
+      "Commercial buildings"
+    ],
+    "refund_period": "Within 3 years or 30 days from completion certificate — whichever is later",
+    "forfeiture": "If construction not as per approved plan; separate action under KTCP Act initiated"
   }
 }

@@ -32,7 +32,7 @@ _ZONE_MAP = {
     "I1": "I", "I2": "IT_HITECH", "I3": "I", "I4": "I", "I5": "I",
     "IT": "IT_HITECH",   # IT park / Hi-Tech = I2: gets Commercial base FAR + 0.25 bonus
     "PSP1": "PSP", "PSP2": "PSP", "PSP3": "PSP", "PSP4": "PSP", "PSP": "PSP",
-    "T1": "T", "T2": "T", "T3": "T", "T4": "T",
+    "T": "T", "T1": "T", "T2": "T", "T3": "T", "T4": "T",
     "R": "R", "RM": "R",
 }
 
@@ -78,12 +78,12 @@ _R_ROAD_TIERS = [
 
 # C-zone road brackets (same for both planning zones)
 _C_ROAD_TIERS = [
-    ("road_below_9.5",       9.5),
-    ("road_9.5_to_12.5",    12.5),
-    ("road_12.5_to_18.5",   18.5),
-    ("road_18.5_to_24.5",   24.5),
-    ("road_24.5_to_30.5",   30.5),
-    ("road_30.5_and_above", 9999.0),
+    ("road_below_9_5m",       9.5),
+    ("road_9_5_to_12_5m",    12.5),
+    ("road_12_5_to_18_5m",   18.5),
+    ("road_18_5_to_24_5m",   24.5),
+    ("road_24_5_to_30_5m",   30.5),
+    ("road_above_30_5m",     9999.0),
 ]
 
 
@@ -118,14 +118,12 @@ def get_far(
         pi  = _tier_idx(_R_PLOT_TIERS, plot_area_sqm)
         idx = min(ri, pi)           # binding constraint
         pkey = _R_PLOT_TIERS[idx][0]
-        rkey = _R_ROAD_TIERS[idx][0]
         tier = pz.get(pkey) or {}
-        entry = tier.get(rkey) or {"base": 1.50, "tdr": 0.0, "total": 1.50}
         return {
-            "base": entry.get("base", 1.50),
-            "tdr":  entry.get("tdr",  0.0),
-            "total": entry.get("total", 1.50),
-            "coverage_pct": tier.get("coverage_pct", 60) or 60,
+            "base": tier.get("base_far", 1.50),
+            "tdr":  tier.get("tdr_far",  0.0),
+            "total": tier.get("total_max_far", 1.50),
+            "coverage_pct": tier.get("max_coverage_pct", 60) or 60,
         }
 
     if cat == "C":
@@ -136,15 +134,15 @@ def get_far(
                 return {
                     "base": e.get("base_far", 1.20),
                     "tdr":  e.get("tdr_far",  0.0),
-                    "total": e.get("total_far", 1.20),
-                    "coverage_pct": e.get("coverage_pct", 60) or 60,
+                    "total": e.get("total_max_far", 1.20),
+                    "coverage_pct": e.get("max_coverage_pct", 60) or 60,
                 }
-        e = pz.get("road_30.5_and_above") or {}
+        e = pz.get("road_above_30_5m") or {}
         return {"base": e.get("base_far", 1.50), "tdr": e.get("tdr_far", 0.9),
-                "total": e.get("total_far", 2.40), "coverage_pct": 40}
+                "total": e.get("total_max_far", 2.40), "coverage_pct": e.get("max_coverage_pct", 40)}
 
     if cat == "I":
-        i_sec = fs["I"]
+        i_sec = fs["I"].get("I3_to_I5_other", fs["I"])
         for key, upper in [
             ("plot_upto_250",      250), ("plot_250_to_500",   500),
             ("plot_500_to_1000",  1000), ("plot_1000_to_2000", 2000),
@@ -153,12 +151,12 @@ def get_far(
         ]:
             if plot_area_sqm <= upper:
                 e = i_sec.get(key) or {}
-                return {"base": e.get("far", 1.50), "tdr": 0.0,
-                        "total": e.get("far", 1.50),
+                return {"base": e.get("base_far", 1.50), "tdr": 0.0,
+                        "total": e.get("base_far", 1.50),
                         "coverage_pct": e.get("coverage_pct") or 55}
         e = i_sec.get("plot_above_8000") or {}
-        return {"base": e.get("far", 2.25), "tdr": 0.0,
-                "total": e.get("far", 2.25), "coverage_pct": 55}
+        return {"base": e.get("base_far", 2.25), "tdr": 0.0,
+                "total": e.get("base_far", 2.25), "coverage_pct": 55}
 
     if cat == "PSP":
         p_sec = fs["PSP"]
@@ -168,12 +166,12 @@ def get_far(
         ]:
             if plot_area_sqm <= upper:
                 e = p_sec.get(key) or {}
-                return {"base": e.get("far", 1.50), "tdr": 0.0,
-                        "total": e.get("far", 1.50),
-                        "coverage_pct": e.get("coverage_pct") or 55}
+                return {"base": e.get("max_allowable_far", 1.50), "tdr": 0.0,
+                        "total": e.get("max_allowable_far", 1.50),
+                        "coverage_pct": e.get("max_coverage_pct") or 55}
         e = p_sec.get("plot_above_2000") or {}
-        return {"base": e.get("far", 2.25), "tdr": 0.0,
-                "total": e.get("far", 2.25), "coverage_pct": 45}
+        return {"base": e.get("max_allowable_far", 2.25), "tdr": 0.0,
+                "total": e.get("max_allowable_far", 2.25), "coverage_pct": e.get("max_coverage_pct", 45)}
 
     if cat == "T":
         t_sec = fs["T"]
@@ -183,9 +181,9 @@ def get_far(
         ]:
             if plot_area_sqm <= upper:
                 e = t_sec.get(key) or {}
-                return {"base": e.get("far", 1.00), "tdr": 0.0,
-                        "total": e.get("far", 1.00),
-                        "coverage_pct": e.get("coverage_pct") or 55}
+                return {"base": e.get("max_far", 1.00), "tdr": 0.0,
+                        "total": e.get("max_far", 1.00),
+                        "coverage_pct": e.get("max_coverage_pct") or 55}
 
     if cat == "IT_HITECH":
         # BDA RMP 2031: I2 Hi-Tech / IT parks get Commercial base FAR + 0.25 bonus.
@@ -291,13 +289,13 @@ def lift_mandatory_floors() -> int:
 # ── Public: basement rules ────────────────────────────────────────────────────
 def get_basement_rules() -> dict:
     rules = _load()
-    return rules.get("basement", {})
+    return rules.get("building_regulations", {}).get("basement", {})
 
 
 # ── Public: balcony rules ─────────────────────────────────────────────────────
 def get_balcony_rules() -> dict:
     rules = _load()
-    return rules.get("balcony", {})
+    return rules.get("setbacks", {}).get("projections_in_setback", {}).get("balcony", {})
 
 
 # ── Public: accessibility rules ──────────────────────────────────────────────
@@ -316,4 +314,4 @@ def get_compound_wall_rules() -> dict:
 def fire_noc_non_residential_bua_sqm() -> float:
     """BDA RMP 2031: non-residential buildings > 5,000 sqm BUA require fire arrangement."""
     rules = _load()
-    return rules.get("fire_safety", {}).get("non_residential_bua_threshold_sqm", 5000)
+    return rules.get("fire_safety", {}).get("non_residential_fire_arrangement_above_sqm", 5000)
