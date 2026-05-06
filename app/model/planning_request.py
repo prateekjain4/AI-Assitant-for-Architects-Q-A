@@ -22,3 +22,4 @@ class PlanningRequest(BaseModel):
     number_of_floors: Optional[int] = None
     number_of_units: Optional[int] = 1
     property_type: Optional[str] = "residential"
+    planning_zone: Optional[str] = "zone_A"   # zone_A = inside ORR, zone_B = outside

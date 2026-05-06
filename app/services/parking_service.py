@@ -30,6 +30,48 @@ PARKING_RULES = {
         "visitor_pct":   10,
         "note": "BDA RMP 2031 Sec 4.13 / Table 4 — Industrial"
     },
+    # ── Usage-specific rules from BDA RMP 2031 Table 4 ──────────────
+    "hotel": {
+        # 1 car per 4 rooms OR 1 car per 50 sqm (lower applies) + 10% visitors
+        "car_per_sqm": 50, "bike_per_car": 2, "visitor_pct": 10,
+        "note": "BDA RMP 2031 Table 4 — Hotel/Lodge: 1 car per 4 rooms OR 1 car per 50 sqm (lower applies) + 10% visitors",
+    },
+    "star_hotel": {
+        # 1 car per 2 rooms + 1 car per 50 sqm (excl. room area) for visitors
+        "car_per_sqm": 38, "bike_per_car": 2, "rooms_per_car": 2,
+        "note": "BDA RMP 2031 Table 4 — Star Hotel: 1 car per 2 rooms + 1 car per 50 sqm (common areas)",
+    },
+    "lodge": {
+        "car_per_sqm": 50, "bike_per_car": 2, "visitor_pct": 10,
+        "note": "BDA RMP 2031 Table 4 — Hotel/Lodge: 1 car per 4 rooms OR 1 car per 50 sqm + 10% visitors",
+    },
+    "hospital": {
+        # 1 car per 75 sqm + 10% for ambulances/hospital vehicles
+        "car_per_sqm": 75, "ambulance_pct": 10, "bike_per_car": 2,
+        "note": "BDA RMP 2031 Table 4 — Hospital: 1 car per 75 sqm + 10% ambulance/hospital vehicles",
+    },
+    "nursing_home": {
+        # 1 car per 50 sqm + 10% for ambulances
+        "car_per_sqm": 50, "ambulance_pct": 10, "bike_per_car": 2,
+        "note": "BDA RMP 2031 Table 4 — Nursing Home: 1 car per 50 sqm + 10% ambulance vehicles",
+    },
+    "office": {
+        "car_per_100sqm": 2, "bike_per_car": 2, "visitor_pct": 20,
+        "note": "BDA RMP 2031 Table 4 — Office (Govt/Private): 1 car per 50 sqm",
+    },
+    "retail": {
+        "car_per_100sqm": 2, "bike_per_car": 2, "visitor_pct": 0,
+        "note": "BDA RMP 2031 Table 4 — Retail/Shops/Mall: 1 car per 50 sqm",
+    },
+    "restaurant": {
+        "car_per_100sqm": 2, "bike_per_car": 2, "visitor_pct": 0,
+        "note": "BDA RMP 2031 Table 4 — Restaurant: 1 car per 50 sqm",
+    },
+    "educational": {
+        # 1 car per 150 sqm (class/faculty/admin rooms only)
+        "car_per_100sqm": 0.67, "bike_per_car": 3, "visitor_pct": 0,
+        "note": "BDA RMP 2031 Table 4 — Educational: 1 car per 150 sqm + 1 bus per 120 students",
+    },
 }
 
 # ── Standard parking space dimensions (IRC + BBMP) ────────────────
@@ -71,8 +113,26 @@ def calculate_parking(
             usage_key = "residential"
     elif raw_usage in PARKING_RULES:
         usage_key = raw_usage
+    elif any(k in raw_usage for k in ("hotel", "lodge")):
+        usage_key = "star_hotel" if any(k in raw_usage for k in ("star", "luxury", "5star", "4star")) else "hotel"
+    elif "hospital" in raw_usage:
+        usage_key = "hospital"
+    elif "nursing" in raw_usage:
+        usage_key = "nursing_home"
+    elif any(k in raw_usage for k in ("office", "corporate")):
+        usage_key = "office"
+    elif any(k in raw_usage for k in ("retail", "shop", "mall")):
+        usage_key = "retail"
+    elif "restaurant" in raw_usage or "eatery" in raw_usage:
+        usage_key = "restaurant"
+    elif any(k in raw_usage for k in ("school", "college", "educational")):
+        usage_key = "educational"
+    elif raw_usage in ("commercial", "mixed"):
+        usage_key = "commercial"
+    elif "industrial" in raw_usage:
+        usage_key = "industrial"
     else:
-        usage_key = "residential"
+        usage_key = "commercial"
     rules     = PARKING_RULES[usage_key]
     built_sqm = built_up_sqft / 10.7639
 
@@ -85,9 +145,6 @@ def calculate_parking(
         total_cars   = cars_req + visitor_cars
     elif usage_key == "residential":
         # Multi-dwelling — tiered by avg DU size (BDA Table 4)
-        #   DU <  50 sqm : 1 car per 2 DUs
-        #   DU 50-120    : 1 car per DU
-        #   DU > 120     : 1 car + 1 per 120 sqm above 120 per DU
         avg_unit        = avg_unit_sqm if avg_unit_sqm > 0 else 130
         estimated_units = max(1, math.ceil(built_sqm / avg_unit))
         actual_units    = num_units if num_units > 1 else estimated_units
@@ -101,10 +158,35 @@ def calculate_parking(
         bikes_req    = cars_req * rules["bike_per_car"]
         visitor_cars = max(1, math.ceil(cars_req * rules["visitor_pct"] / 100))
         total_cars   = cars_req + visitor_cars
+    elif usage_key in ("hospital", "nursing_home"):
+        # 1 car per 75/50 sqm + ambulance percentage
+        cars_req     = math.ceil(built_sqm / rules["car_per_sqm"])
+        bikes_req    = cars_req * rules["bike_per_car"]
+        visitor_cars = max(1, math.ceil(cars_req * rules["ambulance_pct"] / 100))
+        total_cars   = cars_req + visitor_cars   # visitor_cars = ambulance/hospital vehicles
+    elif usage_key == "hotel":
+        # 1 car per 50 sqm (area-based proxy for 1 car per 4 rooms) + 10% visitors
+        cars_req     = math.ceil(built_sqm / rules["car_per_sqm"])
+        bikes_req    = cars_req * rules["bike_per_car"]
+        visitor_cars = max(1, math.ceil(cars_req * rules["visitor_pct"] / 100))
+        total_cars   = cars_req + visitor_cars
+    elif usage_key in ("lodge",):
+        cars_req     = math.ceil(built_sqm / rules["car_per_sqm"])
+        bikes_req    = cars_req * rules["bike_per_car"]
+        visitor_cars = max(1, math.ceil(cars_req * rules["visitor_pct"] / 100))
+        total_cars   = cars_req + visitor_cars
+    elif usage_key == "star_hotel":
+        # Estimate rooms at ~38 sqm avg; 1 car per 2 rooms + common-area visitor parking
+        estimated_rooms = max(1, math.ceil(built_sqm / rules["car_per_sqm"]))
+        cars_req        = math.ceil(estimated_rooms / rules["rooms_per_car"])
+        common_sqm      = built_sqm * 0.30   # typical 30% common area in star hotel
+        visitor_cars    = math.ceil(common_sqm / 50)
+        bikes_req       = cars_req * rules["bike_per_car"]
+        total_cars      = cars_req + visitor_cars
     else:
         cars_req     = math.ceil(built_sqm / 100 * rules["car_per_100sqm"])
         bikes_req    = cars_req * rules["bike_per_car"]
-        visitor_cars = math.ceil(cars_req * rules["visitor_pct"] / 100)
+        visitor_cars = math.ceil(cars_req * rules.get("visitor_pct", 0) / 100)
         total_cars   = cars_req + visitor_cars
 
     total_bikes = bikes_req

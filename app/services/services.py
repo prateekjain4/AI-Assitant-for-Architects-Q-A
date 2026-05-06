@@ -25,22 +25,39 @@ SECTION_HASH_FILE = "data/section_hashes.json"
 PDF_SOURCES = [
     {
         "name": "bbmp_bylaws",
+        "city": "bangalore",
         "category": "bylaws",
         "url": "https://www.naredco.in/notification/pdfs/Bangalore-Building-Byelaws.pdf",
         "file": "Bangalore-Building-Byelaws.pdf"
     },
     {
-        "name": "zoning_regulations",
+        "name": "bda_zoning",
+        "city": "bangalore",
         "category": "zoning",
         "url": "https://data-opencity.sgp1.cdn.digitaloceanspaces.com/Documents/Recent/Bengaluru-BDA-RMP-2031-Volume_6_Zoning_Regulations.pdf",
         "file": "BDA_Zoning_Regulations.pdf"
     },
     {
-        "name": "fire_safety",
+        "name": "nbc2016",
+        "city": "national",
         "category": "fire",
-        "url": "https://fireandsafetyequipments.com/wp-content/uploads/2018/09/NBC2016-Part-IV.pdf",
-        "file": "NBC2016_Fire_Safety.pdf"
-    }
+        "url": None,
+        "file": "NBC2016_Vol1.pdf"
+    },
+    {
+        "name": "ranchi_bylaws",
+        "city": "ranchi",
+        "category": "bylaws",
+        "url": None,
+        "file": "Ranchi_Bylaws.pdf"
+    },
+    {
+        "name": "hyderabad_bylaws",
+        "city": "hyderabad",
+        "category": "bylaws",
+        "url": None,
+        "file": "Hyderabad_Bylaws.pdf"
+    },
 ]
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -174,7 +191,7 @@ def detect_section_changes(sections):
 # ---------------------------
 # STEP 3: Structure Text
 # ---------------------------
-def structure_document(text, source, category):
+def structure_document(text, source, category, city="bangalore"):
 
     text = re.sub(r'\r', '', text)
 
@@ -230,6 +247,7 @@ def structure_document(text, source, category):
 
         structured_sections.append({
             "source": source,
+            "city": city,
             "category": category,
             "chapter": current_part,
             "section_number": section_number,
@@ -268,6 +286,7 @@ def build_vector_index(sections):
 
             metadata.append({
                 "source": sec["source"],
+                "city": sec.get("city", "bangalore"),
                 "category": sec["category"],
                 "chapter": sec["chapter"],
                 "section_number": sec["section_number"],
@@ -395,7 +414,7 @@ def get_far_from_rules(zone, road_width):
     return None
 
 
-def answer_question_from_bylaws(question):
+def answer_question_from_bylaws(question, city="bangalore"):
 
     if not os.path.exists(VECTOR_INDEX_FILE):
         return {
@@ -433,6 +452,9 @@ def answer_question_from_bylaws(question):
     for rank, idx in enumerate(indices[0]):
 
         sec = sections[idx]
+
+        if sec.get("city") not in (city, "national"):
+            continue
 
         if sec["category"] != category:
             continue
@@ -618,11 +640,15 @@ def run_full_pipeline():
     for pdf in PDF_SOURCES:
 
         if not os.path.exists(pdf["file"]):
-            download_pdf(pdf["url"], pdf["file"])
+            if pdf.get("url"):
+                download_pdf(pdf["url"], pdf["file"])
+            else:
+                print(f"Skipping {pdf['file']} — file not found and no URL configured.")
+                continue
 
         extracted_text = extract_text_from_pdf(pdf["file"])
 
-        sections = structure_document(extracted_text, pdf["name"], pdf["category"])
+        sections = structure_document(extracted_text, pdf["name"], pdf["category"], city=pdf.get("city", "bangalore"))
 
         all_sections.extend(sections)
 

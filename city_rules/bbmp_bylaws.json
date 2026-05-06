@@ -1,0 +1,516 @@
+{
+  "_meta": {
+    "city": "bengaluru",
+    "authority": "BBMP",
+    "document": "BBMP Building Bye-Laws 2003 (amended, notified 5-Jun-2004; subsequent amendments up to 2022)",
+    "secondary_documents": [
+      "NBC 2016 Part IV — Fire & Life Safety (cross-referenced in fire sections)",
+      "BDA RMP 2031 — cross-referenced for setbacks and FAR"
+    ],
+    "schema_version": "1.0",
+    "notes": "Values sourced from BBMP Building Bye-Laws 2003 Sections 8–35 and NBC 2016 Part IV. VERIFY all fields against the official gazette before use in production."
+  },
+
+  "staircase": {
+    "_source": "BBMP Building Bye-Laws 2003, Sections 20.6 and 21.8",
+
+    "height_based_minimums": {
+      "_note": "Overrides usage-based minimum only if it yields a HIGHER value. Take max(height_min, usage_min).",
+      "upto_11_5m":   { "min_clear_width_m": 1.0,  "note": "Standard residential buildings up to G+3" },
+      "11_5m_to_15m": { "min_clear_width_m": 1.2,  "note": "Buildings between 11.5 m and 15 m height (BBMP Bylaws)" },
+      "above_15m":    { "min_clear_width_m": 1.5,  "note": "Fire-escape staircase for buildings above 15 m (NBC 2016 Part IV Cl. 4.1)" }
+    },
+
+    "usage_based_widths": {
+      "residential_min_width_m": 1.0,
+      "residential_row_housing_two_storey_min_width_m": 0.75,
+      "hostel_min_width_m": 1.5,
+      "assembly_cinema_auditorium_min_width_m": 1.5,
+      "educational_upto_24m_height_min_width_m": 1.5,
+      "educational_above_24m_height_min_width_m": 2.0,
+      "institutional_upto_10beds_min_width_m": 1.5,
+      "institutional_above_10beds_min_width_m": 2.0,
+      "all_other_buildings_min_width_m": 1.5
+    },
+
+    "count_thresholds": {
+      "two_staircases_above_bua_sqm": 2000,
+      "note": "2 staircases mandatory above 2,000 sqm built-up area"
+    },
+
+    "tread_riser": {
+      "residential_min_tread_mm": 250,
+      "other_buildings_min_tread_mm": 300,
+      "residential_max_riser_mm": 190,
+      "other_buildings_max_riser_mm": 150,
+      "max_risers_per_flight": 15,
+      "min_headroom_m": 2.2
+    },
+
+    "handrail_min_height_mm": 1000,
+    "non_combustible_materials": true,
+
+    "enclosure_rules": {
+      "above_15m": "Staircase must be fully enclosed by fire-rated construction",
+      "upto_g3_residential": "Need not be self-contained unit; adjacent to external wall not mandatory",
+      "open_staircase_in_setback": "Permitted for residential plots <= 120 sqm (in side or rear setback)"
+    }
+  },
+
+  "lifts": {
+    "_source": "BDA RMP 2031 Section 4.9.1(iv) and 4.9.6; BBMP Bye-Laws Section 20.7",
+
+    "mandatory_above_floors": 3,
+    "mandatory_height_m": 15.0,
+    "note": "Lift mandatory above G+3 (i.e., 4 floors and above) or above 15 m — whichever triggers first",
+
+    "service_lift": {
+      "required_for": "All high-rise buildings",
+      "combined_allowed_if": "Building has < 24 units OR < 2,400 sqm BUA (whichever lower)",
+      "note": "Service lift may double as passenger lift for smaller buildings"
+    },
+
+    "disabled_access_lift": {
+      "min_cage_clear_depth_mm": 1100,
+      "min_cage_clear_width_mm": 2000,
+      "entrance_door_width_mm": 900,
+      "lobby_min_size_m": "1.80 x 1.80",
+      "braille_buttons": true,
+      "note": "BIS 13-person passenger lift standard (Schedule XI, BBMP Bye-Laws)"
+    }
+  },
+
+  "compound_wall": {
+    "_source": "BBMP Building Bye-Laws 2003, Section 20.8",
+
+    "front_and_side_max_height_m": 1.5,
+    "rear_max_height_m": 2.0,
+
+    "barbed_wire_fence": "Prohibited on all boundaries",
+    "prickly_hedge": "Prohibited on all boundaries",
+
+    "corner_plot": {
+      "restricted_height_m": 0.75,
+      "restricted_length_from_intersection_m": 5,
+      "note": "On both roads for 5 m from the intersection; wall to be rounded or chamfered"
+    },
+
+    "exceptions": [
+      "Jails",
+      "Sanatoria",
+      "Heavy industries",
+      "Women's hostels — may exceed standard height with special BBMP permission"
+    ]
+  },
+
+  "basement": {
+    "_source": "BDA RMP 2031 Section 4.9.2; BBMP Bye-Laws 2003, Section 18",
+
+    "definition": "Storey partly or wholly below average ground level. Max projection above average ground: 1.2 m (BDA RMP 2031) / 1.0 m (BBMP 2003)",
+    "max_overall_height_m": 4.5,
+    "min_clear_height_m": 2.4,
+    "max_levels_for_parking": 5,
+
+    "setbacks": {
+      "min_from_boundary_m": 2.0,
+      "additional_per_extra_level_m": 1.0,
+      "extension_below_ground_note": "Basement may extend below ground beyond the above-ground setback provided the underground portion is within the plot"
+    },
+
+    "small_plot_restriction": "Sites < 200 sqm with depth < 20 m: car parking NOT permitted in basement",
+    "zone_a_restriction": "Zone A only: only 1 basement permitted if site >= 500 sqm with min road width 12 m",
+
+    "permitted_uses": [
+      "Car parking (primary use)",
+      "Two-wheeler parking",
+      "Electrical room, pump room, generator, AC plant room",
+      "Dark rooms for X-ray / light-sensitive materials",
+      "Bank safes / strong room (counted in FAR)",
+      "Services connected to the building"
+    ],
+
+    "permitted_only_for_3star_plus_hotels": [
+      "Health club and gym",
+      "Shopping arcade",
+      "Dining area with or without kitchen",
+      "Administrative office",
+      "Banquet / conference facility",
+      "Swimming pool (counted in FAR)"
+    ],
+
+    "not_permitted": [
+      "Habitable residential rooms",
+      "Retail or commercial use (except 3-star+ hotels)",
+      "Restaurants / kitchens (except 3-star+ hotels)"
+    ],
+
+    "fire_requirements_above_200sqm": [
+      "Sprinklers mandatory in basement regardless of height",
+      "Minimum 2 means of escape from basement",
+      "Smoke extraction system required",
+      "Emergency lighting mandatory"
+    ],
+
+    "fire_requirements_small_plot": [
+      "Fire extinguishers mandatory",
+      "Adequate ventilation required"
+    ],
+
+    "ventilation": {
+      "type": "Mechanical ventilation mandatory",
+      "min_air_changes_per_hour": 6,
+      "note": "Minimum 6 air changes per hour (NBC 2016)"
+    },
+
+    "waterproofing": "Walls and floors must be watertight to resist sub-soil hydraulic pressure",
+    "far_counted": false,
+    "far_note": "Basement NOT counted in FAR when used exclusively for parking / services"
+  },
+
+  "accessibility": {
+    "_source": "BBMP Building Bye-Laws 2003, Schedule XI (Bye-law 31.0); BDA RMP 2031 Section 4.9.1(vii)",
+
+    "mandatory_trigger": "All public and semi-public buildings with covered area >= 300 sqm",
+    "mandatory_for_zones": ["PSP"],
+    "mandatory_covered_area_sqm": 300,
+
+    "access_path": {
+      "min_width_m": 1.8,
+      "max_gradient_pct": 5
+    },
+
+    "ramp": {
+      "min_width_m": 1.8,
+      "max_gradient": "1:10",
+      "landing_min_size": "1.80 m x 2.00 m",
+      "handrail_height_m": 0.8,
+      "note": "Handrails on both sides"
+    },
+
+    "corridor_min_width_m": 1.8,
+
+    "staircase": {
+      "min_width_m": 1.5,
+      "max_risers_per_flight": 12,
+      "min_tread_mm": 300,
+      "max_riser_mm": 150
+    },
+
+    "wheelchair": {
+      "standard_size_mm": "1050 x 750",
+      "min_door_width_mm": 900,
+      "surface_parking_spaces": 2,
+      "max_travel_distance_m": 30
+    },
+
+    "lift": {
+      "min_cage_clear_depth_mm": 1100,
+      "min_cage_clear_width_mm": 2000,
+      "entrance_door_width_mm": 900,
+      "lobby_min_size_m": "1.80 x 1.80",
+      "braille_buttons": true
+    },
+
+    "toilet": {
+      "min_width_m": 1.5,
+      "min_depth_m": 1.75,
+      "max_wc_seat_height_m": 0.5,
+      "grab_bars": true,
+      "note": "1 special WC per set with wash basin"
+    },
+
+    "handrails": {
+      "height_mm": 800,
+      "required_at": ["ramps", "staircases", "lifts", "toilets"]
+    },
+
+    "guiding_floor_material": {
+      "required": true,
+      "note": "Tactile guiding block flooring for visually impaired"
+    },
+
+    "signage": {
+      "min_letter_size_mm": 20,
+      "braille_board": "Required on walls",
+      "contrasting_colour": true,
+      "illuminated": true,
+      "note": "No protruding signs"
+    }
+  },
+
+  "parking_standards": {
+    "_source": "BBMP Building Bye-Laws 2003, Table 23 (Parking Regulations); amended 2022 for EV mandate",
+
+    "car_space": {
+      "min_length_m": 5.0,
+      "min_width_m": 2.5,
+      "height_clearance_m": 2.1,
+      "note": "Clear dimensions; column stubs and pilasters must not intrude into space"
+    },
+
+    "two_wheeler_space": {
+      "min_length_m": 2.0,
+      "min_width_m": 0.75
+    },
+
+    "drive_aisles": {
+      "parallel_parking_m": 3.0,
+      "angle_45_deg_m": 4.0,
+      "angle_60_deg_m": 5.5,
+      "angle_90_deg_m": 6.0,
+      "note": "Measured clear of parked vehicles"
+    },
+
+    "ev_charging": {
+      "mandate_pct_of_spaces": 5,
+      "applicable_above_spaces": 10,
+      "note": "Minimum 5% of total parking spaces to be EV-charging-ready (BBMP amendment 2022)"
+    },
+
+    "parking_ramp": {
+      "max_slope_ratio": "1:8",
+      "preferred_slope_ratio": "1:10",
+      "min_width_single_lane_m": 3.0,
+      "min_width_two_lane_m": 5.5
+    },
+
+    "requirements_by_usage": {
+      "_source": "BDA RMP 2031 Section 4.13 Table 4 (quantum); BBMP Table 23 (physical standards)",
+      "residential_per_du_upto_50sqm": 0.5,
+      "residential_per_du_50_to_100sqm": 1.0,
+      "residential_per_du_100_to_200sqm": 1.5,
+      "residential_per_du_above_200sqm": 2.0,
+      "office_per_50sqm_bua": 1.0,
+      "retail_per_50sqm_bua": 1.0,
+      "hospital_per_75sqm_bua": 1.0,
+      "hotel_per_room": 1.0,
+      "industrial_per_500sqm_bua": 1.0,
+      "two_wheelers_pct_of_car_equivalent": 25
+    }
+  },
+
+  "rainwater_harvesting": {
+    "_source": "BBMP Building Bye-Laws 2003, Section 25 and BWSSB (Cauvery Water Supply) Act amendments",
+
+    "mandatory_above_plot_sqm": 120,
+    "note": "Rainwater harvesting mandatory for all new buildings on plots >= 120 sqm. BWSSB water/sewage connection withheld without compliance certificate.",
+
+    "pit_and_sump": {
+      "min_pit_diameter_m": 0.3,
+      "min_pit_depth_m": 3.0,
+      "min_sump_capacity_formula": "20 litres per sqm of roof area",
+      "filter_media": ["Coarse sand", "Gravel", "Mesh screen"]
+    },
+
+    "recharge_methods": [
+      "Recharge pit",
+      "Percolation pit",
+      "Recharge well",
+      "Percolation trench"
+    ]
+  },
+
+  "ventilation_and_light": {
+    "_source": "BBMP Building Bye-Laws 2003, Section 17",
+
+    "habitable_room": {
+      "min_window_area_pct_of_floor": 10,
+      "min_ventilation_area_pct_of_floor": 5,
+      "min_height_m": 2.75,
+      "note": "At least one window opening directly to external air or ventilation shaft"
+    },
+
+    "kitchen": {
+      "min_window_area_pct_of_floor": 10,
+      "min_height_m": 2.75
+    },
+
+    "bathroom_and_wc": {
+      "min_window_area_sqm": 0.37,
+      "mechanical_ventilation_allowed": true
+    },
+
+    "dark_room": {
+      "mechanical_ventilation_required": true,
+      "min_air_changes_per_hour": 6
+    }
+  },
+
+  "plinth": {
+    "_source": "BDA RMP 2031 Section 4.9.1(ii); BBMP Bye-Laws 2003, Section 19",
+
+    "min_height_above_road_m": 0.45,
+    "max_height_above_ground_m": 1.2,
+    "low_lying_area_note": "In flood-prone or low-lying areas, plinth height shall be fixed by BBMP to ensure adequate drainage gradient"
+  },
+
+  "fire_safety": {
+    "_source": "BDA RMP 2031 Section 4.11 and 4.19; BBMP Bye-Laws 2003 Section 23; NBC 2016 Part IV",
+
+    "governing_code": "NBC 2016 Part IV — Fire and Life Safety",
+    "noc_height_threshold_m": 15.0,
+    "noc_authority": "Director of Fire Services / KSFES",
+    "non_residential_fire_arrangement_above_sqm": 5000,
+
+    "tender_access": {
+      "required_above_height_m": 9.0,
+      "min_road_width_m": 4.5,
+      "min_height_clearance_m": 4.5,
+      "turning_radius_m": 9.0,
+      "dead_end_max_m": 45,
+      "sides_required_above_15m": 3,
+      "note": "Fire tender access road required on at least 3 sides for buildings above 15 m (NBC 2016 Part IV Cl. 4.1)"
+    },
+
+    "staircase_for_fire_egress": {
+      "high_rise_fully_enclosed": true,
+      "non_combustible_materials": true,
+      "note": "Staircase shall not be arranged around a lift shaft unless lift is fully enclosed by fire-rated construction"
+    },
+
+    "requirements_above_9m": [
+      "Fire escape staircase — minimum 1.2 m clear width",
+      "Fire-rated doors on staircase landings",
+      "Emergency lighting in corridors and staircases",
+      "Fire tender access road — min 4.5 m wide, 4.5 m height clearance, 9 m turning radius"
+    ],
+
+    "requirements_above_15m": [
+      "Automatic sprinkler system throughout",
+      "Fire lift — minimum 1.1 m x 2.1 m car, 630 kg capacity",
+      "Wet riser system",
+      "Public address system",
+      "Fire detection and alarm system",
+      "Hose reel and extinguishers on every floor",
+      "Terrace tank — minimum 25,000 litres"
+    ],
+
+    "requirements_above_24m": [
+      "Fire command centre at ground level",
+      "Pressurisation of staircases",
+      "Two separate fire escape staircases mandatory"
+    ],
+
+    "refuge_area": {
+      "required_above_height_m": 24,
+      "frequency_floors": 7,
+      "min_area_sqm": 15,
+      "counted_in_far": false,
+      "note": "Refuge area NOT counted in FAR (NBC 2016 Part IV Section 4.11)"
+    },
+
+    "travel_distance_to_exit_m": {
+      "residential": 22.5,
+      "institutional": 22.5,
+      "educational": 22.5,
+      "assembly": 30.0,
+      "commercial": 30.0,
+      "business": 45.0,
+      "industrial": 30.0,
+      "storage": 30.0,
+      "hazardous": 22.5
+    },
+
+    "exit_door": {
+      "residential_min_width_m": 0.75,
+      "other_buildings_min_width_m": 1.0,
+      "min_height_m": 2.0
+    }
+  },
+
+  "solar_and_green": {
+    "_source": "BDA RMP 2031 Section 4.15; BESCOM energy efficiency bye-laws",
+
+    "solar_water_heating": {
+      "mandatory_for_usages": ["hotel", "hospital", "nursing_home"],
+      "mandatory_for_group_housing_units": 50,
+      "requirement": "Solar Water Heating System + Solar Lighting in common areas and outdoor lighting",
+      "occupancy_certificate": "Issued only after installation of solar systems to satisfaction of BBMP / BESCOM"
+    },
+
+    "energy_efficiency": {
+      "note": "Large commercial buildings (> 500 sqm) encouraged to comply with ECBC (Energy Conservation Building Code)"
+    }
+  },
+
+  "open_space_and_landscaping": {
+    "_source": "BBMP Building Bye-Laws 2003, Sections 12 and 13",
+
+    "recreational_open_space": {
+      "applicable_above_units": 10,
+      "min_pct_of_site_area": 10,
+      "min_dimension_m": 6,
+      "note": "Group housing / apartment schemes with > 10 units: 10% of site area must be kept as recreational open space"
+    },
+
+    "tree_planting": {
+      "required_per_sqm_plot": 1,
+      "note": "At least one tree per 30 sqm of open / unpaved area"
+    }
+  },
+
+  "sanitation": {
+    "_source": "BBMP Building Bye-Laws 2003, Section 22; NBC 2016 Part IX",
+
+    "wc_per_usage": {
+      "_note": "Minimum WC / urinal count per floor for public / commercial buildings",
+      "office_per_15_persons": { "wc": 1, "washbasin": 1 },
+      "retail_per_200sqm_bua": { "wc": 1, "urinal": 1, "washbasin": 1 },
+      "restaurant_per_50_seats": { "wc": 2, "urinal": 1, "washbasin": 2 },
+      "hospital_per_8_beds": { "wc": 1, "washbasin": 1 },
+      "educational_per_40_students": { "wc": 1, "urinal": 1, "washbasin": 1 }
+    },
+
+    "plumbing": {
+      "min_pipe_dia_internal_mm": 100,
+      "vent_pipe_min_dia_mm": 50,
+      "note": "All sanitary drainage to BBMP sewer; septic tank only where public sewer unavailable"
+    }
+  },
+
+  "miscellaneous": {
+    "projections_in_setback": {
+      "_source": "BDA RMP 2031 Section 4.9.5",
+      "balcony": {
+        "ground_floor": "NOT permitted",
+        "ground_floor_allowed": false,
+        "first_floor_max_projection_m": 1.2,
+        "above_second_floor_max_projection_m": 1.75,
+        "max_fraction_of_floor_area_pct": 20,
+        "far_exclusion": "Balconies within permitted projection limits excluded from FAR",
+        "max_projection_as_fraction_of_setback": "1/3 of setback or max projection limit — whichever is less"
+      },
+      "chajja_sun_shade": {
+        "max_projection_m": 0.75,
+        "far_counted": false,
+        "note": "Chajja / sun shade up to 0.75 m not counted in FAR"
+      }
+    },
+
+    "mezzanine_floor": {
+      "_source": "BBMP Bye-Laws 2003 Section 20.4; BDA RMP 2031 Section 4.9.1(iii)",
+      "permitted_between": "Any two floors in residential buildings",
+      "counted_in_far": true,
+      "min_area_sqm": 9.5,
+      "max_area_fraction": "1/3 of the respective floor area",
+      "min_height_m": 2.75,
+      "kitchen_use": "NOT permitted",
+      "accessibility": "Accessible only from its lower floor"
+    },
+
+    "ramp_vehicular": {
+      "_source": "BDA RMP 2031 Section 4.9.3",
+      "min_width_m": 3.5,
+      "max_slope": "1:10 (1:8 in special cases)",
+      "min_clearance_from_boundary_m": 2.0,
+      "high_rise_ramp_width_m": 6.0
+    },
+
+    "signage_and_hoardings": {
+      "_source": "BBMP Advertisement Bye-Laws 2006",
+      "no_permanent_hoarding_on_residential": true,
+      "temporary_construction_board_max_sqm": 2.0,
+      "note": "Signage / hoardings require separate BBMP advertisement permission"
+    }
+  }
+}

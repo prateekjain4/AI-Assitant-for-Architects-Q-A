@@ -48,6 +48,14 @@ app.include_router(projects_router)
 
 class QuestionRequest(BaseModel):
     question: str
+    city: str = "bangalore"
+
+class ChatRequest(BaseModel):
+    question: str
+    city: str = "bangalore"
+    planning_data: dict = None
+    scenario_data: dict = None
+    cost_estimate: dict = None
 
 app.add_middleware(
     CORSMiddleware,
@@ -85,7 +93,7 @@ def get_changes():
 @app.post("/ask")
 @limiter.limit("30/minute")
 def ask_question(request: Request, body: QuestionRequest):
-    return answer_question_from_bylaws(body.question)
+    return answer_question_from_bylaws(body.question, city=body.city)
 
 @app.post("/planning")
 @limiter.limit("10/minute")
@@ -94,12 +102,13 @@ def planning_tool(request: Request, body: PlanningRequest):
 
 @app.post("/chat")
 @limiter.limit("20/minute")
-def chat_endpoint(request: Request, data: dict):
+def chat_endpoint(request: Request, data: ChatRequest):
     answer = chat_with_context(
-        question      = data.get("question"),
-        planning_data = data.get("planning_data"),
-        scenario_data = data.get("scenario_data"),
-        cost_estimate = data.get("cost_estimate"),
+        question      = data.question,
+        city          = data.city,
+        planning_data = data.planning_data,
+        scenario_data = data.scenario_data,
+        cost_estimate = data.cost_estimate,
     )
     return {"answer": answer}
 
@@ -192,6 +201,17 @@ def parking_calculator(request: Request, body: ParkingRequest):
         basement       = body.basement,
         stilt          = body.stilt,
     )
+
+@app.get("/permissible-usages")
+@limiter.limit("60/minute")
+def permissible_usages(request: Request, zone: str = "R", road_width: float = 9.0):
+    """
+    Return the list of usages allowed in the given zone at the given road width.
+    Used by the frontend to dynamically filter the Usage dropdown.
+    """
+    from app.services.city_rules_engine import get_allowed_usages_for_zone
+    return {"usages": get_allowed_usages_for_zone(zone, road_width)}
+
 
 @app.post("/planning-ranchi")
 @limiter.limit("10/minute")

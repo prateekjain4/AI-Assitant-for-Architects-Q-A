@@ -206,6 +206,7 @@ def _build_cost_context(cost_estimate: dict) -> str:
 
 def chat_with_context(
     question:      str,
+    city:          str = "bangalore",
     planning_data: dict = None,
     scenario_data: dict = None,
     cost_estimate: dict = None,
@@ -214,7 +215,7 @@ def chat_with_context(
     client = get_openai_client()
 
     # ── STEP 1: Retrieve bylaw knowledge from FAISS ───────────────
-    bylaw_context = answer_question_from_bylaws(question).get("answer", "")
+    bylaw_context = answer_question_from_bylaws(question, city=city).get("answer", "")
 
     # ── STEP 2: Build structured project context ──────────────────
     planning_block = _build_planning_context(planning_data)
@@ -260,7 +261,7 @@ giving generic guidance.
             {
                 "role": "system",
                 "content": (
-                    "You are a precise Bangalore building regulatory assistant working with BDA RMP 2031 rules. "
+                    f"You are a precise {city.title()} building regulatory assistant. Apply city-specific bylaws first; fall back to NBC 2016 national code for items not covered locally. "
                     "Always cite specific numbers from the project data when available. "
                     "Key rules to remember: setbacks are progressive above 15 m (BDA Table 2), not a flat 5 m at 11.5 m. "
                     "Lift is mandatory above G+3 per BDA RMP 2031. "

@@ -1,6 +1,4 @@
-import json
-import re
-from app.services.services import get_openai_client
+from app.ai.floor_plan import generate_zones
 
 ZONE_COLORS = {
     "circulation": "#bfdbfe",
@@ -52,81 +50,20 @@ def generate_floor_plan(
 
     buildable_w = round(plot_length_m - 2 * setback_side, 2)
     buildable_d = round(plot_width_m - setback_front - setback_rear, 2)
-    buildable_area = round(buildable_w * buildable_d, 1)
 
-    prompt = f"""
-You are an expert architect designing a regulatory-compliant floor plan for Bangalore, India.
-
-PLOT & REGULATIONS:
-- Zone: {zone}
-- Usage: {usage}
-- Buildable footprint: {buildable_w}m wide × {buildable_d}m deep  ({buildable_area} sq m)
-- Building height: {building_height_m}m  |  {num_floors} floors  |  Floor height: {floor_height_m}m
-- Road: {road_width_m}m wide on the SOUTH/FRONT side
-- Corner plot: {corner_plot}  |  Basement: {basement}
-- Ground coverage: {ground_coverage_pct}%
-
-COORDINATE SYSTEM (critical — read carefully):
-- Origin (0,0) is at the BOTTOM-LEFT corner of the buildable footprint
-- x increases to the RIGHT (east), max = {buildable_w}
-- y increases UPWARD (north), max = {buildable_d}
-- y=0 means FRONT (facing road, south) — put lobby/entrance here
-- y={buildable_d} means REAR (north) — put services/utilities here
-
-BYLAW CONSTRAINTS:
-1. Lobby/entrance MUST be at y=0 (front, road side) — BBMP access requirement
-2. Staircase/core within 25m of any point (BBMP fire rule Sec 20.6)
-3. Service/utility at y close to {buildable_d} (rear, north side)
-4. ALL zones together must cover the ENTIRE {buildable_w}m × {buildable_d}m footprint
-5. No zone: x<0, y<0, x+w>{buildable_w}, y+h>{buildable_d}
-6. Zones must tile with NO overlaps and NO gaps > 0.5m
-7. Minimum zone size: 3m × 3m
-
-TASK: Design ONE complete ground floor layout filling the full {buildable_w}×{buildable_d}m footprint.
-Return ONLY a JSON object (no markdown, no explanation outside JSON):
-
-{{
-  "floor": 0,
-  "label": "Ground Floor — {usage.title()}",
-  "buildable_w": {buildable_w},
-  "buildable_d": {buildable_d},
-  "zones": [
-    {{
-      "label": "Zone Name",
-      "x": 0.0,
-      "y": 0.0,
-      "w": 10.0,
-      "h": 8.0,
-      "type": "circulation|commercial|residential|core|services|parking|open"
-    }}
-  ],
-  "annotations": [
-    "Decision with bylaw reference (e.g. BBMP Sec X.Y)"
-  ]
-}}
-
-Use 5–10 zones. Cover the full footprint. Lobby at y=0, services at y≈{buildable_d}.
-"""
-
-    client = get_openai_client()
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a precise architect. Return only valid JSON, no markdown fences."},
-            {"role": "user",   "content": prompt}
-        ],
-        temperature=0.3,
-        max_tokens=900,
+    data = generate_zones(
+        buildable_w=buildable_w,
+        buildable_d=buildable_d,
+        building_height_m=building_height_m,
+        num_floors=num_floors,
+        floor_height_m=floor_height_m,
+        usage=usage,
+        zone=zone,
+        ground_coverage_pct=ground_coverage_pct,
+        road_width_m=road_width_m,
+        corner_plot=corner_plot,
+        basement=basement,
     )
-
-    raw = response.choices[0].message.content.strip()
-
-    # Strip markdown fences if model adds them despite instruction
-    raw = re.sub(r'^```json\s*', '', raw)
-    raw = re.sub(r'^```\s*',     '', raw)
-    raw = re.sub(r'\s*```$',     '', raw)
-
-    data = json.loads(raw)
 
     # Validate & clamp zones to buildable area
     bw, bd = buildable_w, buildable_d

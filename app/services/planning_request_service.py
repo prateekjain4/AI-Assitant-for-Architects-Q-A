@@ -1,5 +1,14 @@
 from app.services.services import get_openai_client
-from app.services.city_rules_engine import get_far, get_setbacks, lift_mandatory_floors, get_basement_rules, get_balcony_rules, get_accessibility_rules, get_compound_wall_rules
+from app.services.city_rules_engine import (
+    get_far, get_setbacks, lift_mandatory_floors,
+    get_basement_rules, get_basement_ventilation, get_balcony_rules,
+    get_accessibility_rules, get_compound_wall_rules,
+    validate_usage_in_zone, validate_space_standards,
+    get_usage_staircase_width, get_staircase_height_threshold, get_staircase_count_threshold,
+    is_solar_required, get_solar_note,
+    get_hotel_basement_uses, get_fire_travel_distance,
+    get_fire_tender_access, get_fire_refuge_area, get_rainwater_harvesting,
+)
 from shapely.geometry import Polygon
 from pyproj import Transformer
 from shapely.ops import transform
@@ -47,30 +56,38 @@ def get_fire_requirements(building_height: float, max_built_area: float, usage: 
         "requirements": [],
         "tender_access": {},
         "refuge_area": {},
-        "thresholds_note": ""
+        "thresholds_note": "",
+        "travel_distance_m": get_fire_travel_distance(usage),
+        "travel_distance_note": (
+            f"Max travel distance to exit: {get_fire_travel_distance(usage)}m "
+            f"for {usage} use (NBC 2016 Part IV)"
+        ),
     }
 
+    _non_residential = usage.lower() not in ("residential", "residential_single", "dwelling")
     if building_height > 15:
         fire["noc_required"] = True
         fire["thresholds_note"] = "Fire NOC from KSFES mandatory above 15m"
-    elif max_built_area > 5000 and usage.lower() in ["commercial", "mixed"]:
+    elif max_built_area > 5000 and _non_residential:
         # BDA RMP 2031: non-residential buildings ≥ 5,000 sqm BUA require fire arrangements
         fire["noc_required"] = True
         fire["thresholds_note"] = "Fire NOC mandatory for non-residential buildings ≥ 5,000 sqm BUA (BDA RMP 2031)"
 
     if building_height > 9:
+        _stair_w = "1.5m" if building_height > 15 else "1.2m"
         fire["requirements"] += [
-            "Fire escape staircase — minimum 1.2m clear width",
+            f"Fire escape staircase — minimum {_stair_w} clear width",
             "Fire-rated doors on staircase landings",
             "Emergency lighting in corridors and staircases",
         ]
+        _ta = get_fire_tender_access()
         fire["tender_access"] = {
             "required": True,
-            "min_road_width_m": 4.5,
-            "min_height_clearance_m": 4.5,
-            "turning_radius_m": 9.0, 
-            "dead_end_max_m": 45,
-            "note": "Fire tender access road required on at least 3 sides above 15m (NBC 2016 Part IV Cl. 4.1)"
+            "min_road_width_m":       _ta.get("min_road_width_m", 4.5),
+            "min_height_clearance_m": _ta.get("min_height_clearance_m", 4.5),
+            "turning_radius_m":       _ta.get("turning_radius_m", 9.0),
+            "dead_end_max_m":         _ta.get("dead_end_max_m", 45),
+            "note":                   _ta.get("note", "Fire tender access road required on at least 3 sides above 15m (NBC 2016 Part IV Cl. 4.1)"),
         }
 
     if building_height > 15:
@@ -90,11 +107,12 @@ def get_fire_requirements(building_height: float, max_built_area: float, usage: 
             "Pressurisation of staircases",
             "Two separate fire escape staircases mandatory",
         ]
+        _ra = get_fire_refuge_area()
         fire["refuge_area"] = {
-            "required": True,
-            "frequency": "Every 7 floors",
-            "min_area_sqm": 15,
-            "note": "Refuge area NOT counted in FAR (NBC 2016 Part IV Section 4.11)"
+            "required":     True,
+            "frequency":    f"Every {_ra.get('frequency_floors', 7)} floors",
+            "min_area_sqm": _ra.get("min_area_sqm", 15),
+            "note":         _ra.get("note", "Refuge area NOT counted in FAR (NBC 2016 Part IV Section 4.11)"),
         }
 
     return fire
@@ -177,22 +195,37 @@ def generate_compliance_score(fire_data, parking, far_floors):
 # ─────────────────────────────────────────────────────────────────
 # Staircase & lift requirements
 # ─────────────────────────────────────────────────────────────────
-def get_staircase_requirements(building_height: float, max_built_area: float, far_floors: float) -> dict:
+def get_staircase_requirements(
+    building_height: float, max_built_area: float, far_floors: float,
+    usage: str = "residential"
+) -> dict:
     num_floors = far_floors if far_floors > 0 else math.ceil(building_height / 3.2)
 
-    if building_height <= 11.5:
-        min_width = 1.0
-        width_note = "Minimum 1.0m clear width (BBMP Bylaws)"
-    elif building_height <= 15.0:
-        min_width = 1.2
-        width_note = "Minimum 1.2m clear width for buildings above 11.5m (BBMP Bylaws)"
-    else:
-        min_width = 1.5
-        width_note = "Minimum 1.5m clear width for fire escape staircase — buildings above 15m (NBC 2016 Part IV, Cl. 4.1)"
+    # Height-based minimum (BBMP Bye-Laws 2003 — read from bbmp_bylaws.json)
+    ht = get_staircase_height_threshold(building_height)
+    height_min = ht["min_clear_width_m"]
+    width_note = ht["note"]
 
-    if max_built_area > 2000:
+    # Usage-based minimum (BBMP Bye-Laws 2003 Sec 20.6)
+    usage_min = get_usage_staircase_width(usage, building_height)
+    min_width = max(height_min, usage_min)
+
+    # Override note when usage drives the width
+    u = usage.lower()
+    if usage_min > height_min:
+        if any(k in u for k in ("hospital", "nursing", "institutional")):
+            width_note = f"Minimum {min_width}m for institutional/hospital buildings (BBMP Bye-Laws 2003 Sec 20.6)"
+        elif any(k in u for k in ("hotel", "hostel", "lodge")):
+            width_note = f"Minimum {min_width}m for hotel/hostel buildings (BBMP Bye-Laws 2003 Sec 20.6)"
+        elif any(k in u for k in ("school", "college", "educational")):
+            width_note = f"Minimum {min_width}m for educational buildings (BBMP Bye-Laws 2003 Sec 20.6)"
+        elif any(k in u for k in ("assembly", "cinema", "theatre")):
+            width_note = f"Minimum {min_width}m for assembly/cinema buildings (BBMP Bye-Laws 2003 Sec 20.6)"
+
+    _stair_threshold = get_staircase_count_threshold()
+    if max_built_area > _stair_threshold:
         num_staircases = 2
-        staircase_note = "2 staircases mandatory above 2000 sqm BUA"
+        staircase_note = f"2 staircases mandatory above {_stair_threshold} sqm BUA (BBMP Bye-Laws 2003)"
     else:
         num_staircases = 1
         staircase_note = "1 staircase sufficient for this BUA"
@@ -222,35 +255,41 @@ def get_basement_regulations(plot_area_sqm: float, basement_requested: bool) -> 
     if not basement_requested:
         return {"requested": False}
 
-    bda_bsmt = get_basement_rules()
+    bsmt = get_basement_rules()
+    vent = get_basement_ventilation()
+    vent_note = (
+        f"Mechanical ventilation mandatory — minimum {vent.get('min_air_changes_per_hour', 6)} "
+        f"air changes per hour (NBC 2016)"
+    )
+    fire_key = "fire_requirements_above_200sqm" if plot_area_sqm > 200 else "fire_requirements_small_plot"
     return {
-        "requested": True,
-        "max_basements": bda_bsmt.get("max_basement_levels_for_parking", bda_bsmt.get("max_number_of_levels", 5)),
-        "permitted_uses": bda_bsmt.get("permitted_uses", [
+        "requested":     True,
+        "max_basements": bsmt.get("max_levels_for_parking", 5),
+        "permitted_uses": bsmt.get("permitted_uses", [
             "Car parking (primary use — up to 5 levels)",
             "Electrical room, pump room, generator",
             "AC handling units and utilities/services",
         ]),
-        "not_permitted": [
+        "not_permitted": bsmt.get("not_permitted", [
             "Habitable rooms or residential use",
             "Retail or commercial use",
             "Kitchens or restaurants",
-        ],
-        "setback_in_basement": f"Minimum {bda_bsmt.get('setback_from_boundary_m', 2.0)} m from plot boundary; "
-                               f"+{bda_bsmt.get('additional_setback_per_extra_level_m', bda_bsmt.get('additional_setback_per_extra_floor_m', 1.0))} m per additional level (BDA RMP 2031 Sec 4.9.2)",
-        "ventilation": "Mechanical ventilation mandatory — minimum 6 air changes per hour (NBC 2016)",
-        "max_depth_m": bda_bsmt.get("max_height_m", bda_bsmt.get("max_overall_height_m", 4.5)),
-        "far_counted": False,
-        "far_note": "Basement NOT counted in FAR if used for parking/services only",
-        "fire_requirements": [
+        ]),
+        "setback_in_basement": (
+            f"Minimum {bsmt.get('setbacks', {}).get('min_from_boundary_m', 2.0)} m from plot boundary; "
+            f"+{bsmt.get('setbacks', {}).get('additional_per_extra_level_m', 1.0)} m per additional level "
+            f"(BDA RMP 2031 Sec 4.9.2 / BBMP Bye-Laws 2003 Sec 18)"
+        ),
+        "ventilation":     vent_note,
+        "max_depth_m":     bsmt.get("max_overall_height_m", 4.5),
+        "far_counted":     bsmt.get("far_counted", False),
+        "far_note":        bsmt.get("far_note", "Basement NOT counted in FAR if used for parking/services only"),
+        "fire_requirements": bsmt.get(fire_key, [
             "Sprinklers mandatory in basement regardless of height",
             "Minimum 2 means of escape from basement",
             "Smoke extraction system required",
             "Emergency lighting mandatory",
-        ] if plot_area_sqm > 200 else [
-            "Fire extinguishers mandatory",
-            "Adequate ventilation required",
-        ]
+        ]),
     }
 
 
@@ -301,8 +340,17 @@ def get_accessibility_requirements(usage: str, plot_area_sqm: float, zone: str) 
     rules = get_accessibility_rules()
     mandatory_zones = rules.get("mandatory_for_zones", ["PSP"])
     mandatory_area  = rules.get("mandatory_covered_area_sqm", 300)
-    is_psp          = zone.upper().startswith("PSP")
-    is_public_usage = usage.lower() in ["commercial", "mixed", "institutional", "public"]
+    is_psp = zone.upper().startswith("PSP")
+    # BBMP Schedule XI: mandatory for all public/semi-public buildings ≥ 300 sqm covered area.
+    # Hospitals, hotels, educational, commercial, and institutional are all public buildings.
+    _public_usages = {
+        "commercial", "mixed", "institutional", "public",
+        "hospital", "nursing_home", "nursing", "medical",
+        "hotel", "star_hotel", "luxury_hotel", "lodge",
+        "educational", "school", "college",
+        "restaurant", "retail", "mall", "office",
+    }
+    is_public_usage = any(k in usage.lower() for k in _public_usages)
     required        = is_psp or (is_public_usage and plot_area_sqm >= mandatory_area)
 
     return {
@@ -385,8 +433,6 @@ def calculate_plot_planning(request):
     # Height constraint: how many full floors fit within the declared building height
     far_floors_by_height = max(1, math.floor(building_height / floor_height_m))
     far_floors = max(1, min(far_floors_by_height, 15))
-    # Informational: minimum floors to use the full FAR budget at this footprint
-    min_floors_for_max_far = max(1, math.ceil(max_built_sqm / max(footprint_sqm, 1)))
 
     # ── Setbacks — BDA RMP 2031 progressive table ─────────────────
     far_building_height_for_setbacks = far_floors * floor_height_m
@@ -395,6 +441,15 @@ def calculate_plot_planning(request):
     side_setback  = sb_data["side"]
     rear_setback  = sb_data["rear"]
 
+    # Setback-constrained footprint: use actual buildable area, not just GC cap
+    plot_length = request.plot_length or 0
+    plot_width  = request.plot_width  or 0
+    sb_footprint_sqm = max(0.0, plot_length - front_setback - rear_setback) * \
+                       max(0.0, plot_width  - side_setback  * 2)
+    effective_footprint = min(footprint_sqm, sb_footprint_sqm) if sb_footprint_sqm > 0 else footprint_sqm
+    # Informational: minimum floors to exhaust the full FAR budget at the actual buildable footprint
+    min_floors_for_max_far = max(1, math.ceil(max_built_sqm / max(effective_footprint, 1)))
+
     setbacks = {
         "front": front_setback,
         "side":  side_setback,
@@ -402,11 +457,29 @@ def calculate_plot_planning(request):
         "corner_relaxation": "Side setback reduced by 1m on secondary road side" if corner_plot else None
     }
 
+    # ── Usage validation (permissible use + space standards) ─────
+    usage_zone_check   = validate_usage_in_zone(usage, zone, road_width)
+    space_std_check    = validate_space_standards(usage, plot_area_sqm, road_width)
+    solar_required     = is_solar_required(usage)
+    solar_note         = get_solar_note() if solar_required else None
+
     # ── Computed sections ─────────────────────────────────────────
     far_building_height = far_floors * floor_height_m  # actual buildable height from FAR
-    fire_data      = get_fire_requirements(far_building_height, max_built_sqm, usage)   # pass sqm
-    staircase_data = get_staircase_requirements(far_building_height, max_built_sqm, far_floors)
+    fire_data      = get_fire_requirements(far_building_height, max_built_sqm, usage)
+    staircase_data = get_staircase_requirements(far_building_height, max_built_sqm, far_floors, usage)
     basement_data    = get_basement_regulations(plot_area_sqm, basement)
+
+    # Hotel 3-star+ gets additional basement uses
+    u_lower = usage.lower()
+    if any(k in u_lower for k in ("hotel", "star_hotel", "luxury_hotel")) and basement:
+        hotel_bsmt = get_hotel_basement_uses()
+        if isinstance(basement_data, dict) and hotel_bsmt:
+            basement_data["hotel_special_uses"] = hotel_bsmt
+            basement_data["hotel_special_note"] = (
+                "3-star+ hotels may use basement for health club, shopping arcade, "
+                "dining, banquet/conference and admin office (BDA RMP 2031 Sec 4.9.2)"
+            )
+
     projection_rules = get_projection_rules(road_width)
     accessibility    = get_accessibility_requirements(usage, plot_area_sqm, zone)
     boundary_wall    = get_boundary_wall_rules(corner_plot)
@@ -515,7 +588,7 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
             "fire":        f"{'Fire NOC required' if fire_data['noc_required'] else 'Fire NOC not required'} for {building_height}m building under NBC 2016 Part IV.",
             "compliance":  (f"Lift mandatory — {far_floors} floors (G+{far_floors-1}) exceeds G+3 threshold per BDA RMP 2031 Sec 4.9.1(iv)."
                             if staircase_data['lift_mandatory']
-                            else "Rainwater harvesting mandatory for plots above 120 sqm; verify zone-specific bylaws."),
+                            else f"Rainwater harvesting mandatory for plots above {get_rainwater_harvesting().get('mandatory_above_plot_sqm', 120)} sqm (BBMP Bye-Laws 2003 Sec 25)."),
             "parking":     "Parking calculated per BDA RMP 2031 Sec 4.13 / Table 4 based on built-up area and usage type.",
         }
 
@@ -548,4 +621,15 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
         "min_floors_for_max_far":  min_floors_for_max_far,
         "accessibility":           accessibility,
         "boundary_wall":           boundary_wall,
+        # ── Usage-specific additions ──────────────────────────────
+        "usage_validation": {
+            "zone_check":         usage_zone_check,
+            "space_std_check":    space_std_check,
+            "all_warnings":       (
+                ([usage_zone_check["warning"]] if usage_zone_check.get("warning") else [])
+                + space_std_check.get("warnings", [])
+            ),
+        },
+        "solar_required":  solar_required,
+        "solar_note":      solar_note,
     }

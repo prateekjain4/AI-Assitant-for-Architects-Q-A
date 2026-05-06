@@ -1,5 +1,6 @@
 import math
 from app.services.city_rules_engine import get_far, get_setbacks, lift_mandatory_floors
+from app.ai.scenario_advisor import advise_scenarios
 
 DEFAULT_FLOOR_HEIGHT_M = 3.2
 
@@ -87,10 +88,8 @@ def _compute_scenario(
     u = usage.lower().strip()
     if u.startswith("residential"):
         if "single" in u or "dwelling" in u:
-            # Single dwelling: 1 car per 100 sqm BUA
             cars_req = math.ceil(total_built_sqm / 100)
         else:
-            # Multi-dwelling: tiered by avg DU size
             avg_unit_sqm = 130
             units        = max(1, math.ceil(total_built_sqm / avg_unit_sqm))
             if avg_unit_sqm < 50:
@@ -98,14 +97,45 @@ def _compute_scenario(
             elif avg_unit_sqm <= 120:
                 cars_per_unit = 1.0
             else:
-                # +1 car per 120 sqm above 120 sqm per DU
                 cars_per_unit = 1 + math.floor((avg_unit_sqm - 120) / 120)
             cars_req = math.ceil(units * cars_per_unit)
         visitor_cars = max(1, math.ceil(cars_req * 0.10))
         parking_car  = cars_req + visitor_cars
         parking_2w   = parking_car * 2
+    elif "hospital" in u:
+        # 1 car per 75 sqm + 10% ambulances (BDA Table 4)
+        cars_req     = math.ceil(total_built_sqm / 75)
+        ambulance    = max(1, math.ceil(cars_req * 0.10))
+        parking_car  = cars_req + ambulance
+        parking_2w   = parking_car * 2
+    elif "nursing" in u:
+        # 1 car per 50 sqm + 10% ambulances (BDA Table 4)
+        cars_req     = math.ceil(total_built_sqm / 50)
+        ambulance    = max(1, math.ceil(cars_req * 0.10))
+        parking_car  = cars_req + ambulance
+        parking_2w   = parking_car * 2
+    elif any(k in u for k in ("hotel", "lodge")):
+        # 1 car per 50 sqm + 10% visitors (BDA Table 4 — hotel/lodge)
+        cars_req     = math.ceil(total_built_sqm / 50)
+        visitor_cars = max(1, math.ceil(cars_req * 0.10))
+        parking_car  = cars_req + visitor_cars
+        parking_2w   = parking_car * 2
+    elif any(k in u for k in ("office", "commercial", "mixed", "retail", "mall",
+                               "restaurant", "eatery")):
+        # 1 car per 50 sqm (BDA Table 4 — office/retail/commercial)
+        parking_car = math.ceil(total_built_sqm / 50)
+        parking_2w  = parking_car * 2
+    elif any(k in u for k in ("industrial", "warehouse")):
+        # 1 car per 100 sqm + 3 two-wheelers per car (BDA Table 4 — industrial)
+        parking_car = math.ceil(total_built_sqm / 100)
+        parking_2w  = parking_car * 3
+    elif any(k in u for k in ("school", "college", "educational")):
+        # 1 car per 150 sqm (BDA Table 4 — educational)
+        parking_car = math.ceil(total_built_sqm / 150)
+        parking_2w  = parking_car * 3
     else:
-        parking_car = math.ceil(total_built_sqm / 100 * 3)
+        # Generic fallback: 1 car per 50 sqm
+        parking_car = math.ceil(total_built_sqm / 50)
         parking_2w  = parking_car * 2
 
     avg_floor_area_sqft = round(total_built / floors, 1) if floors else 0
@@ -355,10 +385,25 @@ def calculate_scenarios(
         s["exceeds_far"]     = False
         results.append(s)
 
-    # ── Recommended: highest density without Fire NOC ──────────────────────
+    # ── Recommended: fallback is highest density without Fire NOC ─────────
     no_noc    = [s for s in results if not s["fire_noc_required"]]
     best_pool = no_noc if no_noc else results
     best      = max(best_pool, key=lambda s: s["total_built_sqft"])
+    recommended = best["label"]
+
+    # ── AI advisor: replace hardcoded pick with Claude reasoning ──────────
+    ai_advice = None
+    try:
+        ai_advice   = advise_scenarios(
+            scenarios     = results,
+            zone          = zone,
+            usage         = usage,
+            plot_area_sqm = plot_area_sqm,
+            road_width    = road_width,
+        )
+        recommended = ai_advice["recommended"]
+    except Exception:
+        pass  # fallback to hardcoded recommended above
 
     return {
         "plot_area_sqft":  plot_area_sqft,
@@ -370,6 +415,7 @@ def calculate_scenarios(
         "zone":            zone,
         "road_width":      road_width,
         "planning_zone":   planning_zone,
-        "recommended":     best["label"],
+        "recommended":     recommended,
+        "ai_advice":       ai_advice,
         "scenarios":       results,
     }
