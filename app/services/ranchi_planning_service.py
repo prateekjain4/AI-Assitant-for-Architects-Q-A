@@ -34,7 +34,28 @@ def calculate_ranchi_planning(
     floor_height_m:   float = 3.2,
     locality:         str   = "Ranchi",
     ward:             str   = "",
+    authority:        str   = "rmc",
 ) -> dict:
+
+    auth = authority.lower().strip()
+
+    # Gram Panchayat — no formal building bylaws; return informational response
+    if auth == "gram_panchayat":
+        return {
+            "city":      "ranchi",
+            "authority": "Gram Panchayat",
+            "gram_panchayat": True,
+            "message": (
+                "This plot falls under Gram Panchayat jurisdiction (rural village per "
+                "Jharkhand Panchayat Raj Act). Formal JBBL building bylaws do not apply. "
+                "Building permission is issued by the Gram Panchayat under the guidance of "
+                "a High Court order. Contact your local Gram Panchayat for construction norms."
+            ),
+            "contacts": [
+                "District Urban Development Agency (DUDA), Ranchi",
+                "Block Development Officer (BDO) for your block",
+            ],
+        }
 
     canon_zone   = normalise_zone(zone)
     plot_area_m2 = round(plot_length_m * plot_width_m, 2)
@@ -53,11 +74,11 @@ def calculate_ranchi_planning(
         ht_cap_reason = f"Plot width ≤10 m caps height to {width_ht_cap} m (RMC Bye-Law)"
 
     # ── FAR ───────────────────────────────────────────────────────
-    far_data     = get_far(canon_zone, road_width_m, plot_area_m2)
+    far_data     = get_far(canon_zone, road_width_m, plot_area_m2, authority=auth)
     far_val      = far_data["total"]
 
     # ── Ground coverage ───────────────────────────────────────────
-    cov_pct      = get_ground_coverage(plot_area_m2, effective_ht)
+    cov_pct      = get_ground_coverage(plot_area_m2, effective_ht, authority=auth)
 
     # ── Setbacks ──────────────────────────────────────────────────
     sb = get_setbacks(
@@ -66,6 +87,7 @@ def calculate_ranchi_planning(
         building_height_m = effective_ht,
         usage             = usage,
         road_width_m      = road_width_m,
+        authority         = auth,
     )
 
     if sb["not_permitted"]:
@@ -181,7 +203,7 @@ def calculate_ranchi_planning(
     return {
         # Identity
         "city":              "ranchi",
-        "authority":         "RMC",
+        "authority":         auth.upper(),
         "zone":              canon_zone,
         "zone_display":      zone_display_name(canon_zone),
         "locality":          locality,

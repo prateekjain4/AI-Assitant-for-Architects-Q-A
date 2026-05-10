@@ -16,16 +16,27 @@ Key differences from BDA Bengaluru:
 import json
 from pathlib import Path
 
-_RULES_PATH = Path(__file__).parent.parent.parent / "city_rules" / "ranchi_rmc.json"
-_rules: dict | None = None
+_RULES_DIR = Path(__file__).parent.parent.parent / "city_rules"
+_cache: dict[str, dict] = {}
+
+_AUTHORITY_FILES = {
+    "rmc":            "ranchi_rmc.json",
+    "rrda":           "ranchi_rrda.json",
+    "gram_panchayat": "ranchi_rmc.json",   # fallback — GP has no formal rules
+}
 
 
-def _load() -> dict:
-    global _rules
-    if _rules is None:
-        with open(_RULES_PATH, encoding="utf-8") as f:
-            _rules = json.load(f)
-    return _rules
+def _load(authority: str = "rmc") -> dict:
+    key = authority.lower()
+    if key not in _cache:
+        filename = _AUTHORITY_FILES.get(key, "ranchi_rmc.json")
+        path = _RULES_DIR / filename
+        # Fall back to RMC if RRDA file doesn't exist yet
+        if not path.exists():
+            path = _RULES_DIR / "ranchi_rmc.json"
+        with open(path, encoding="utf-8") as f:
+            _cache[key] = json.load(f)
+    return _cache[key]
 
 
 # ── Zone normalisation ────────────────────────────────────────────────────────
@@ -69,13 +80,13 @@ def zone_display_name(zone: str) -> str:
 
 
 # ── FAR ───────────────────────────────────────────────────────────────────────
-def get_far(zone: str, road_width_m: float = 9.0, plot_area_sqm: float = 0.0) -> dict:
+def get_far(zone: str, road_width_m: float = 9.0, plot_area_sqm: float = 0.0, authority: str = "rmc") -> dict:
     """
     Returns {"base": float, "tdr": 0.0, "total": float, "coverage_pct": int}.
     Ranchi FAR is uniform per zone (no road-width matrix).
     Road width still governs max HEIGHT (see height constraints).
     """
-    rules = _load()
+    rules = _load(authority)
     canon = normalise_zone(zone)
     far_map = rules["far"]["zones"]
     entry   = far_map.get(canon, far_map["general_zone"])
@@ -152,6 +163,7 @@ def get_setbacks(
     building_height_m: float,
     usage:             str = "residential",
     road_width_m:      float = 9.0,
+    authority:         str = "rmc",
 ) -> dict:
     """
     Returns {"front": m, "side": m, "rear": m, "not_permitted": bool,
@@ -159,7 +171,7 @@ def get_setbacks(
 
     'not_permitted' = True means this height is not allowed for this plot size.
     """
-    rules = _load()
+    rules = _load(authority)
     tier  = _ht_tier(building_height_m)
     dk    = _depth_key(plot_depth_m)
     wk    = _width_key(plot_width_m)
@@ -214,11 +226,15 @@ def get_setbacks(
 
 
 # ── Ground coverage ───────────────────────────────────────────────────────────
-def get_ground_coverage(plot_area_sqm: float, building_height_m: float) -> int:
+def get_ground_coverage(plot_area_sqm: float, building_height_m: float, authority: str = "rmc") -> int:
     """60% for plot ≤1000 sqm and height ≤16 m; 50% otherwise."""
+    rules = _load(authority)
+    gc = rules.get("ground_coverage", {})
+    low_pct  = gc.get("plot_upto_1000sqm_ht_upto_16m",  {}).get("max_coverage_pct", 60)
+    high_pct = gc.get("plot_above_1000sqm_ht_above_16m", {}).get("max_coverage_pct", 50)
     if plot_area_sqm <= 1000 and building_height_m <= 16.0:
-        return 60
-    return 50
+        return low_pct
+    return high_pct
 
 
 # ── Fire NOC ──────────────────────────────────────────────────────────────────

@@ -1,0 +1,95 @@
+{
+  "_meta": {
+    "city": "ranchi",
+    "authority": "RRDA",
+    "document": "Jharkhand Building Bye-Laws 2016 (10th Amendment 2024) — RRDA Jurisdiction",
+    "schema_version": "1.0",
+    "jurisdiction": "268 peri-urban villages: Angara, Kanke, Ratu, Nagri, Namkum, Ormanjhi circles",
+    "source": "https://udhd.jharkhand.gov.in/Other/byLaws.aspx",
+    "notes": "RRDA peri-urban norms — lower FAR and coverage than RMC urban; setbacks simplified by plot size per JBBL 2016 Schedule III"
+  },
+  "far": {
+    "zones": {
+      "district_and_commercial_centre": { "far": 2.25 },
+      "core_inner_zone":                { "far": 2.0  },
+      "general_zone":                   { "far": 1.75 }
+    }
+  },
+  "ground_coverage": {
+    "plot_upto_1000sqm_ht_upto_16m":   { "max_coverage_pct": 55 },
+    "plot_above_1000sqm_ht_above_16m": { "max_coverage_pct": 45 }
+  },
+  "height": {
+    "height_tiers_m": [12.0, 16.0],
+    "max_height_by_road_width": {
+      "above_12m_requires_min_road_m": 6.0,
+      "above_16m_requires_min_road_m": 12.0
+    },
+    "plot_width_upto_10m_max_ht_residential_m": 9.0,
+    "plot_width_upto_10m_max_ht_commercial_m":  12.0,
+    "tandem_site_access_below_4.5m_max_ht_m":   9.0
+  },
+  "setbacks": {
+    "residential": {
+      "front_rear_by_plot_depth": {
+        "upto_10m":  { "ht_upto_12m": { "front": 1.5, "rear": 1.0 }, "ht_12_to_16m": null,                              "ht_above_16m": null },
+        "10_to_15m": { "ht_upto_12m": { "front": 2.0, "rear": 1.5 }, "ht_12_to_16m": { "front": 2.5, "rear": 2.0 },    "ht_above_16m": { "front": 4.0, "rear": 2.5 } },
+        "15_to_21m": { "ht_upto_12m": { "front": 3.0, "rear": 2.0 }, "ht_12_to_16m": { "front": 3.0, "rear": 2.5 },    "ht_above_16m": { "front": 5.0, "rear": 3.0 } },
+        "21_to_27m": { "ht_upto_12m": { "front": 3.0, "rear": 2.0 }, "ht_12_to_16m": { "front": 3.5, "rear": 3.0 },    "ht_above_16m": { "front": 5.5, "rear": 3.5 } },
+        "27_to_33m": { "ht_upto_12m": { "front": 4.5, "rear": 3.0 }, "ht_12_to_16m": { "front": 4.5, "rear": 3.0 },    "ht_above_16m": { "front": 6.0, "rear": 3.5 } },
+        "33_to_39m": { "ht_upto_12m": { "front": 5.0, "rear": 3.0 }, "ht_12_to_16m": { "front": 5.0, "rear": 3.5 },    "ht_above_16m": { "front": 6.5, "rear": 4.0 } },
+        "39_to_45m": { "ht_upto_12m": { "front": 5.5, "rear": 3.5 }, "ht_12_to_16m": { "front": 5.5, "rear": 4.0 },    "ht_above_16m": { "front": 7.0, "rear": 4.5 } },
+        "above_45m": { "ht_upto_12m": { "front": 6.0, "rear": 3.5 }, "ht_12_to_16m": { "front": 6.0, "rear": 4.5 },    "ht_above_16m": { "front": 7.5, "rear": 5.0 } }
+      },
+      "sides_by_plot_width": {
+        "upto_10m":  { "ht_upto_12m": 0.0, "ht_12_to_16m": null, "ht_above_16m": null },
+        "10_to_15m": { "ht_upto_12m": 1.0, "ht_12_to_16m": 1.5,  "ht_above_16m": 2.5  },
+        "15_to_21m": { "ht_upto_12m": 1.5, "ht_12_to_16m": 1.5,  "ht_above_16m": 3.0  },
+        "21_to_27m": { "ht_upto_12m": 2.0, "ht_12_to_16m": 2.0,  "ht_above_16m": 3.0  },
+        "27_to_33m": { "ht_upto_12m": 2.5, "ht_12_to_16m": 2.5,  "ht_above_16m": 3.5  },
+        "33_to_39m": { "ht_upto_12m": 3.0, "ht_12_to_16m": 3.0,  "ht_above_16m": 4.0  },
+        "39_to_45m": { "ht_upto_12m": 3.5, "ht_12_to_16m": 3.5,  "ht_above_16m": 4.5  },
+        "above_45m": { "ht_upto_12m": 4.0, "ht_12_to_16m": 4.0,  "ht_above_16m": 5.0  }
+      },
+      "additional_above_22m": {
+        "22_to_28m": { "extra_front": 1.0, "extra_rear": 1.0, "extra_side": 0.3 },
+        "28_to_34m": { "extra_front": 2.0, "extra_rear": 1.5, "extra_side": 0.6 },
+        "above_34m": { "extra_front": 3.0, "extra_rear": 2.0, "extra_side": 1.0 }
+      }
+    },
+    "commercial": {
+      "front_rear_by_plot_depth": {
+        "upto_10m":  { "ht_upto_12m": { "front": 3.0, "rear": 1.5 }, "ht_12_to_16m": null,                              "ht_above_16m": null },
+        "10_to_15m": { "ht_upto_12m": { "front": 3.0, "rear": 1.8 }, "ht_12_to_16m": { "front": 3.5, "rear": 2.5 },    "ht_above_16m": { "front": 4.5, "rear": 3.0 } },
+        "15_to_21m": { "ht_upto_12m": { "front": 4.0, "rear": 2.0 }, "ht_12_to_16m": { "front": 4.0, "rear": 2.5 },    "ht_above_16m": { "front": 5.5, "rear": 3.0 } },
+        "21_to_27m": { "ht_upto_12m": { "front": 4.5, "rear": 2.5 }, "ht_12_to_16m": { "front": 5.0, "rear": 3.0 },    "ht_above_16m": { "front": 6.0, "rear": 3.5 } },
+        "27_to_33m": { "ht_upto_12m": { "front": 5.5, "rear": 3.0 }, "ht_12_to_16m": { "front": 6.0, "rear": 3.0 },    "ht_above_16m": { "front": 6.5, "rear": 4.0 } },
+        "33_to_39m": { "ht_upto_12m": { "front": 6.0, "rear": 3.5 }, "ht_12_to_16m": { "front": 6.5, "rear": 4.0 },    "ht_above_16m": { "front": 7.5, "rear": 4.5 } },
+        "39_to_45m": { "ht_upto_12m": { "front": 6.5, "rear": 4.0 }, "ht_12_to_16m": { "front": 7.0, "rear": 4.5 },    "ht_above_16m": { "front": 8.5, "rear": 5.0 } },
+        "above_45m": { "ht_upto_12m": { "front": 7.0, "rear": 4.5 }, "ht_12_to_16m": { "front": 7.5, "rear": 5.0 },    "ht_above_16m": { "front": 9.5, "rear": 5.5 } }
+      },
+      "sides_by_plot_width": {
+        "upto_10m":  { "ht_upto_12m": 1.5, "ht_12_to_16m": null, "ht_above_16m": null },
+        "10_to_15m": { "ht_upto_12m": 1.5, "ht_12_to_16m": 2.0,  "ht_above_16m": 3.0  },
+        "15_to_21m": { "ht_upto_12m": 1.5, "ht_12_to_16m": 2.0,  "ht_above_16m": 3.0  },
+        "21_to_27m": { "ht_upto_12m": 2.0, "ht_12_to_16m": 2.5,  "ht_above_16m": 3.5  },
+        "27_to_33m": { "ht_upto_12m": 2.5, "ht_12_to_16m": 3.0,  "ht_above_16m": 4.0  },
+        "33_to_39m": { "ht_upto_12m": 3.0, "ht_12_to_16m": 3.5,  "ht_above_16m": 4.5  },
+        "39_to_45m": { "ht_upto_12m": 3.5, "ht_12_to_16m": 4.0,  "ht_above_16m": 5.0  },
+        "above_45m": { "ht_upto_12m": 4.0, "ht_12_to_16m": 4.5,  "ht_above_16m": 5.5  }
+      }
+    }
+  },
+  "fire_safety": {
+    "special_building_height_m": 16.0,
+    "special_building_coverage_sqm": 500.0,
+    "fire_noc_required_above_m": 16.0
+  },
+  "lift": {
+    "mandatory_above_floors": 4
+  },
+  "parking": {
+    "residential_per_du":       { "cars": 1, "two_wheelers": 2 },
+    "commercial_per_100sqm":    { "cars": 2, "two_wheelers": 4 }
+  }
+}
