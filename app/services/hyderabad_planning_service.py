@@ -624,3 +624,75 @@ def calculate_hyderabad_planning(
         "occupancy_certificate": rules_data["occupancy_certificate"],
         "height_exemptions":     rules_data["height_exemptions"],
     }
+
+
+# ── Permissible usages by Hyderabad zone ──────────────────────────────────────
+_HYD_ALL_USAGES = [
+    # value,          label,                                      group,                    road_min
+    ("residential",  "Residential (Dwelling)",                   "Residential",             0),
+    ("commercial",   "Commercial (Shops / Markets)",             "Commercial",              0),
+    ("office",       "Office / IT / ITES",                       "Commercial",              0),
+    ("hotel",        "Hotel / Guest House",                      "Commercial",              9),
+    ("restaurant",   "Restaurant / Food Court",                  "Commercial",              0),
+    ("mall",         "Shopping Mall (≥ 4000 sqm)",               "Commercial",             12),
+    ("multiplex",    "Multiplex / Cinema",                       "Commercial",             18),
+    ("industrial",   "Industrial",                               "Industrial",              0),
+    ("institutional","Institutional / Public Building",          "Public / Semi-Public",    0),
+    ("hospital",     "Hospital / Nursing Home",                  "Public / Semi-Public",    0),
+    ("educational",  "Educational",                              "Public / Semi-Public",    0),
+]
+
+# Zone → allowed usage values  (AP Building Rules 2012 / GHMC zoning regulations)
+_HYD_ZONE_USAGES: dict[str, set[str]] = {
+    "R1":  {"residential", "educational", "institutional", "hospital"},
+    "R2":  {"residential", "educational", "institutional", "hospital"},
+    "R3":  {"residential", "commercial", "educational", "institutional", "hospital"},
+    "R4":  {"residential", "commercial", "office", "educational", "institutional", "hospital"},
+    "R5":  {"residential", "commercial", "office", "hotel", "restaurant",
+            "educational", "institutional", "hospital"},
+    "C1":  {"commercial", "residential", "office", "restaurant", "hotel",
+            "educational", "institutional", "hospital"},
+    "C2":  {"commercial", "office", "hotel", "restaurant", "mall",
+            "institutional", "hospital", "educational"},
+    "C3":  {"commercial", "office", "hotel", "restaurant", "mall", "multiplex",
+            "institutional", "hospital"},
+    "MU1": {"residential", "commercial", "office", "restaurant", "hotel",
+            "educational", "institutional", "hospital"},
+    "MU2": {"residential", "commercial", "office", "hotel", "restaurant", "mall", "multiplex",
+            "educational", "institutional", "hospital"},
+    "I1":  {"industrial", "commercial"},
+    "I2":  {"industrial", "office"},
+    "I3":  {"industrial"},
+    "I4":  {"industrial"},
+    "IT":  {"office", "industrial"},          # GeoJSON uses IT code
+    "PSP": {"institutional", "hospital", "educational"},
+    "T":   {"institutional"},
+    "OS":  {"institutional"},
+    "P":   {"institutional"},
+    "GB":  {"institutional"},
+    "AG":  {"institutional"},
+}
+
+
+def get_allowed_usages_for_hyderabad_zone(zone: str, road_width_m: float) -> list:
+    """
+    Return usage options allowed in the given GHMC/HMDA zone at that road width.
+    Each item: {value, label, group, requires_space_standards}.
+    """
+    z    = zone.upper().strip()
+    road = float(road_width_m)
+    allowed = _HYD_ZONE_USAGES.get(z, {u[0] for u in _HYD_ALL_USAGES})
+
+    result = []
+    for value, label, group, road_min in _HYD_ALL_USAGES:
+        if value not in allowed:
+            continue
+        if road < road_min:
+            continue
+        result.append({
+            "value":                    value,
+            "label":                    label,
+            "group":                    group,
+            "requires_space_standards": False,
+        })
+    return result

@@ -219,6 +219,14 @@ def permissible_usages(request: Request, zone: str = "R", road_width: float = 9.
     return {"usages": get_allowed_usages_for_zone(zone, road_width)}
 
 
+@app.get("/permissible-usages-hyderabad")
+@limiter.limit("60/minute")
+def permissible_usages_hyderabad(request: Request, zone: str = "R2", road_width: float = 9.0):
+    """Return usage options allowed in the given GHMC/HMDA zone at that road width."""
+    from app.services.hyderabad_planning_service import get_allowed_usages_for_hyderabad_zone
+    return {"usages": get_allowed_usages_for_hyderabad_zone(zone, road_width)}
+
+
 @app.post("/planning-ranchi")
 @limiter.limit("10/minute")
 def planning_ranchi(request: Request, data: dict):
