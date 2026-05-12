@@ -423,7 +423,11 @@ def calculate_plot_planning(request):
     building_height_auto = (building_height <= 0)
 
     # ── Plot Area (all calculations in sqm) ──────────────────────
-    if request.coordinates:
+    # Priority: direct sqft input > polygon coords > length × width
+    _direct_sqft = getattr(request, 'plot_area_sqft', None)
+    if _direct_sqft and _direct_sqft > 0:
+        plot_area_sqm = round(_direct_sqft / 10.7639, 2)
+    elif request.coordinates:
         coords    = [(p.lng, p.lat) for p in request.coordinates]
         plot_area_sqm = round(calculate_area_sqft(coords) / 10.7639, 2)
     else:
@@ -456,15 +460,18 @@ def calculate_plot_planning(request):
         building_height = raw_ht if road_cap >= 999 else min(raw_ht, road_cap)
         building_height = max(building_height, floor_height_m * 2)  # at least G+1
 
+    # Round to 1 decimal to eliminate floating-point noise (e.g. 3 × 3.2 = 9.600000001)
+    building_height = round(building_height, 1)
+
     # How many floors are feasible?
     # Height is the architectural ceiling — FAR governs total AREA, not floor count.
     # A tall building with small floors is still valid as long as total_built ≤ max_built.
     # Height constraint: how many full floors fit within the declared building height
-    far_floors_by_height = max(1, math.floor(building_height / floor_height_m))
+    far_floors_by_height = max(1, math.floor(round(building_height / floor_height_m, 6)))
     far_floors = max(1, min(far_floors_by_height, 15))
 
     # ── Setbacks — BDA RMP 2031 progressive table ─────────────────
-    far_building_height_for_setbacks = far_floors * floor_height_m
+    far_building_height_for_setbacks = round(far_floors * floor_height_m, 1)
     sb_data      = get_setbacks(plot_area_sqm, far_building_height_for_setbacks, road_width, corner_plot)
     front_setback = sb_data["front"]
     side_setback  = sb_data["side"]
@@ -661,6 +668,6 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
         },
         "solar_required":      solar_required,
         "solar_note":          solar_note,
-        "building_height_m":   far_building_height,
+        "building_height_m":   round(far_building_height, 1),
         "building_height_auto": building_height_auto,
     }

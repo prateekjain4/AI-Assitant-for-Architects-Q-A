@@ -453,7 +453,8 @@ def answer_question_from_bylaws(question, city="bangalore"):
 
         sec = sections[idx]
 
-        if sec.get("city") not in (city, "national"):
+        sec_city = sec.get("city", "")
+        if sec_city and sec_city not in (city, "national"):
             continue
 
         if sec["category"] != category:
