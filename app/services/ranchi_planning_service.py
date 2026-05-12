@@ -61,21 +61,36 @@ def calculate_ranchi_planning(
     plot_area_m2 = round(plot_length_m * plot_width_m, 2)
     plot_area_sqft = round(_sqm_to_sqft(plot_area_m2), 0)
 
+    building_height_auto = (building_height_m <= 0)
+
+    # ── FAR (does not depend on height) ───────────────────────────
+    far_data     = get_far(canon_zone, road_width_m, plot_area_m2, authority=auth)
+    far_val      = far_data["total"]
+
+    # ── Auto-compute most feasible height from FAR + GC ──────────
+    # Use a low-height coverage estimate as baseline; cap by bylaw height limits.
+    if building_height_auto:
+        cov_base      = get_ground_coverage(plot_area_m2, building_height_m=8.0, authority=auth)
+        gc_fraction   = cov_base / 100 if cov_base > 0 else 0.5
+        floors_needed = max(2, math.ceil(far_val / gc_fraction))
+        road_cap      = max_height_for_road(road_width_m)
+        width_cap     = max_height_for_plot_width(plot_width_m, usage)
+        hard_cap      = min(road_cap, width_cap)
+        raw_ht        = floors_needed * floor_height_m
+        building_height_m = raw_ht if hard_cap >= 999 else min(raw_ht, hard_cap)
+        building_height_m = max(building_height_m, floor_height_m * 2)
+
     # ── Height cap ────────────────────────────────────────────────
     road_ht_cap  = max_height_for_road(road_width_m)
     width_ht_cap = max_height_for_plot_width(plot_width_m, usage)
     effective_ht = min(building_height_m, road_ht_cap, width_ht_cap)
 
-    ht_capped    = effective_ht < building_height_m
+    ht_capped    = effective_ht < building_height_m and not building_height_auto
     ht_cap_reason = ""
     if effective_ht == road_ht_cap and ht_capped:
         ht_cap_reason = f"Road width {road_width_m} m caps height to {road_ht_cap} m (RMC Sec 21.2a)"
     elif effective_ht == width_ht_cap and ht_capped:
         ht_cap_reason = f"Plot width ≤10 m caps height to {width_ht_cap} m (RMC Bye-Law)"
-
-    # ── FAR ───────────────────────────────────────────────────────
-    far_data     = get_far(canon_zone, road_width_m, plot_area_m2, authority=auth)
-    far_val      = far_data["total"]
 
     # ── Ground coverage ───────────────────────────────────────────
     cov_pct      = get_ground_coverage(plot_area_m2, effective_ht, authority=auth)
@@ -239,10 +254,11 @@ def calculate_ranchi_planning(
         },
 
         # Height
-        "building_height_m":   effective_ht,
-        "requested_height_m":  building_height_m,
-        "height_capped":       ht_capped,
-        "floor_height_m":      floor_height_m,
+        "building_height_m":    effective_ht,
+        "requested_height_m":   building_height_m,
+        "height_capped":        ht_capped,
+        "building_height_auto": building_height_auto,
+        "floor_height_m":       floor_height_m,
 
         # Staircase / floors
         "staircase": {

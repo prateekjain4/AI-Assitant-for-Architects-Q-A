@@ -11,7 +11,7 @@ class PlanningRequest(BaseModel):
     plot_width: Optional[float] = None
     coordinates: List[Coordinate]
     road_width: float
-    building_height: float
+    building_height: Optional[float] = 0.0
     usage: str
     # new fields
     locality: Optional[str] = "Bangalore"

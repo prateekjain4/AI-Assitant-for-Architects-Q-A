@@ -356,12 +356,29 @@ def calculate_hyderabad_planning(
     canon_zone   = _normalise_zone(zone)
     plot_area_m2 = round(plot_length_m * plot_width_m, 2)
     plot_area_sqft = round(_sqm_to_sqft(plot_area_m2), 0)
+
+    building_height_auto = (building_height_m <= 0)
+
+    # ── FAR (does not depend on height) ───────────────────────────
+    far_val = _get_far(canon_zone)
+
+    # ── Auto-compute most feasible height from FAR + GC ──────────
+    # Use non-high-rise coverage as base estimate; cap by road-width limit.
+    if building_height_auto:
+        cov_base      = _get_coverage(canon_zone, plot_area_m2, is_high_rise=False)
+        gc_fraction   = cov_base / 100 if cov_base > 0 else 0.5
+        floors_needed = max(2, math.ceil(far_val / gc_fraction))
+        road_cap      = _max_height_for_road(road_width_m)
+        raw_ht        = floors_needed * floor_height_m
+        building_height_m = raw_ht if road_cap >= 9999 else min(raw_ht, road_cap)
+        building_height_m = max(building_height_m, floor_height_m * 2)
+
     is_high_rise = building_height_m >= 18.0
 
     # ── Height cap by road width ───────────────────────────────────
     road_ht_cap   = _max_height_for_road(road_width_m)
     effective_ht  = min(building_height_m, road_ht_cap)
-    ht_capped     = effective_ht < building_height_m
+    ht_capped     = effective_ht < building_height_m and not building_height_auto
     ht_cap_reason = ""
     if ht_capped:
         ht_cap_reason = (
@@ -370,10 +387,7 @@ def calculate_hyderabad_planning(
         )
     is_high_rise = effective_ht >= 18.0
 
-    # ── FAR ───────────────────────────────────────────────────────
-    far_val = _get_far(canon_zone)
-
-    # ── Ground coverage ───────────────────────────────────────────
+    # ── Ground coverage (depends on is_high_rise) ─────────────────
     cov_pct = _get_coverage(canon_zone, plot_area_m2, is_high_rise)
 
     # ── Setbacks ──────────────────────────────────────────────────
@@ -559,11 +573,12 @@ def calculate_hyderabad_planning(
         },
 
         # Height
-        "building_height_m":  effective_ht,
-        "requested_height_m": building_height_m,
-        "height_capped":      ht_capped,
-        "floor_height_m":     floor_height_m,
-        "is_high_rise":       is_high_rise,
+        "building_height_m":    effective_ht,
+        "requested_height_m":   building_height_m,
+        "height_capped":        ht_capped,
+        "building_height_auto": building_height_auto,
+        "floor_height_m":       floor_height_m,
+        "is_high_rise":         is_high_rise,
 
         # Staircase / floors
         "staircase": {

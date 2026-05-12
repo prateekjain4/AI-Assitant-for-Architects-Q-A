@@ -392,17 +392,35 @@ def get_boundary_wall_rules(corner_plot: bool) -> dict:
     return result
 
 
+# ── BDA height cap by road width (BDA RMP 2031 Table 1 + formula) ─────────
+def _max_height_for_road_bda(road_width_m: float) -> float:
+    """Return the maximum building height (m) permitted for this road width under BDA norms."""
+    if road_width_m < 6.0:
+        return 9.0
+    if road_width_m < 9.0:
+        return 11.5
+    if road_width_m < 12.0:
+        return 15.0
+    if road_width_m < 18.0:
+        return 21.0
+    if road_width_m < 24.0:
+        return 30.0
+    return 999.0  # FAR governs on wide roads
+
+
 # ─────────────────────────────────────────────────────────────────
 # Main planning function
 # ─────────────────────────────────────────────────────────────────
 def calculate_plot_planning(request):
     zone            = request.zone
     road_width      = request.road_width
-    building_height = request.building_height
+    building_height = request.building_height or 0
     usage           = request.usage
     locality        = getattr(request, 'locality', 'Bangalore')
     corner_plot     = getattr(request, 'corner_plot', False)
     basement        = getattr(request, 'basement', False)
+
+    building_height_auto = (building_height <= 0)
 
     # ── Plot Area (all calculations in sqm) ──────────────────────
     if request.coordinates:
@@ -424,12 +442,23 @@ def calculate_plot_planning(request):
     footprint_sqm       = plot_area_sqm * (ground_coverage_pct / 100)
     # ── Max Built Area ────────────────────────────────────────────
     max_built_sqm  = round(plot_area_sqm * far, 2)
-    # All areas in sqm — no sqft conversion
+
+    floor_height_m = getattr(request, 'floor_height', 3.2) or 3.2
+
+    # ── Auto-compute most feasible height from FAR + GC ──────────
+    # Derive the minimum floors needed to exhaust FAR at the allowed ground coverage,
+    # then cap by the road-width height limit so the result is always bylaw-compliant.
+    if building_height_auto:
+        gc_fraction   = ground_coverage_pct / 100 if ground_coverage_pct > 0 else 0.5
+        floors_needed = max(2, math.ceil(far / gc_fraction))
+        road_cap      = _max_height_for_road_bda(road_width)
+        raw_ht        = floors_needed * floor_height_m
+        building_height = raw_ht if road_cap >= 999 else min(raw_ht, road_cap)
+        building_height = max(building_height, floor_height_m * 2)  # at least G+1
 
     # How many floors are feasible?
     # Height is the architectural ceiling — FAR governs total AREA, not floor count.
     # A tall building with small floors is still valid as long as total_built ≤ max_built.
-    floor_height_m = getattr(request, 'floor_height', 3.2) or 3.2
     # Height constraint: how many full floors fit within the declared building height
     far_floors_by_height = max(1, math.floor(building_height / floor_height_m))
     far_floors = max(1, min(far_floors_by_height, 15))
@@ -630,6 +659,8 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
                 + space_std_check.get("warnings", [])
             ),
         },
-        "solar_required":  solar_required,
-        "solar_note":      solar_note,
+        "solar_required":      solar_required,
+        "solar_note":          solar_note,
+        "building_height_m":   far_building_height,
+        "building_height_auto": building_height_auto,
     }
