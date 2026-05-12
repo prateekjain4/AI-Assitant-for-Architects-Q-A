@@ -40,7 +40,7 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Serve regulation PDFs as static files at /docs
-_DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)))
+_DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "pdfs")
 app.mount("/docs", StaticFiles(directory=_DOCS_DIR, html=False), name="docs")
 
 # Routers
@@ -219,6 +219,47 @@ def permissible_usages(request: Request, zone: str = "R", road_width: float = 9.
     return {"usages": get_allowed_usages_for_zone(zone, road_width)}
 
 
+@app.post("/estimate-valuation")
+@limiter.limit("15/minute")
+def estimate_valuation_endpoint(request: Request, data: dict):
+    """
+    Market valuation estimator for Bengaluru (Karnataka SRO guidance values +
+    optional OpenStreetMap Overpass amenity uplift).
+    """
+    from app.services.valuation_service import estimate_valuation
+    return estimate_valuation(
+        city                    = str(data.get("city",    "bengaluru")),
+        zone                    = str(data.get("zone",    "R")),
+        usage                   = str(data.get("usage",   "residential")),
+        max_built_sqm           = float(data.get("max_built_sqm",   0)),
+        num_floors              = int(data.get("num_floors",         1)),
+        plot_area_sqm           = float(data.get("plot_area_sqm",   0)),
+        total_construction_cost = float(data.get("total_construction_cost", 0)),
+        lat                     = data.get("lat"),
+        lng                     = data.get("lng"),
+    )
+
+
+@app.post("/valuation-analysis")
+@limiter.limit("10/minute")
+def valuation_analysis_endpoint(request: Request, data: dict):
+    """Accepts a /estimate-valuation response body; returns AI-generated narrative explaining the numbers."""
+    from app.services.valuation_service import generate_valuation_analysis
+    return generate_valuation_analysis(data)
+
+
+@app.post("/valuation-chat")
+@limiter.limit("20/minute")
+def valuation_chat_endpoint(request: Request, data: dict):
+    """Math-grounded Q&A chat for Market Valuation. Injects full valuation context."""
+    from app.services.valuation_service import answer_valuation_question
+    return {"answer": answer_valuation_question(
+        question          = str(data.get("question", "")),
+        valuation_context = data.get("valuation_context", {}),
+        city              = str(data.get("city", "bengaluru")),
+    )}
+
+
 @app.get("/permissible-usages-hyderabad")
 @limiter.limit("60/minute")
 def permissible_usages_hyderabad(request: Request, zone: str = "R2", road_width: float = 9.0):
@@ -235,7 +276,7 @@ def planning_ranchi(request: Request, data: dict):
         plot_length_m     = float(data.get("plot_length",              15)),
         plot_width_m      = float(data.get("plot_width",               10)),
         road_width_m      = float(data.get("road_width",                9)),
-        building_height_m = float(data.get("building_height",          10)),
+        building_height_m = float(data.get("building_height",           0)),
         usage             = str(data.get("usage",          "residential")),
         corner_plot       = bool(data.get("corner_plot",          False)),
         basement          = bool(data.get("basement",             False)),
@@ -271,7 +312,7 @@ def planning_hyderabad(request: Request, data: dict):
         plot_length_m     = float(data.get("plot_length",              15)),
         plot_width_m      = float(data.get("plot_width",               10)),
         road_width_m      = float(data.get("road_width",                9)),
-        building_height_m = float(data.get("building_height",          10)),
+        building_height_m = float(data.get("building_height",           0)),
         usage             = str(data.get("usage",          "residential")),
         corner_plot       = bool(data.get("corner_plot",          False)),
         basement          = bool(data.get("basement",             False)),

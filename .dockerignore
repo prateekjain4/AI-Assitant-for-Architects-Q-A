@@ -11,6 +11,8 @@ __pycache__/
 *.env
 .git/
 .gitignore
-*.pdf
 *.log
 bylaw_app.db
+# Root-level PDFs excluded; pdfs/ folder is included (served at /docs)
+/*.pdf
+NBC2016_Vol1.pdf
