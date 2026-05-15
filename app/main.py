@@ -21,6 +21,13 @@ from app.services.ranchi_planning_service import calculate_ranchi_planning
 from app.services.ranchi_scenario_service import calculate_ranchi_scenarios
 from app.services.hyderabad_planning_service import calculate_hyderabad_planning
 from app.services.hyderabad_scenario_service import calculate_hyderabad_scenarios
+# from app.services.anekal_planning_service import calculate_anekal_planning
+# from app.services.anekal_scenario_service import calculate_anekal_scenarios
+# from app.services.hoskote_planning_service import calculate_hoskote_planning, calculate_hoskote_scenarios
+# from app.services.nelamangala_planning_service import calculate_nelamangala_planning, calculate_nelamangala_scenarios
+# from app.services.kanakapura_planning_service import calculate_kanakapura_planning, calculate_kanakapura_scenarios
+# from app.services.ramanagara_planning_service import calculate_ramanagara_planning, calculate_ramanagara_scenarios
+# from app.services.biaapa_planning_service import calculate_biaapa_planning, calculate_biaapa_scenarios
 from app.routers.auth import router as auth_router
 from app.routers.projects import router as projects_router
 from app.db.database import engine
@@ -272,10 +279,18 @@ def permissible_usages_hyderabad(request: Request, zone: str = "R2", road_width:
 @app.post("/planning-ranchi")
 @limiter.limit("10/minute")
 def planning_ranchi(request: Request, data: dict):
+    import math
+    area_sqm = data.get("plot_area_sqm")
+    if area_sqm and float(area_sqm) > 0:
+        side = round(math.sqrt(float(area_sqm)), 2)
+        plot_l, plot_w = side, side
+    else:
+        plot_l = float(data.get("plot_length", 15))
+        plot_w = float(data.get("plot_width",  10))
     return calculate_ranchi_planning(
         zone              = str(data.get("zone",              "general_zone")),
-        plot_length_m     = float(data.get("plot_length",              15)),
-        plot_width_m      = float(data.get("plot_width",               10)),
+        plot_length_m     = plot_l,
+        plot_width_m      = plot_w,
         road_width_m      = float(data.get("road_width",                9)),
         building_height_m = float(data.get("building_height",           0)),
         usage             = str(data.get("usage",          "residential")),
@@ -308,10 +323,18 @@ def scenarios_ranchi(request: Request, data: dict):
 @app.post("/planning-hyderabad")
 @limiter.limit("10/minute")
 def planning_hyderabad(request: Request, data: dict):
+    import math
+    area_sqm = data.get("plot_area_sqm")
+    if area_sqm and float(area_sqm) > 0:
+        side = round(math.sqrt(float(area_sqm)), 2)
+        plot_l, plot_w = side, side
+    else:
+        plot_l = float(data.get("plot_length", 15))
+        plot_w = float(data.get("plot_width",  10))
     return calculate_hyderabad_planning(
         zone              = str(data.get("zone",              "R2")),
-        plot_length_m     = float(data.get("plot_length",              15)),
-        plot_width_m      = float(data.get("plot_width",               10)),
+        plot_length_m     = plot_l,
+        plot_width_m      = plot_w,
         road_width_m      = float(data.get("road_width",                9)),
         building_height_m = float(data.get("building_height",           0)),
         usage             = str(data.get("usage",          "residential")),
@@ -336,3 +359,255 @@ def scenarios_hyderabad(request: Request, data: dict):
         building_height_m = float(data.get("building_height",           0)),
         locality          = str(data.get("locality",        "Hyderabad")),
     )
+
+
+# ── BMRDA / ANEKAL ──────────────────────────────────────────────────────────────
+# @app.get("/permissible-usages-anekal")
+# @limiter.limit("60/minute")
+# def permissible_usages_anekal(request: Request, zone: str = "R", road_width: float = 9.0):
+#     from app.services.anekal_planning_service import get_allowed_usages_for_anekal_zone
+#     return {"usages": get_allowed_usages_for_anekal_zone(zone, road_width)}
+#
+#
+# @app.post("/planning-anekal")
+# @limiter.limit("10/minute")
+# def planning_anekal(request: Request, data: dict):
+#     return calculate_anekal_planning(
+#         zone              = str(data.get("zone",              "R")),
+#         plot_length_m     = float(data.get("plot_length",     15)),
+#         plot_width_m      = float(data.get("plot_width",      10)),
+#         road_width_m      = float(data.get("road_width",       9)),
+#         building_height_m = float(data.get("building_height",  0)),
+#         usage             = str(data.get("usage",  "residential")),
+#         corner_plot       = bool(data.get("corner_plot",   False)),
+#         basement          = bool(data.get("basement",      False)),
+#         floor_height_m    = float(data.get("floor_height",   3.0)),
+#         locality          = str(data.get("locality",      "Anekal")),
+#     )
+#
+#
+# @app.post("/scenarios-anekal")
+# @limiter.limit("15/minute")
+# def scenarios_anekal(request: Request, data: dict):
+#     return calculate_anekal_scenarios(
+#         zone              = str(data.get("zone",              "R")),
+#         road_width        = float(data.get("road_width",       9)),
+#         plot_length_m     = float(data.get("plot_length",     15)),
+#         plot_width_m      = float(data.get("plot_width",      10)),
+#         usage             = str(data.get("usage",  "residential")),
+#         corner_plot       = bool(data.get("corner_plot",   False)),
+#         basement          = bool(data.get("basement",      False)),
+#         floor_height_m    = float(data.get("floor_height",   3.0)),
+#         building_height_m = float(data.get("building_height",  0)),
+#         locality          = str(data.get("locality",      "Anekal")),
+#     )
+
+
+# ── BMRDA / HOSKOTE ─────────────────────────────────────────────────────────────
+# @app.get("/permissible-usages-hoskote")
+# @limiter.limit("60/minute")
+# def permissible_usages_hoskote(request: Request, zone: str = "R", road_width: float = 9.0):
+#     from app.services.hoskote_planning_service import get_allowed_usages_for_hoskote_zone
+#     return {"usages": get_allowed_usages_for_hoskote_zone(zone, road_width)}
+#
+#
+# @app.post("/planning-hoskote")
+# @limiter.limit("10/minute")
+# def planning_hoskote(request: Request, data: dict):
+#     return calculate_hoskote_planning(
+#         zone              = str(data.get("zone",              "R")),
+#         plot_length_m     = float(data.get("plot_length",     15)),
+#         plot_width_m      = float(data.get("plot_width",      10)),
+#         road_width_m      = float(data.get("road_width",       9)),
+#         building_height_m = float(data.get("building_height",  0)),
+#         usage             = str(data.get("usage",  "residential")),
+#         corner_plot       = bool(data.get("corner_plot",   False)),
+#         basement          = bool(data.get("basement",      False)),
+#         floor_height_m    = float(data.get("floor_height",   3.0)),
+#         locality          = str(data.get("locality",    "Hoskote")),
+#     )
+#
+#
+# @app.post("/scenarios-hoskote")
+# @limiter.limit("15/minute")
+# def scenarios_hoskote(request: Request, data: dict):
+#     return calculate_hoskote_scenarios(
+#         zone              = str(data.get("zone",              "R")),
+#         road_width        = float(data.get("road_width",       9)),
+#         plot_length_m     = float(data.get("plot_length",     15)),
+#         plot_width_m      = float(data.get("plot_width",      10)),
+#         usage             = str(data.get("usage",  "residential")),
+#         corner_plot       = bool(data.get("corner_plot",   False)),
+#         basement          = bool(data.get("basement",      False)),
+#         floor_height_m    = float(data.get("floor_height",   3.0)),
+#         building_height_m = float(data.get("building_height",  0)),
+#         locality          = str(data.get("locality",    "Hoskote")),
+#     )
+
+
+# ── BMRDA / NELAMANGALA ─────────────────────────────────────────────────────────
+# @app.get("/permissible-usages-nelamangala")
+# @limiter.limit("60/minute")
+# def permissible_usages_nelamangala(request: Request, zone: str = "R", road_width: float = 9.0):
+#     from app.services.nelamangala_planning_service import get_allowed_usages_for_nelamangala_zone
+#     return {"usages": get_allowed_usages_for_nelamangala_zone(zone, road_width)}
+#
+#
+# @app.post("/planning-nelamangala")
+# @limiter.limit("10/minute")
+# def planning_nelamangala(request: Request, data: dict):
+#     return calculate_nelamangala_planning(
+#         zone              = str(data.get("zone",                  "R")),
+#         plot_length_m     = float(data.get("plot_length",         15)),
+#         plot_width_m      = float(data.get("plot_width",          10)),
+#         road_width_m      = float(data.get("road_width",           9)),
+#         building_height_m = float(data.get("building_height",      0)),
+#         usage             = str(data.get("usage",      "residential")),
+#         corner_plot       = bool(data.get("corner_plot",       False)),
+#         basement          = bool(data.get("basement",          False)),
+#         floor_height_m    = float(data.get("floor_height",       3.0)),
+#         locality          = str(data.get("locality",    "Nelamangala")),
+#     )
+#
+#
+# @app.post("/scenarios-nelamangala")
+# @limiter.limit("15/minute")
+# def scenarios_nelamangala(request: Request, data: dict):
+#     return calculate_nelamangala_scenarios(
+#         zone              = str(data.get("zone",                  "R")),
+#         road_width        = float(data.get("road_width",           9)),
+#         plot_length_m     = float(data.get("plot_length",         15)),
+#         plot_width_m      = float(data.get("plot_width",          10)),
+#         usage             = str(data.get("usage",      "residential")),
+#         corner_plot       = bool(data.get("corner_plot",       False)),
+#         basement          = bool(data.get("basement",          False)),
+#         floor_height_m    = float(data.get("floor_height",       3.0)),
+#         building_height_m = float(data.get("building_height",      0)),
+#         locality          = str(data.get("locality",    "Nelamangala")),
+#     )
+
+
+# ── BMRDA / KANAKAPURA ──────────────────────────────────────────────────────────
+# @app.get("/permissible-usages-kanakapura")
+# @limiter.limit("60/minute")
+# def permissible_usages_kanakapura(request: Request, zone: str = "R", road_width: float = 9.0):
+#     from app.services.kanakapura_planning_service import get_allowed_usages_for_kanakapura_zone
+#     return {"usages": get_allowed_usages_for_kanakapura_zone(zone, road_width)}
+#
+#
+# @app.post("/planning-kanakapura")
+# @limiter.limit("10/minute")
+# def planning_kanakapura(request: Request, data: dict):
+#     return calculate_kanakapura_planning(
+#         zone              = str(data.get("zone",                  "R")),
+#         plot_length_m     = float(data.get("plot_length",         15)),
+#         plot_width_m      = float(data.get("plot_width",          10)),
+#         road_width_m      = float(data.get("road_width",           9)),
+#         building_height_m = float(data.get("building_height",      0)),
+#         usage             = str(data.get("usage",      "residential")),
+#         corner_plot       = bool(data.get("corner_plot",       False)),
+#         basement          = bool(data.get("basement",          False)),
+#         floor_height_m    = float(data.get("floor_height",       3.0)),
+#         locality          = str(data.get("locality",    "Kanakapura")),
+#     )
+#
+#
+# @app.post("/scenarios-kanakapura")
+# @limiter.limit("15/minute")
+# def scenarios_kanakapura(request: Request, data: dict):
+#     return calculate_kanakapura_scenarios(
+#         zone              = str(data.get("zone",                  "R")),
+#         road_width        = float(data.get("road_width",           9)),
+#         plot_length_m     = float(data.get("plot_length",         15)),
+#         plot_width_m      = float(data.get("plot_width",          10)),
+#         usage             = str(data.get("usage",      "residential")),
+#         corner_plot       = bool(data.get("corner_plot",       False)),
+#         basement          = bool(data.get("basement",          False)),
+#         floor_height_m    = float(data.get("floor_height",       3.0)),
+#         building_height_m = float(data.get("building_height",      0)),
+#         locality          = str(data.get("locality",    "Kanakapura")),
+#     )
+
+
+# ── BMRDA / RAMANAGARA ──────────────────────────────────────────────────────────
+# @app.get("/permissible-usages-ramanagara")
+# @limiter.limit("60/minute")
+# def permissible_usages_ramanagara(request: Request, zone: str = "R", road_width: float = 9.0):
+#     from app.services.ramanagara_planning_service import get_allowed_usages_for_ramanagara_zone
+#     return {"usages": get_allowed_usages_for_ramanagara_zone(zone, road_width)}
+#
+#
+# @app.post("/planning-ramanagara")
+# @limiter.limit("10/minute")
+# def planning_ramanagara(request: Request, data: dict):
+#     return calculate_ramanagara_planning(
+#         zone              = str(data.get("zone",                  "R")),
+#         plot_length_m     = float(data.get("plot_length",         15)),
+#         plot_width_m      = float(data.get("plot_width",          10)),
+#         road_width_m      = float(data.get("road_width",           9)),
+#         building_height_m = float(data.get("building_height",      0)),
+#         usage             = str(data.get("usage",      "residential")),
+#         corner_plot       = bool(data.get("corner_plot",       False)),
+#         basement          = bool(data.get("basement",          False)),
+#         floor_height_m    = float(data.get("floor_height",       3.0)),
+#         locality          = str(data.get("locality",    "Ramanagara")),
+#     )
+#
+#
+# @app.post("/scenarios-ramanagara")
+# @limiter.limit("15/minute")
+# def scenarios_ramanagara(request: Request, data: dict):
+#     return calculate_ramanagara_scenarios(
+#         zone              = str(data.get("zone",                  "R")),
+#         road_width        = float(data.get("road_width",           9)),
+#         plot_length_m     = float(data.get("plot_length",         15)),
+#         plot_width_m      = float(data.get("plot_width",          10)),
+#         usage             = str(data.get("usage",      "residential")),
+#         corner_plot       = bool(data.get("corner_plot",       False)),
+#         basement          = bool(data.get("basement",          False)),
+#         floor_height_m    = float(data.get("floor_height",       3.0)),
+#         building_height_m = float(data.get("building_height",      0)),
+#         locality          = str(data.get("locality",    "Ramanagara")),
+#     )
+
+
+# ── BIAAPA ──────────────────────────────────────────────────────────────────────
+# @app.get("/permissible-usages-biaapa")
+# @limiter.limit("60/minute")
+# def permissible_usages_biaapa(request: Request, zone: str = "R", road_width: float = 9.0):
+#     from app.services.biaapa_planning_service import get_allowed_usages_for_biaapa_zone
+#     return {"usages": get_allowed_usages_for_biaapa_zone(zone, road_width)}
+#
+#
+# @app.post("/planning-biaapa")
+# @limiter.limit("10/minute")
+# def planning_biaapa(request: Request, data: dict):
+#     return calculate_biaapa_planning(
+#         zone              = str(data.get("zone",                  "R")),
+#         plot_length_m     = float(data.get("plot_length",         15)),
+#         plot_width_m      = float(data.get("plot_width",          10)),
+#         road_width_m      = float(data.get("road_width",           9)),
+#         building_height_m = float(data.get("building_height",      0)),
+#         usage             = str(data.get("usage",      "residential")),
+#         corner_plot       = bool(data.get("corner_plot",       False)),
+#         basement          = bool(data.get("basement",          False)),
+#         floor_height_m    = float(data.get("floor_height",       3.0)),
+#         locality          = str(data.get("locality",       "BIAAPA")),
+#     )
+#
+#
+# @app.post("/scenarios-biaapa")
+# @limiter.limit("15/minute")
+# def scenarios_biaapa(request: Request, data: dict):
+#     return calculate_biaapa_scenarios(
+#         zone              = str(data.get("zone",                  "R")),
+#         road_width        = float(data.get("road_width",           9)),
+#         plot_length_m     = float(data.get("plot_length",         15)),
+#         plot_width_m      = float(data.get("plot_width",          10)),
+#         usage             = str(data.get("usage",      "residential")),
+#         corner_plot       = bool(data.get("corner_plot",       False)),
+#         basement          = bool(data.get("basement",          False)),
+#         floor_height_m    = float(data.get("floor_height",       3.0)),
+#         building_height_m = float(data.get("building_height",      0)),
+#         locality          = str(data.get("locality",       "BIAAPA")),
+#     )

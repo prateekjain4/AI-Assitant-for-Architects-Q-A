@@ -38,6 +38,50 @@ if os.path.exists(_ORR_PATH):
     _ORR_POLYGON = shape(_orr_gj["features"][0]["geometry"])
 
 
+# ── Load BMRDA sub-authority boundary GeoJSON polygons ────────────
+# Each file should have features with properties:
+#   authority: str (e.g. "anekal", "hoskote")
+#   authority_name: str (e.g. "Anekal Planning Authority / BMRDA")
+#   zone_code: str (default zone, e.g. "R")
+#   locality: str (optional)
+_BMRDA_AUTHORITY_PATHS = {
+    "anekal":       "city_rules/anekal_lpa_boundary.geojson",
+    "hoskote":      "city_rules/hoskote_lpa_boundary.geojson",
+    "nelamangala":  "city_rules/nelamangala_lpa_boundary.geojson",
+    "kanakapura":   "city_rules/kanakapura_lpa_boundary.geojson",
+    "ramanagara":   "city_rules/ramanagara_lpa_boundary.geojson",
+    "biaapa":       "city_rules/biaapa_boundary.geojson",
+}
+
+_BMRDA_AUTHORITY_NAMES = {
+    "anekal":       "Anekal Planning Authority / BMRDA",
+    "hoskote":      "Hoskote Planning Authority / BMRDA",
+    "nelamangala":  "Nelamangala Planning Authority / BMRDA",
+    "kanakapura":   "Kanakapura Planning Authority / BMRDA",
+    "ramanagara":   "Ramanagara / Channapatna / Magadi LPA (BMRDA)",
+    "biaapa":       "BIAAPA — Bangalore International Airport Area Planning Authority",
+}
+
+# List of {authority, authority_name, zone_code, locality, shape} dicts
+BMRDA_ZONES: list[dict] = []
+
+for _auth_key, _path in _BMRDA_AUTHORITY_PATHS.items():
+    if os.path.exists(_path):
+        with open(_path) as f:
+            _gj = json.load(f)
+        for feat in _gj["features"]:
+            p = feat.get("properties", {})
+            BMRDA_ZONES.append({
+                "shape":          shape(feat["geometry"]),
+                "authority":      p.get("authority", _auth_key),
+                "authority_name": p.get("authority_name",
+                                        _BMRDA_AUTHORITY_NAMES.get(_auth_key, _auth_key)),
+                "zone_code":      p.get("zone_code", "R"),
+                "locality":       p.get("locality", ""),
+                "planning_endpoint": f"planning-{_auth_key}",
+            })
+
+
 def _detect_planning_zone(lat: float, lng: float) -> str:
     """Return 'zone_A' if inside Bengaluru ORR, else 'zone_B' (BDA RMP 2031)."""
     if _ORR_POLYGON is None:
@@ -201,29 +245,51 @@ def _resolve_bda_zone(ksrsac_data: dict) -> tuple:
 # ── Main detection function ───────────────────────────────────────
 def detect_zone_from_coordinate(lat: float, lng: float) -> dict:
     """
-    3-layer BDA zone detection + BBMP ward overlay:
-    1. Precise GeoJSON polygon (BDA zones)
-    2. KSRSAC K-GIS API (cached)
-    3. Not found fallback
-    BBMP ward detection runs in parallel and is merged into every response.
+    Multi-layer zone detection for Bengaluru region (BDA + BMRDA sub-authorities):
+    1. BMRDA sub-authority GeoJSON (Anekal, Hoskote, Nelamangala, Kanakapura, Ramanagara, BIAAPA)
+    2. BDA zone GeoJSON polygon
+    3. KSRSAC K-GIS API (cached)
+    4. BBMP ward fallback
+    Returns authority field: "bda" for BDA areas, "anekal"/"hoskote"/... for BMRDA.
     """
     bbmp          = _lookup_bbmp_ward(lat, lng)
     planning_zone = _detect_planning_zone(lat, lng)
+    point         = Point(lng, lat)
 
-    # ── Layer 1: GeoJSON polygon ───────────────────────────────────
-    point = Point(lng, lat)
+    # ── Layer 0: BMRDA sub-authority boundary GeoJSON ─────────────
+    for bmrda in BMRDA_ZONES:
+        if bmrda["shape"].contains(point):
+            return {
+                "found":              True,
+                "source":             "geojson",
+                "confidence":         "precise",
+                "authority":          bmrda["authority"],
+                "authority_name":     bmrda["authority_name"],
+                "planning_endpoint":  bmrda["planning_endpoint"],
+                "zone_code":          bmrda["zone_code"],
+                "zone_name":          f"{bmrda['zone_code']} Zone",
+                "locality":           bmrda["locality"],
+                "ward":               "",
+                "planning_zone":      bmrda["authority"],
+                **bbmp,
+            }
+
+    # ── Layer 1: BDA GeoJSON polygon ──────────────────────────────
     for zone in ZONES:
         if zone["shape"].contains(point):
             p = zone["properties"]
             return {
-                "found":         True,
-                "source":        "geojson",
-                "confidence":    "precise",
-                "zone_code":     p["zone_code"],
-                "zone_name":     p["zone_name"],
-                "locality":      p["locality"],
-                "ward":          p["ward"],
-                "planning_zone": planning_zone,
+                "found":              True,
+                "source":             "geojson",
+                "confidence":         "precise",
+                "authority":          "bda",
+                "authority_name":     "Bruhat Bengaluru Mahanagara Palike / BDA",
+                "planning_endpoint":  "bengaluru",
+                "zone_code":          p["zone_code"],
+                "zone_name":          p["zone_name"],
+                "locality":           p["locality"],
+                "ward":               p["ward"],
+                "planning_zone":      planning_zone,
                 **bbmp,
             }
 
@@ -236,37 +302,43 @@ def detect_zone_from_coordinate(lat: float, lng: float) -> dict:
     if ksrsac.get("message") == "200":
         zone_code, zone_name, match_type = _resolve_bda_zone(ksrsac)
         return {
-            "found":         True,
-            "source":        "ksrsac",
-            "confidence":    "approximate",
-            "zone_code":     zone_code,
-            "zone_name":     zone_name,
-            "locality":      ksrsac.get("wardName",     ""),
-            "ward":          ksrsac.get("zoneName",     ""),
-            "ward_code":     ksrsac.get("wardCode",     ""),
-            "district":      ksrsac.get("districtName", ""),
-            "ksrsac_zone":   ksrsac.get("zoneName",     ""),
-            "ksrsac_ward":   ksrsac.get("wardName",     ""),
-            "match_type":    match_type,
-            "planning_zone": planning_zone,
+            "found":              True,
+            "source":             "ksrsac",
+            "confidence":         "approximate",
+            "authority":          "bda",
+            "authority_name":     "Bruhat Bengaluru Mahanagara Palike / BDA",
+            "planning_endpoint":  "bengaluru",
+            "zone_code":          zone_code,
+            "zone_name":          zone_name,
+            "locality":           ksrsac.get("wardName",     ""),
+            "ward":               ksrsac.get("zoneName",     ""),
+            "ward_code":          ksrsac.get("wardCode",     ""),
+            "district":           ksrsac.get("districtName", ""),
+            "ksrsac_zone":        ksrsac.get("zoneName",     ""),
+            "ksrsac_ward":        ksrsac.get("wardName",     ""),
+            "match_type":         match_type,
+            "planning_zone":      planning_zone,
             **bbmp,
         }
 
-    # ── Layer 3: Not found (still return BBMP ward if available) ───
+    # ── Layer 3: BBMP ward fallback ────────────────────────────────
     if bbmp.get("in_bbmp"):
         return {
-            "found":         True,
-            "source":        "bbmp_ward_only",
-            "confidence":    "approximate",
-            "zone_code":     "R",
-            "zone_name":     "Residential Zone (default — verify BDA zone manually)",
-            "locality":      bbmp.get("bbmp_ward_name", ""),
-            "ward":          bbmp.get("bbmp_zone", ""),
-            "planning_zone": planning_zone,
+            "found":              True,
+            "source":             "bbmp_ward_only",
+            "confidence":         "approximate",
+            "authority":          "bda",
+            "authority_name":     "Bruhat Bengaluru Mahanagara Palike / BDA",
+            "planning_endpoint":  "bengaluru",
+            "zone_code":          "R",
+            "zone_name":          "Residential Zone (default — verify BDA zone manually)",
+            "locality":           bbmp.get("bbmp_ward_name", ""),
+            "ward":               bbmp.get("bbmp_zone", ""),
+            "planning_zone":      planning_zone,
             **bbmp,
         }
 
     return {
         "found":   False,
-        "message": "Location not within Bangalore municipal limits or API unavailable."
+        "message": "Location not within Bangalore metropolitan region or API unavailable."
     }
