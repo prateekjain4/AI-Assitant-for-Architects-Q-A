@@ -1,0 +1,507 @@
+{
+  "_meta": {
+    "city": "anekal",
+    "authority": "Anekal Planning Authority / BMRDA",
+    "document": "Master Plan for Anekal Local Planning Area 2031 — Zoning Regulations (Chapter 11)",
+    "govt_order": "G.O. No. UDD 151 BMR 2013 Dated 03.09.2014",
+    "schema_version": "1.0",
+    "applicable_bylaws": [
+      "Karnataka Town and Country Planning Act 1961",
+      "Master Plan for Anekal LPA 2031 — Zoning Regulations",
+      "BBMP Building Byelaws 2003 (for provisions not covered here)",
+      "National Building Code 2016 (fire, accessibility, earthquake norms)",
+      "IS 1893-2002 (earthquake resistant design)"
+    ],
+    "notes": "FAR values from Table 4 (road-width based). Setbacks from Table 2 (≤10m) and Table 3 (>10m). High-rise threshold: G+4 or 15m.",
+    "last_verified": "2024-09-03",
+    "source_pdf": "pdfcoffee.com_zonal-regulations-pdf-free.pdf"
+  },
+
+  "zones": {
+    "R": {
+      "label": "Residential Zone",
+      "far_category": "residential",
+      "ground_coverage_pct": 60,
+      "permissible_uses": [
+        "residential", "apartment", "group_housing", "hostel", "old_age_home",
+        "orphanage", "school_primary", "kindergarten", "daycare", "library",
+        "post_office", "milk_booth", "place_of_worship"
+      ],
+      "special_uses": [
+        "govt_office", "public_utility", "bank", "nursing_home",
+        "hospital", "filling_station", "neighbourhood_shop",
+        "service_apartment", "vehicle_parking"
+      ]
+    },
+    "C": {
+      "label": "Commercial Zone",
+      "far_category": "commercial",
+      "ground_coverage_pct": 60,
+      "permissible_uses": [
+        "residential", "retail", "office", "hotel", "restaurant", "bank",
+        "educational", "hospital", "nursing_home", "warehouse", "cinema",
+        "mall", "multiplex", "commercial_complex", "filling_station",
+        "service_industry", "cultural", "place_of_worship"
+      ],
+      "special_uses": []
+    },
+    "I": {
+      "label": "Industrial Zone",
+      "far_category": "industrial",
+      "ground_coverage_pct": 50,
+      "permissible_uses": [
+        "light_industry", "medium_industry", "heavy_industry", "it_bt",
+        "warehouse", "bus_terminal", "truck_terminal", "filling_station",
+        "canteen", "office", "residential_watchward"
+      ],
+      "special_uses": [
+        "hazardous_industry", "junk_yard", "dairy", "slaughter_house",
+        "sports_recreation", "resort"
+      ]
+    },
+    "PSP": {
+      "label": "Public and Semi-Public Zone",
+      "far_category": "psp",
+      "ground_coverage_pct": 50,
+      "permissible_uses": [
+        "govt_office", "educational", "hospital", "cultural", "library",
+        "place_of_worship", "fire_station", "police_station", "bank",
+        "research_institution", "public_utility", "sports_complex"
+      ],
+      "special_uses": [
+        "parking_lot", "repair_shop", "park", "playground", "club",
+        "canteen", "aquarium", "museum"
+      ]
+    },
+    "PU": {
+      "label": "Public Utilities Zone",
+      "far_category": "psp",
+      "ground_coverage_pct": 40,
+      "permissible_uses": [
+        "power_substation", "water_treatment", "sewage_treatment",
+        "solid_waste_management", "gas_installation", "telecom_tower",
+        "fire_station", "milk_dairy", "wind_mill"
+      ],
+      "special_uses": [
+        "shop", "canteen", "office", "bank_counter", "residential_watchward"
+      ]
+    },
+    "OS": {
+      "label": "Open Space, Parks and Playgrounds",
+      "far_category": "psp",
+      "ground_coverage_pct": 5,
+      "permissible_uses": [
+        "park", "playground", "stadium", "sports_complex", "nmt_infrastructure",
+        "cemetery", "crematorium", "public_toilet", "parking"
+      ],
+      "special_uses": [
+        "club", "canteen", "library", "museum", "open_air_theatre",
+        "water_sports", "amusement_park"
+      ]
+    },
+    "TC": {
+      "label": "Transport and Communication Zone",
+      "far_category": "psp",
+      "ground_coverage_pct": 50,
+      "permissible_uses": [
+        "railway", "bus_stand", "airport", "metro_station", "parking",
+        "filling_station", "telecom", "post_office", "transport_office",
+        "loading_unloading", "cargo_terminal"
+      ],
+      "special_uses": [
+        "hotel", "motel", "club", "warehouse", "shop", "canteen", "restaurant"
+      ]
+    },
+    "AG": {
+      "label": "Agricultural Zone",
+      "far_category": "agricultural",
+      "ground_coverage_pct": 15,
+      "permissible_uses": [
+        "agriculture", "horticulture", "dairy_farm", "poultry_farm",
+        "fish_culture", "farm_house", "eco_tourism", "nursery"
+      ],
+      "special_uses": [
+        "agro_processing", "sports_ground", "golf_club", "hospital",
+        "educational", "library", "warehouse", "urban_village"
+      ]
+    }
+  },
+
+  "far_by_road_width": {
+    "_note": "Table 4 — Maximum FAR by road width and use category. Industrial uses follow Table 10.",
+    "residential": [
+      { "road_max": 9,   "far": 1.50 },
+      { "road_max": 12,  "far": 1.75 },
+      { "road_max": 18,  "far": 2.00 },
+      { "road_max": 24,  "far": 2.25 },
+      { "road_max": 9999,"far": 2.50 }
+    ],
+    "commercial": [
+      { "road_max": 9,   "far": 1.50 },
+      { "road_max": 12,  "far": 1.75 },
+      { "road_max": 18,  "far": 2.00 },
+      { "road_max": 24,  "far": 2.25 },
+      { "road_max": 9999,"far": 2.50 }
+    ],
+    "psp": [
+      { "road_max": 9,   "far": 1.25 },
+      { "road_max": 12,  "far": 1.50 },
+      { "road_max": 18,  "far": 1.75 },
+      { "road_max": 24,  "far": 1.75 },
+      { "road_max": 9999,"far": 2.00 }
+    ],
+    "agricultural": [
+      { "road_max": 9999, "far": 1.00 }
+    ]
+  },
+
+  "far_group_housing": {
+    "_note": "Table 6 — Group housing on plot ≥1 ha with approach road ≥12m",
+    "min_plot_ha": 1.0,
+    "min_road_m": 12.0,
+    "tiers": [
+      { "road_max": 12,  "coverage_pct": 60, "far": 2.00 },
+      { "road_max": 18,  "coverage_pct": 55, "far": 2.25 },
+      { "road_max": 24,  "coverage_pct": 55, "far": 2.50 },
+      { "road_max": 9999,"coverage_pct": 50, "far": 2.75 }
+    ],
+    "civic_amenity_pct": 5,
+    "parks_open_space_pct": 10,
+    "visitor_parking_pct": 10
+  },
+
+  "setbacks_standard": {
+    "_note": "Table 2 — Exterior open spaces for buildings up to 10m height, keyed by plot frontage width. Note: for plots ≥4000 sqm, minimum 5.0m on all sides.",
+    "by_site_width": [
+      {
+        "site_width_max": 6,
+        "front_m": 1.0, "rear_m": 0.0,
+        "side_left_m": 0.0, "side_right_m": 0.0
+      },
+      {
+        "site_width_max": 9,
+        "front_m": 1.5, "rear_m": 1.0,
+        "side_left_m": 1.0, "side_right_m": 1.0
+      },
+      {
+        "site_width_max": 12,
+        "front_m": 2.0, "rear_m": 1.5,
+        "side_left_m": 1.0, "side_right_m": 1.0
+      },
+      {
+        "site_width_max": 18,
+        "front_m": 2.5, "rear_m": 2.0,
+        "side_left_m": 1.5, "side_right_m": 1.5
+      },
+      {
+        "site_width_max": 24,
+        "front_m": 3.0, "rear_m": 2.5,
+        "side_left_m": 2.0, "side_right_m": 2.0
+      },
+      {
+        "site_width_max": 9999,
+        "front_m": 4.0, "rear_m": 3.0,
+        "side_left_m": 2.5, "side_right_m": 2.5
+      }
+    ],
+    "large_plot_min_all_m": 5.0,
+    "large_plot_threshold_sqm": 4000,
+    "note_corner": "Corner plot: front setback applies to both abutting roads."
+  },
+
+  "setbacks_high_rise": {
+    "_note": "Table 3 — All-round exterior open space for buildings above 10m. Front = max(road-based, all-round).",
+    "by_height": [
+      { "height_above": 10,  "height_upto": 12,  "all_round_m": 4.5  },
+      { "height_above": 12,  "height_upto": 15,  "all_round_m": 5.0  },
+      { "height_above": 15,  "height_upto": 18,  "all_round_m": 6.0  },
+      { "height_above": 18,  "height_upto": 21,  "all_round_m": 7.0  },
+      { "height_above": 21,  "height_upto": 24,  "all_round_m": 8.0  },
+      { "height_above": 24,  "height_upto": 27,  "all_round_m": 9.0  },
+      { "height_above": 27,  "height_upto": 30,  "all_round_m": 10.0 },
+      { "height_above": 30,  "height_upto": 35,  "all_round_m": 11.0 },
+      { "height_above": 35,  "height_upto": 40,  "all_round_m": 12.0 },
+      { "height_above": 40,  "height_upto": 45,  "all_round_m": 13.0 },
+      { "height_above": 45,  "height_upto": 50,  "all_round_m": 14.0 },
+      { "height_above": 50,  "height_upto": 9999,"all_round_m": 16.0 }
+    ]
+  },
+
+  "high_rise_threshold_m": 15,
+  "high_rise_threshold_floors": 4,
+
+  "industrial_by_plot_area": {
+    "_note": "Table 10 — Coverage/FAR/Setbacks for Industrial buildings",
+    "tiers": [
+      {
+        "plot_max_sqm": 230,
+        "coverage_pct": 80, "far": 1.00,
+        "min_frontage_m": 9.0, "front_setback_m": 1.0,
+        "side_setback_m": 1.0, "rear_setback_m": 1.0,
+        "min_road_m": 9
+      },
+      {
+        "plot_max_sqm": 1000,
+        "coverage_pct": 60, "far": 1.25,
+        "min_frontage_m": 12.0, "front_setback_m": 4.5,
+        "side_setback_m": 3.0, "rear_setback_m": 3.0,
+        "min_road_m": 9
+      },
+      {
+        "plot_max_sqm": 2000,
+        "coverage_pct": 50, "far": 1.25,
+        "min_frontage_m": 24.0, "front_setback_m": 6.0,
+        "side_setback_m": 5.0, "rear_setback_m": 5.0,
+        "min_road_m": 12
+      },
+      {
+        "plot_max_sqm": 4000,
+        "coverage_pct": 40, "far": 1.25,
+        "min_frontage_m": 28.0, "front_setback_m": 8.0,
+        "side_setback_m": 5.0, "rear_setback_m": 5.0,
+        "min_road_m": 12
+      },
+      {
+        "plot_max_sqm": 8000,
+        "coverage_pct": 35, "far": 1.00,
+        "min_frontage_m": 32.0, "front_setback_m": 8.0,
+        "side_setback_m": 6.0, "rear_setback_m": 6.0,
+        "min_road_m": 15
+      },
+      {
+        "plot_max_sqm": 9999999,
+        "coverage_pct": 30, "far": 1.00,
+        "min_frontage_m": 42.0, "front_setback_m": 15.0,
+        "side_setback_m": 12.0, "rear_setback_m": 12.0,
+        "min_road_m": 15
+      }
+    ]
+  },
+
+  "it_bt_by_plot_area": {
+    "_note": "Tables 10A and 10B — FAR and setbacks for IT/BT related activities in Industrial Zone",
+    "tiers": [
+      {
+        "plot_max_sqm": 1000,
+        "coverage_pct": 55, "far": 1.50,
+        "front_setback_m": 6.0, "all_round_setback_m": 5.0,
+        "min_road_m": 9
+      },
+      {
+        "plot_max_sqm": 2000,
+        "coverage_pct": 50, "far": 1.75,
+        "front_setback_m": 8.0, "all_round_setback_m": 5.0,
+        "min_road_m": 12
+      },
+      {
+        "plot_max_sqm": 4000,
+        "coverage_pct": 50, "far": 2.00,
+        "front_setback_m": 8.0, "all_round_setback_m": 6.0,
+        "min_road_m": 18
+      },
+      {
+        "plot_max_sqm": 6000,
+        "coverage_pct": 45, "far": 2.25,
+        "front_setback_m": 8.0, "all_round_setback_m": 6.0,
+        "min_road_m": 24
+      },
+      {
+        "plot_max_sqm": 9999999,
+        "coverage_pct": 45, "far": 2.50,
+        "front_setback_m": 15.0, "all_round_setback_m": 12.0,
+        "min_road_m": 30
+      }
+    ]
+  },
+
+  "parking": {
+    "_note": "Table 11 — Off-street parking spaces. Car space: 2.5m x 5.5m = 13.75 sqm. Scooter: 3 sqm. Cycle: 1.4 sqm.",
+    "car_space_sqm": 13.75,
+    "car_dimensions": "2.5m x 5.5m",
+    "scooter_space_sqm": 3.0,
+    "cycle_space_sqm": 1.4,
+    "scooter_ratio_of_car": 0.25,
+    "by_use": {
+      "residential_single": {
+        "rule": "1 car per dwelling unit >50 sqm upto 150 sqm",
+        "unit": "per_unit", "threshold_sqm": 50
+      },
+      "residential_multi": {
+        "rule": "1 car per 2 units <50 sqm, or 1 car per unit >50 sqm",
+        "small_unit_sqm": 50, "cars_per_units": 2
+      },
+      "hotel": { "unit": "per_rooms", "value": 6 },
+      "educational": { "unit": "per_sqm", "value": 200 },
+      "hospital": { "unit": "per_sqm", "value": 100 },
+      "nursing_home": { "unit": "per_sqm", "value": 75 },
+      "assembly_auditorium": { "unit": "per_seats", "value": 25 },
+      "govt_semi_public": { "unit": "per_sqm", "value": 100 },
+      "retail": { "unit": "per_sqm", "value": 75, "exempt_below_sqm": 50 },
+      "industrial": {
+        "unit": "per_sqm", "value": 100,
+        "lorry_per_sqm": 1000, "lorry_dimensions": "3.5m x 7.5m"
+      },
+      "storage": { "unit": "per_sqm", "value": 100 },
+      "kalyana_mantapa": { "unit": "per_sqm", "value": 75 },
+      "office": { "unit": "per_sqm", "value": 75 },
+      "restaurant": { "unit": "per_sqm", "value": 75 },
+      "student_hostel": { "unit": "per_rooms", "value": 15 },
+      "working_hostel": { "unit": "per_rooms", "value": 5 }
+    },
+    "notes": [
+      "Up to 50 sqm shops: parking not mandatory",
+      "Drive aisle minimum 3.5m width",
+      "Car parking in set-back areas: minimum 3.0m free from building",
+      "Basement parking: first basement for plots up to 1000 sqm; second basement above 1000 sqm"
+    ]
+  },
+
+  "basement": {
+    "permitted": true,
+    "may_extend_into_setback_except_front": true,
+    "min_from_property_line_m": 1.5,
+    "min_clear_height_m": 2.4,
+    "max_floor_height_m": 2.75,
+    "max_projection_above_ground_m": 1.2,
+    "max_basements_standard": 1,
+    "max_basements_3star_hotel": 3,
+    "use": "parking and services only"
+  },
+
+  "rural_development": {
+    "_note": "Section 11.2.8A — Within 250m radius of Gramathana for villages with population ≤1000 (2011 census)",
+    "max_far": 1.0,
+    "max_floors": "G+1",
+    "max_height_m": 7.0,
+    "setbacks": "as_per_table_8",
+    "additional_radius_per_1000_pop_m": 50
+  },
+
+  "row_housing": {
+    "_note": "Table 8 — Row housing (3 to 12 units)",
+    "min_units": 3,
+    "max_units": 12,
+    "min_combined_area_sqm": 210,
+    "max_area_per_plot_sqm": 108,
+    "setbacks": {
+      "front_m": 2.0,
+      "rear_m": 1.5,
+      "side_end_units_m": 2.0
+    }
+  },
+
+  "flatted_factories": {
+    "_note": "Table 9 — Flatted factories (non-hazardous small industrial units, max 50 workers)",
+    "min_plot_sqm": 1000,
+    "max_coverage_pct": 40,
+    "far_road_upto_12m": 1.50,
+    "far_road_above_12m": 1.75,
+    "setbacks": {
+      "front_m": 8.0,
+      "rear_m": 4.5,
+      "side_m": 4.5
+    }
+  },
+
+  "water_body_buffers": {
+    "_note": "Section 11.3.8 — No building activity within these buffers",
+    "lake_above_40ha_m": 30,
+    "lake_others_m": 10,
+    "canal_raj_kaluve_m": 9,
+    "field_drain_m": 3,
+    "note": "Buffer distances are in addition to mandatory setbacks."
+  },
+
+  "fire_safety": {
+    "_note": "NBC 2016 Part IV applies. Anekal adopts BBMP byelaws for fire provisions not covered here.",
+    "high_rise_noc_above_m": 15,
+    "special_building_threshold_m": 15,
+    "requirements_above_15m": [
+      "Fire NOC from Fire Department mandatory",
+      "NBC 2016 Part IV (Fire & Life Safety) compliance required",
+      "Sprinkler system in buildings above 15m",
+      "Fire escape staircase (minimum 1m wide) required",
+      "Refuge areas at every 7 floors for buildings >24m"
+    ]
+  },
+
+  "solar": {
+    "_note": "Table 14 — Solar water heater requirements (100 litres/day per unit)",
+    "mandatory_uses": {
+      "restaurant_above_100sqm_seating": "per 40 sqm seating",
+      "lodging_tourist_home": "per 3 rooms",
+      "hostel_guest_house": "per 6 beds",
+      "industrial_canteen": "per 50 workers",
+      "hospital_nursing_home": "per 4 beds",
+      "kalyana_mantapa_community_hall": "per 30 sqm floor area",
+      "recreational_club": "per 100 sqm floor area",
+      "residential_single_above_200sqm_or_400sqm_site": "mandatory",
+      "residential_multi_per_5_units": "500 lpcd"
+    },
+    "pv_lighting": "Mandatory for multi-unit residential (>5 units) in setback areas, driveways, internal corridors"
+  },
+
+  "rainwater_harvesting": {
+    "_note": "Section 11.3.11 — Compulsory for all buildings on plots of 9m x 12m (108 sqm) and above",
+    "mandatory_plot_area_sqm": 108,
+    "systems": ["open_well", "bore_well_recharge", "storage_tank", "percolation_pits"]
+  },
+
+  "accessibility": {
+    "_note": "Section 11.3.12 (Schedule V) — For public/semi-public buildings ≥300 sqm covered area",
+    "mandatory_above_sqm": 300,
+    "access_path_width_m": 1.8,
+    "max_gradient_pct": 5,
+    "surface_parking_near_entrance": 2,
+    "max_travel_to_entrance_m": 30
+  },
+
+  "corridor_widths": {
+    "_note": "Table 12 — Minimum corridor widths by building use",
+    "residential_individual_m": 1.0,
+    "residential_apartment_m": 2.0,
+    "assembly_auditorium_religious_m": 2.0,
+    "govt_office_m": 2.0,
+    "hospital_m": 2.4,
+    "educational_m": 2.0,
+    "commercial_office_nursing_home_lodge_m": 2.0,
+    "other_m": 1.5
+  },
+
+  "transit_oriented_development": {
+    "_note": "Section 11.2.7 — Additional FAR for transit-oriented development",
+    "additional_far": 0.5,
+    "min_road_width_m": 60,
+    "radius_from_transit_hub_m": 150,
+    "eligible_hubs": ["railway_station", "metro_station", "BRT_station"],
+    "fee": "twice applicable betterment levy rates",
+    "statutory_clearances": ["fire_noc", "airport_clearance_if_applicable", "pollution_control"]
+  },
+
+  "space_standards_table1": {
+    "_note": "Table 1 — Minimum road width and plot size for specific uses",
+    "conference_community_hall_club": { "min_road_m": 12, "min_plot_sqm": 500 },
+    "cold_storage": { "min_road_m": 12, "min_plot_sqm": 1000 },
+    "indoor_games": { "min_road_m": 15, "min_plot_sqm": 2000 },
+    "hotel_lodge": { "min_road_m": 12, "min_plot_sqm": 500 },
+    "kalyana_mantapa": { "min_road_m": 12, "min_plot_sqm": 1000 },
+    "lpg_fuel_filling": { "min_road_m": 15, "min_plot_sqm": 500 },
+    "nursing_home_polyclinic": { "min_road_m": 12, "min_plot_sqm": 500 },
+    "service_apartment": { "min_road_m": 12, "min_plot_sqm": 500 },
+    "star_hotel_upto_3star": { "min_road_m": 15 },
+    "star_hotel_above_3star": { "min_road_m": 18 },
+    "cinema_multiplex_convention": { "min_road_m": 18, "min_plot_sqm": 2000 },
+    "rd_lab": { "min_road_m": 12, "min_plot_sqm": 1500 }
+  },
+
+  "archaeological_heritage_control": {
+    "_note": "Section 11.2.9B — Height restrictions near heritage monuments",
+    "within_100m_max_floors": "G+1",
+    "within_100m_max_height_m": 7.0,
+    "100_to_200m_max_floors": "G+2",
+    "100_to_200m_max_height_m": 10.5,
+    "200_to_400m_max_floors": "G+3",
+    "200_to_400m_max_height_m": 14.0,
+    "note": "No permission without NOC from ASI/State Archaeology Department"
+  }
+}

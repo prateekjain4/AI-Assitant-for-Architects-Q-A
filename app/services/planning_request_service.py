@@ -14,6 +14,7 @@ from pyproj import Transformer
 from shapely.ops import transform
 import math
 from app.services.parking_service import calculate_parking
+from app.services.proximity_service import check_water_body_proximity, check_rajkaluve_proximity
 
 # ─────────────────────────────────────────────────────────────────
 # Area calculation
@@ -552,6 +553,22 @@ def calculate_plot_planning(request):
         "basement regulations permitted uses ventilation parking"
     ) if basement else ""
 
+    # ── Water body proximity check ─────────────────────────────────
+    coords_list = request.coordinates
+    if coords_list:
+        centroid_lat = sum(c.lat for c in coords_list) / len(coords_list)
+        centroid_lng = sum(c.lng for c in coords_list) / len(coords_list)
+        water_proximity = check_water_body_proximity(centroid_lat, centroid_lng)
+    else:
+        water_proximity = {"checked": False, "reason": "no_map_pin",
+                           "message": "Click on the map to enable water body proximity check."}
+
+    if coords_list:
+        rajkaluve_proximity = check_rajkaluve_proximity(centroid_lat, centroid_lng)
+    else:
+        rajkaluve_proximity = {"checked": False, "reason": "no_map_pin",
+                               "message": "Click on the map to enable drain proximity check."}
+
     summary = generate_feasibility_summary(plot_area_sqm, max_built_sqm, far_floors)
     design_options = generate_design_options(far_floors, max_built_sqm)
     compliance = generate_compliance_score(fire_data, parking, far_floors)
@@ -573,6 +590,7 @@ FIRE SAFETY: {fire_context}
 
 Plot facts (pre-computed — do NOT recalculate):
 Zone: {zone} | Locality: {locality} | Road: {road_width}m | Usage: {usage}
+{f"WATER BODY WARNING: {water_proximity['warning']}" if water_proximity.get("in_buffer_zone") else ""}
 FAR: {far} | Ground coverage: {ground_coverage_pct}% | Max built-up: {max_built_sqm:,.0f} sqm
 Setbacks: Front {front_setback}m | Side {side_setback}m | Rear {rear_setback}m
 Lift mandatory: {staircase_data['lift_mandatory']} (trigger: G+3 OR 15m, whichever first — BDA RMP 2031 Sec 4.9.1(iv)) | Staircases: {staircase_data['num_staircases']}
@@ -670,4 +688,6 @@ Return ONLY a JSON object with these keys. Each value must be ONE concise senten
         "solar_note":          solar_note,
         "building_height_m":   round(far_building_height, 1),
         "building_height_auto": building_height_auto,
+        "water_proximity":     water_proximity,
+        "rajkaluve_proximity": rajkaluve_proximity,
     }
